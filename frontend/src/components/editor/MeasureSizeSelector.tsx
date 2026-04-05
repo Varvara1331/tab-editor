@@ -6,6 +6,7 @@
  */
 
 import React from 'react';
+import './TabEditor.css';
 
 interface MeasureSizeSelectorProps {
   /** Текущий размер такта (количество позиций) */

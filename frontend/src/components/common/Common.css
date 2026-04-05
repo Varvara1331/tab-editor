@@ -1,0 +1,139 @@
+/**
+ * Общие стили для компонентов
+ * @module components/common
+ */
+
+/* LoadingSpinner */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(245, 70, 57, 0.2);
+  border-top-color: #f54639;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading-container.loading-small .loading-spinner {
+  width: 20px;
+  height: 20px;
+  border-width: 2px;
+}
+
+.loading-container.loading-large .loading-spinner {
+  width: 60px;
+  height: 60px;
+  border-width: 5px;
+}
+
+.loading-container p {
+  color: #c1bcb2;
+  font-size: 14px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* EmptyState */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+}
+
+.empty-icon {
+  font-size: 64px;
+  margin-bottom: 20px;
+  opacity: 0.7;
+}
+
+.empty-state h3 {
+  color: #2d3748;
+  font-size: 22px;
+  margin-bottom: 10px;
+}
+
+.empty-state p {
+  color: #4a5568;
+  margin-bottom: 25px;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.empty-state .action-btn {
+  background: rgba(245, 70, 57, 0.8);
+  color: white;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.empty-state .action-btn:hover {
+  background: rgba(245, 70, 57, 1);
+  transform: translateY(-2px);
+  box-shadow: 0 0 15px 2px rgba(245, 70, 57, 0.5);
+}
+
+/* SearchBar */
+.search-wrapper {
+  background-color: rgba(31, 28, 19, 0.9);
+  display: flex;
+  align-items: center;
+  padding: 0 15px;
+  width: 100%;
+  height: 47px;
+  gap: 10px;
+  color: #dedddc;
+  border: 7px inset rgba(245, 70, 57, 0.47);
+  box-shadow: 0 0 10px 0px #74281b;
+  border-radius: 24px;
+}
+
+.search-icon {
+  font-size: 18px;
+}
+
+.search-wrapper .search-input {
+  flex: 1;
+  background: none;
+  border: none;
+  color: #dedddc;
+  height: 100%;
+  font-size: 16px;
+  outline: none;
+  font-family: "Courier New", monospace;
+}
+
+.search-wrapper .search-input::placeholder {
+  color: #c1bcb2;
+  opacity: 0.7;
+}
+
+.search-clear {
+  background: none;
+  border: none;
+  color: #dedddc;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0 5px;
+  transition: all 0.3s ease;
+}
+
+.search-clear:hover {
+  color: #f54639;
+  transform: scale(1.1);
+}

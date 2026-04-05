@@ -9,6 +9,7 @@ import React, { useState, useCallback, memo, useMemo } from 'react';
 import { TabData } from '../../types/tab';
 import { downloadTab, ExportFormat } from '../../utils/export/exportUtils';
 import { sanitizeFilename } from '../../utils/stringUtils';
+import './Modal.css';
 
 /**
  * Свойства компонента ExportModal

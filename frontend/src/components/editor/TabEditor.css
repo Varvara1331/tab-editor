@@ -1,0 +1,950 @@
+/**
+ * Стили для компонентов редактора табулатур
+ * @module components/editor
+ */
+
+/* Глобальные стили для редактора */
+.tab-editor {
+  max-width: 1538px;
+  margin: 0 auto;
+  padding: 20px;
+  font-family: "Courier New", monospace;
+}
+
+/* Баннер режима только для чтения */
+.readonly-banner {
+  background: rgba(245, 70, 57, 0.8);
+  color: #dedddc;
+  text-align: center;
+  padding: 10px;
+  margin-bottom: 20px;
+  border-radius: 10px;
+  font-weight: bold;
+}
+
+/* Верхняя панель */
+.editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(42, 37, 32, 0.8);
+  border-radius: 20px;
+  padding: 15px 25px;
+  margin-bottom: 20px;
+  border: 3px solid rgba(245, 70, 57, 0.3);
+  box-shadow: 0 0 15px 5px rgba(116, 40, 27, 0.2);
+}
+
+.file-info {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.file-icon {
+  font-size: 32px;
+}
+
+.file-details {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.title-input {
+  background: rgba(31, 28, 19, 0.6);
+  border: 2px solid rgba(245, 70, 57, 0.3);
+  border-radius: 10px;
+  color: #dedddc;
+  font-size: 18px;
+  padding: 5px 10px;
+  font-family: "Courier New", monospace;
+}
+
+.title-input:focus {
+  outline: none;
+  border-color: rgba(245, 70, 57, 0.7);
+}
+
+.artist-input-inline {
+  background: none;
+  border: none;
+  color: #c1bcb2;
+  font-size: 14px;
+  padding: 0;
+  font-family: "Courier New", monospace;
+}
+
+.artist-input-inline:focus {
+  outline: none;
+  color: #dedddc;
+}
+
+.file-details p {
+  color: #c1bcb2;
+  font-size: 14px;
+}
+
+.file-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: "Courier New", monospace;
+}
+
+.btn-primary {
+  background: rgba(245, 70, 57, 0.8);
+  color: white;
+  box-shadow: 0 0 10px 0px rgba(245, 70, 57, 0.5);
+}
+
+.btn-primary:hover {
+  background: rgba(245, 70, 57, 1);
+  transform: translateY(-2px);
+}
+
+.btn-secondary {
+  background: rgba(31, 28, 19, 0.8);
+  color: #dedddc;
+  border: 2px solid rgba(245, 70, 57, 0.3);
+}
+
+.btn-secondary:hover {
+  background: rgba(245, 70, 57, 0.2);
+  transform: translateY(-2px);
+}
+
+.btn-success {
+  background: rgba(16, 185, 129, 0.8);
+  color: white;
+}
+
+.btn-success:hover {
+  background: rgba(16, 185, 129, 1);
+  transform: translateY(-2px);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Панель управления плеером */
+.player-controls-panel {
+  background: rgba(42, 37, 32, 0.6);
+  border-radius: 20px;
+  padding: 15px 25px;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  flex-wrap: wrap;
+  border: 2px solid rgba(245, 70, 57, 0.2);
+}
+
+.playback-controls {
+  display: flex;
+  gap: 10px;
+}
+
+.play-btn, .control-btn {
+  background: rgba(245, 70, 57, 0.47);
+  border: none;
+  border-radius: 50%;
+  width: 50px;
+  height: 50px;
+  font-size: 24px;
+  cursor: pointer;
+  color: #dedddc;
+  box-shadow: 0 0 10px 0px #74281b;
+  transition: all 0.3s ease;
+}
+
+.play-btn:hover, .control-btn:hover {
+  transform: scale(1.05);
+  background: rgba(245, 70, 57, 0.8);
+}
+
+.play-btn:active, .control-btn:active {
+  transform: translateY(2px);
+}
+
+.play-btn:disabled, .control-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.play-btn.playing {
+  background: rgba(245, 70, 57, 0.8);
+  box-shadow: 0 0 15px 2px rgba(245, 70, 57, 0.5);
+}
+
+.tempo-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #dedddc;
+}
+
+.tempo-control label {
+  font-size: 14px;
+}
+
+.tempo-control input[type="range"] {
+  width: 200px;
+  height: 4px;
+  -webkit-appearance: none;
+  background: rgba(245, 70, 57, 0.3);
+  border-radius: 2px;
+}
+
+.tempo-control input[type="range"]:focus {
+  outline: none;
+}
+
+.tempo-control input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #f54639;
+  cursor: pointer;
+  box-shadow: 0 0 5px #74281b;
+}
+
+.tempo-control span {
+  font-size: 14px;
+  min-width: 60px;
+}
+
+.position-indicator {
+  color: #c1bcb2;
+  font-size: 13px;
+  padding: 5px 12px;
+  background: rgba(31, 28, 19, 0.6);
+  border-radius: 20px;
+}
+
+.loading-indicator, .error-indicator {
+  color: #c1bcb2;
+  font-size: 13px;
+  padding: 5px 12px;
+  background: rgba(31, 28, 19, 0.6);
+  border-radius: 20px;
+}
+
+.error-indicator {
+  color: #f54639;
+}
+
+/* Панель инструментов */
+.tools-panel {
+  background: rgba(42, 37, 32, 0.6);
+  border-radius: 20px;
+  padding: 15px 25px;
+  margin-bottom: 15px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+  border: 2px solid rgba(245, 70, 57, 0.2);
+}
+
+.tools-group {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.tool-btn {
+  background: rgba(245, 70, 57, 0.47);
+  color: #dedddc;
+  border: none;
+  border-radius: 15px;
+  cursor: pointer;
+  padding: 8px 16px;
+  box-shadow: 0 0 10px 0 #74281b;
+  font-size: 14px;
+  transition: all 0.3s ease;
+  font-family: "Courier New", monospace;
+}
+
+.tool-btn.active {
+  background: rgba(245, 70, 57, 0.8);
+  box-shadow: 0 0 15px 2px rgba(245, 70, 57, 0.5);
+}
+
+.tool-btn:hover {
+  transform: translateY(-2px);
+  background: rgba(245, 70, 57, 0.8);
+}
+
+.tool-btn:active {
+  transform: translateY(2px);
+}
+
+.tool-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.tool-btn.icon-only {
+  width: 40px;
+  padding: 8px;
+  font-size: 18px;
+}
+
+/* Переключатель раскладки */
+.layout-toggle {
+  display: flex;
+  gap: 5px;
+}
+
+.layout-btn {
+  background: rgba(31, 28, 19, 0.6);
+  color: #c1bcb2;
+  border: 2px solid rgba(245, 70, 57, 0.3);
+  border-radius: 10px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: all 0.3s ease;
+}
+
+.layout-btn.active {
+  background: rgba(245, 70, 57, 0.3);
+  color: #dedddc;
+  border-color: rgba(245, 70, 57, 0.7);
+}
+
+.layout-btn:hover {
+  background: rgba(245, 70, 57, 0.2);
+}
+
+/* Секция настройки строя */
+.tuning-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+}
+
+.tuning-section h4 {
+  color: #dedddc;
+  margin: 0;
+  font-size: 14px;
+}
+
+.tuning-controls {
+  display: flex;
+  gap: 15px;
+  align-items: center;
+}
+
+.tuning-preset {
+  position: relative;
+}
+
+.preset-btn {
+  background: rgba(31, 28, 19, 0.6);
+  color: #dedddc;
+  border: 2px solid rgba(245, 70, 57, 0.3);
+  border-radius: 24px;
+  padding: 8px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.preset-btn:hover {
+  background: rgba(245, 70, 57, 0.2);
+}
+
+.dropdown-arrow {
+  font-size: 10px;
+}
+
+.preset-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 5px;
+  background: #2a2520;
+  border: 7px inset rgba(245, 70, 57, 0.47);
+  border-radius: 20px;
+  min-width: 180px;
+  z-index: 100;
+  box-shadow: 0 0 20px 8px rgba(116, 40, 27, 0.4);
+}
+
+.preset-option {
+  display: block;
+  width: 100%;
+  padding: 10px 15px;
+  background: none;
+  border: none;
+  color: #dedddc;
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.preset-option:hover {
+  background: rgba(245, 70, 57, 0.2);
+}
+
+.preset-option.active {
+  background: rgba(245, 70, 57, 0.3);
+  color: #f54639;
+}
+
+.tuning-inputs {
+  display: flex;
+  gap: 8px;
+}
+
+.tuning-input-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.string-number {
+  color: #c1bcb2;
+  font-size: 10px;
+}
+
+.tuning-input {
+  background: rgba(31, 28, 19, 0.6);
+  border: 2px solid rgba(245, 70, 57, 0.3);
+  border-radius: 10px;
+  color: #dedddc;
+  width: 50px;
+  text-align: center;
+  padding: 6px;
+  font-family: "Courier New", monospace;
+}
+
+.tuning-input:focus {
+  outline: none;
+  border-color: rgba(245, 70, 57, 0.7);
+}
+
+/* Селектор размера такта */
+.measure-size-selector {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.measure-size-label {
+  color: #dedddc;
+  font-size: 14px;
+}
+
+.measure-size-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.measure-size-btn {
+  background: rgba(31, 28, 19, 0.6);
+  color: #c1bcb2;
+  border: 2px solid rgba(245, 70, 57, 0.3);
+  border-radius: 20px;
+  padding: 5px 15px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: all 0.3s ease;
+}
+
+.measure-size-btn.active {
+  background: rgba(245, 70, 57, 0.3);
+  color: #dedddc;
+  border-color: rgba(245, 70, 57, 0.7);
+}
+
+.measure-size-btn:hover {
+  background: rgba(245, 70, 57, 0.2);
+}
+
+.measure-size-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Индикатор ввода лада */
+.fret-indicator {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: rgba(42, 37, 32, 0.9);
+  border: 3px solid rgba(245, 70, 57, 0.5);
+  border-radius: 30px;
+  padding: 12px 24px;
+  color: #f54639;
+  font-size: 24px;
+  font-weight: bold;
+  z-index: 1000;
+  box-shadow: 0 0 20px rgba(116, 40, 27, 0.5);
+  font-family: "Courier New", monospace;
+}
+
+/* Холст с табулатурой */
+.tab-canvas {
+  position: relative;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 20px;
+  min-height: 400px;
+}
+
+.measures-container {
+  display: flex;
+  gap: 20px;
+  padding: 20px;
+  transition: transform 0.1s ease;
+}
+
+.measures-container.vertical {
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Отдельный такт */
+.measure {
+  background: white;
+  border-radius: 15px;
+  padding: 15px;
+  min-width: 300px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.measure.vertical {
+  margin-bottom: 20px;
+  border-bottom: 1px solid #444;
+}
+
+.measure-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.measure-number {
+  font-size: 12px;
+  color: #4a5568;
+  font-weight: bold;
+}
+
+.measure-controls {
+  display: flex;
+  gap: 5px;
+}
+
+.measure-btn {
+  background: none;
+  border: none;
+  color: #f54639;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+.measure-btn:hover {
+  color: #74281b;
+}
+
+/* Отдельная струна */
+.tab-string {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+  padding: 2px 0;
+}
+
+.tab-string.active {
+  background: rgba(245, 70, 57, 0.1);
+  border-radius: 8px;
+}
+
+.string-label {
+  width: 50px;
+  font-size: 11px;
+  color: #4a5568;
+  font-weight: bold;
+  font-family: "Courier New", monospace;
+}
+
+.notes-container {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+/* Ячейка ноты */
+.note-cell {
+  background: #f7fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  min-width: 45px;
+  text-align: center;
+  padding: 8px 5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.note-cell:hover {
+  background: #edf2f7;
+  border-color: #f54639;
+}
+
+.note-cell.cursor {
+  background: rgba(245, 70, 57, 0.2);
+  border-color: #f54639;
+  box-shadow: 0 0 5px rgba(245, 70, 57, 0.5);
+}
+
+.note-cell.playing {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  animation: pulse 0.5s ease;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.note-cell.slide-start {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: #f59e0b;
+}
+
+.note-cell.slide-end {
+  background: rgba(245, 158, 11, 0.3);
+  border-color: #f59e0b;
+}
+
+.note-cell.slide-between {
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.note-symbol {
+  font-family: "Courier New", monospace;
+  font-size: 14px;
+  font-weight: bold;
+  color: #2d3748;
+}
+
+.playing-indicator {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+}
+
+.playing-wave {
+  width: 12px;
+  height: 12px;
+  background-color: #10b981;
+  border-radius: 50%;
+  animation: wave 1s ease infinite;
+}
+
+@keyframes wave {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(2);
+    opacity: 0;
+  }
+}
+
+/* Разделитель между нотами */
+.separator {
+  font-family: "Courier New", monospace;
+  font-size: 14px;
+  color: #a0aec0;
+  margin: 0 2px;
+}
+
+.separator.slide-connector {
+  color: #f59e0b;
+  font-weight: bold;
+}
+
+/* Полоска воспроизведения */
+.tab-playhead {
+  pointer-events: auto;
+}
+
+.playhead-line {
+  box-shadow: 0 0 5px rgba(255, 68, 68, 0.5);
+}
+
+.playhead-handle {
+  cursor: grab;
+}
+
+.playhead-handle:active {
+  cursor: grabbing;
+}
+
+.playhead-dot {
+  width: 8px;
+  height: 8px;
+  background: white;
+  border-radius: 50%;
+  position: absolute;
+  top: 2px;
+  left: 2px;
+}
+
+/* Нижняя панель статуса */
+.editor-footer {
+  margin-top: 20px;
+}
+
+.status-bar {
+  background: rgba(42, 37, 32, 0.6);
+  border-radius: 15px;
+  padding: 10px 20px;
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  color: #c1bcb2;
+  font-family: "Courier New", monospace;
+}
+
+.status-bar span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* FretInput overlay */
+.fret-input-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.fret-input-container {
+  background: #2a2520;
+  border: 7px inset rgba(245, 70, 57, 0.47);
+  border-radius: 20px;
+  padding: 30px;
+  text-align: center;
+  box-shadow: 0 0 30px rgba(116, 40, 27, 0.5);
+}
+
+.fret-input-label {
+  display: block;
+  color: #dedddc;
+  margin-bottom: 15px;
+  font-size: 16px;
+}
+
+.fret-input-field {
+  background: rgba(31, 28, 19, 0.6);
+  border: 2px solid rgba(245, 70, 57, 0.3);
+  border-radius: 10px;
+  color: #dedddc;
+  padding: 10px 15px;
+  font-size: 24px;
+  width: 100px;
+  text-align: center;
+  margin-bottom: 15px;
+  font-family: "Courier New", monospace;
+}
+
+.fret-input-field:focus {
+  outline: none;
+  border-color: rgba(245, 70, 57, 0.7);
+}
+
+.fret-input-btn {
+  background: rgba(245, 70, 57, 0.47);
+  color: #dedddc;
+  border: none;
+  border-radius: 15px;
+  padding: 8px 20px;
+  margin: 0 5px;
+  cursor: pointer;
+  font-family: "Courier New", monospace;
+}
+
+.fret-input-btn:hover {
+  background: rgba(245, 70, 57, 0.8);
+}
+
+.fret-input-btn.cancel {
+  background: rgba(31, 28, 19, 0.6);
+}
+
+/* TuningSelector */
+.tuning-selector {
+  background: rgba(42, 37, 32, 0.8);
+  border-radius: 20px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.tuning-preset {
+  margin-bottom: 20px;
+}
+
+.tuning-preset label {
+  display: block;
+  color: #dedddc;
+  margin-bottom: 8px;
+}
+
+.tuning-preset select {
+  background: rgba(31, 28, 19, 0.6);
+  border: 2px solid rgba(245, 70, 57, 0.3);
+  border-radius: 10px;
+  color: #dedddc;
+  padding: 8px 12px;
+  width: 100%;
+  font-family: "Courier New", monospace;
+}
+
+.tuning-custom label {
+  display: block;
+  color: #dedddc;
+  margin-bottom: 8px;
+}
+
+.tuning-strings {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 10px;
+}
+
+.tuning-string {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tuning-string span {
+  color: #c1bcb2;
+  font-size: 12px;
+}
+
+.tuning-input {
+  background: rgba(31, 28, 19, 0.6);
+  border: 2px solid rgba(245, 70, 57, 0.3);
+  border-radius: 8px;
+  color: #dedddc;
+  padding: 5px 8px;
+  width: 60px;
+  font-family: "Courier New", monospace;
+}
+
+/* Адаптивность */
+@media (max-width: 1024px) {
+  .tab-editor {
+    padding: 10px;
+  }
+  
+  .editor-header {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .file-actions {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .tools-panel {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .tools-group {
+    justify-content: center;
+  }
+  
+  .tuning-controls {
+    flex-direction: column;
+  }
+  
+  .tuning-inputs {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .status-bar {
+    flex-direction: column;
+    gap: 5px;
+  }
+}
+
+@media (max-width: 640px) {
+  .note-cell {
+    min-width: 35px;
+    padding: 5px 3px;
+  }
+  
+  .note-symbol {
+    font-size: 11px;
+  }
+  
+  .separator {
+    font-size: 11px;
+  }
+  
+  .measure {
+    min-width: 250px;
+  }
+  
+  .player-controls-panel {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .playback-controls {
+    justify-content: center;
+  }
+  
+  .tempo-control {
+    justify-content: center;
+  }
+  
+  .position-indicator {
+    text-align: center;
+  }
+}

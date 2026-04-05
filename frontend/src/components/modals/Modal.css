@@ -1,0 +1,396 @@
+/**
+ * Стили для модальных окон
+ * @module components/modals
+ */
+
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-content {
+  background: white;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 90vh;
+  overflow: auto;
+  outline: 7px outset rgba(245, 70, 57, 0.47);
+  box-shadow: 0 0 10px 10px #74281b;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(50px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 25px;
+  background: rgba(42, 37, 32, 0.9);
+  border-bottom: 2px solid rgba(245, 70, 57, 0.3);
+}
+
+.modal-header h3 {
+  color: #dedddc;
+  font-size: 20px;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: #dedddc;
+  font-size: 28px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  padding: 0 5px;
+}
+
+.modal-close:hover {
+  color: #f54639;
+  transform: scale(1.1);
+}
+
+.modal-body {
+  padding: 25px;
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 15px;
+  padding: 20px 25px;
+  background: #f7fafc;
+  border-top: 1px solid #e2e8f0;
+}
+
+/* Формы */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  color: #2d3748;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.filename-input {
+  width: 100%;
+  padding: 10px 15px;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: "Courier New", monospace;
+  transition: all 0.3s ease;
+}
+
+.filename-input:focus {
+  outline: none;
+  border-color: #f54639;
+  box-shadow: 0 0 5px rgba(245, 70, 57, 0.3);
+}
+
+/* Опции формата */
+.format-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.format-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.format-option:hover {
+  border-color: #f54639;
+  background: rgba(245, 70, 57, 0.05);
+}
+
+.format-option.selected {
+  border-color: #f54639;
+  background: rgba(245, 70, 57, 0.1);
+}
+
+.format-option input[type="radio"] {
+  accent-color: #f54639;
+  width: 18px;
+  height: 18px;
+}
+
+.format-info {
+  flex: 1;
+}
+
+.format-label {
+  display: block;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 4px;
+}
+
+.format-description {
+  font-size: 12px;
+  color: #4a5568;
+}
+
+/* Информация предпросмотра */
+.preview-info {
+  background: #f7fafc;
+  padding: 15px;
+  border-radius: 12px;
+  margin-top: 20px;
+}
+
+.preview-info h4 {
+  color: #2d3748;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.preview-info ul {
+  list-style: none;
+  padding: 0;
+}
+
+.preview-info li {
+  color: #4a5568;
+  font-size: 13px;
+  padding: 4px 0;
+  font-family: "Courier New", monospace;
+}
+
+/* Кнопки */
+.btn-primary {
+  background: rgba(245, 70, 57, 0.8);
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background: rgba(245, 70, 57, 1);
+  transform: translateY(-2px);
+  box-shadow: 0 0 10px rgba(245, 70, 57, 0.5);
+}
+
+.btn-secondary {
+  background: #4a5568;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 24px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: #2d3748;
+  transform: translateY(-2px);
+}
+
+/* Dropzone для импорта */
+.import-dropzone {
+  border: 3px dashed rgba(245, 70, 57, 0.3);
+  border-radius: 20px;
+  padding: 40px;
+  text-align: center;
+  transition: all 0.3s ease;
+  background: #f7fafc;
+  margin-bottom: 20px;
+}
+
+.import-dropzone.dragging {
+  border-color: #f54639;
+  background: rgba(245, 70, 57, 0.05);
+  transform: scale(1.02);
+}
+
+.import-icon {
+  font-size: 48px;
+  margin-bottom: 15px;
+}
+
+.import-title {
+  font-size: 18px;
+  color: #2d3748;
+  margin-bottom: 10px;
+}
+
+.import-subtitle {
+  color: #4a5568;
+  margin-bottom: 15px;
+}
+
+.import-button {
+  display: inline-block;
+  background: rgba(245, 70, 57, 0.8);
+  color: white;
+  padding: 10px 24px;
+  border-radius: 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.import-button:hover {
+  background: rgba(245, 70, 57, 1);
+  transform: translateY(-2px);
+}
+
+.import-button input {
+  display: none;
+}
+
+/* Информация о форматах */
+.import-info {
+  background: #f7fafc;
+  padding: 15px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.import-info h4 {
+  color: #2d3748;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.import-info ul {
+  list-style: none;
+  padding: 0;
+}
+
+.import-info li {
+  color: #4a5568;
+  font-size: 13px;
+  padding: 8px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.import-info li:last-child {
+  border-bottom: none;
+}
+
+.import-info strong {
+  color: #2d3748;
+}
+
+.import-info small {
+  font-size: 11px;
+  color: #718096;
+}
+
+/* Сообщения об ошибках и успехе */
+.import-error, .import-success {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 10px;
+  margin-bottom: 15px;
+}
+
+.import-error {
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+  color: #dc2626;
+}
+
+.import-success {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #10b981;
+}
+
+.error-icon, .success-icon {
+  font-size: 18px;
+}
+
+/* Индикатор загрузки в модальном окне */
+.import-loading {
+  text-align: center;
+  padding: 20px;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(245, 70, 57, 0.2);
+  border-top-color: #f54639;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto 15px;
+}
+
+/* Адаптивность */
+@media (max-width: 640px) {
+  .modal-content {
+    width: 95%;
+  }
+  
+  .modal-header {
+    padding: 15px 20px;
+  }
+  
+  .modal-body {
+    padding: 20px;
+  }
+  
+  .modal-footer {
+    padding: 15px 20px;
+  }
+  
+  .format-option {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .import-dropzone {
+    padding: 20px;
+  }
+}

@@ -7,6 +7,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { PRESET_TUNINGS } from '../../utils/tuningConstants';
+import './TabEditor.css';
 
 interface TabControlsProps {
   /** Выбранный инструмент */

@@ -6,6 +6,7 @@
  */
 
 import React, { memo } from 'react';
+//import './Common.css';
 
 /**
  * Свойства компонента LoadingSpinner
