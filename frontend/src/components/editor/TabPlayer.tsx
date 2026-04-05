@@ -8,6 +8,7 @@
 import React, { useState, ChangeEvent, useRef, useEffect, useCallback } from 'react';
 import { TabData, CursorPosition } from '../../types/tab';
 import { useGuitarPlayerSF2 } from '../../hooks/useGuitarPlayerSF2';
+import './TabEditor.css';
 
 interface TabPlayerProps {
   /** Данные табулатуры для воспроизведения */

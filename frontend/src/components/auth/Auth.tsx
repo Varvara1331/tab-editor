@@ -7,6 +7,7 @@
 
 import React, { useState, useCallback, memo, useRef } from 'react';
 import { login, register } from '../../services/authService';
+import './Auth.css';
 
 /**
  * Свойства компонента Auth

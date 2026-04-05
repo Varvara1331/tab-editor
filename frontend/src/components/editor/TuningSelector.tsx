@@ -7,6 +7,7 @@
 
 import React from 'react';
 import { PRESET_TUNINGS, getTuningName } from '../../utils/tuningUtils';
+import './TabEditor.css';
 
 interface TuningSelectorProps {
   /** Текущий строй гитары */

@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
+import './TabEditor.css';
 
 interface FretInputProps {
   /** Функция обратного вызова при отправке лада */

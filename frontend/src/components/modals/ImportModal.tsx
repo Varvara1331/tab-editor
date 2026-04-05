@@ -9,6 +9,7 @@ import React, { useState, useCallback, memo } from 'react';
 import { TabData } from '../../types/tab';
 import { importTabFromFile, canImportFile } from '../../utils/import/importUtils';
 import { saveToLibrary } from '../../services/libraryService';
+import './Modal.css';
 
 /**
  * Свойства компонента ImportModal

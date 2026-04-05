@@ -7,6 +7,7 @@
 
 import React from 'react';
 import { Note, CursorPosition } from '../../types/tab';
+import './TabEditor.css';
 
 interface TabStringProps {
   /** Нота открытой струны */

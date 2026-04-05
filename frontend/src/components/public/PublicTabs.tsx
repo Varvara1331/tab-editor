@@ -18,6 +18,7 @@ import TabCard from '../common/TabCard';
 import SearchBar from '../common/SearchBar';
 import LoadingSpinner from '../common/LoadingSpinner';
 import EmptyState from '../common/EmptyState';
+import '../library/Library.css';
 
 /**
  * Свойства компонента PublicTabs

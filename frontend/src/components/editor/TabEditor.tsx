@@ -15,6 +15,7 @@ import ExportModal from '../modals/ExportModal';
 import MeasureSizeSelector from './MeasureSizeSelector';
 import { saveToLibrary, updateInLibrary } from '../../services/libraryService';
 import { getCurrentUser } from '../../services/authService';
+import './TabEditor.css';
 
 // ==================== КОНСТАНТЫ ====================
 

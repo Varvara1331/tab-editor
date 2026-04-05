@@ -6,6 +6,7 @@
  */
 
 import React, { useCallback, useRef, useEffect, memo, useState } from 'react';
+//import './Common.css';
 
 /**
  * Свойства компонента SearchBar

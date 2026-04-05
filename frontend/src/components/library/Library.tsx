@@ -16,6 +16,7 @@ import SearchBar from '../common/SearchBar';
 import LoadingSpinner from '../common/LoadingSpinner';
 import EmptyState from '../common/EmptyState';
 import TabCard from '../common/TabCard';
+import './Library.css';
 
 /**
  * Свойства компонента Library
