@@ -190,6 +190,12 @@ const TabEditor: React.FC<TabEditorProps> = ({
   /** Ожидаемый ввод лада (для двузначных чисел) */
   const [pendingFret, setPendingFret] = useState<string>('');
   
+  /** Ожидаемый ввод для хаммера (накапливает оба лада через пробел) */
+  const [pendingHammerInput, setPendingHammerInput] = useState<string>('');
+  
+  /** Ожидаемый ввод для слайда (накапливает первый и второй лад через пробел) */
+  const [pendingSlideInput, setPendingSlideInput] = useState<string>('');
+  
   /** Уровень масштабирования (50-200%) */
   const [zoom, setZoom] = useState<number>(() => 
     restoredState?.zoom !== undefined && !hasRestoredRef.current 
@@ -312,12 +318,10 @@ const TabEditor: React.FC<TabEditorProps> = ({
       const noteData: any = { fret: fretValue };
       
       // Добавление эффекта в зависимости от выбранного инструмента
-      if (selectedTool !== 'note') {
-        if (selectedTool === 'slide') {
-          noteData.slide = 'up';
-        } else {
-          noteData[selectedTool] = true;
-        }
+      if (selectedTool === 'bend') {
+        noteData.bend = true;
+      } else if (selectedTool === 'vibrato') {
+        noteData.vibrato = true;
       }
       
       notes[cursor.noteIndex] = { ...notes[cursor.noteIndex], ...noteData };
@@ -339,6 +343,108 @@ const TabEditor: React.FC<TabEditorProps> = ({
       isProcessingRef.current = false; 
     }, 100);
   }, [cursor, selectedTool, isReadOnly, notesPerMeasure]);
+
+  /**
+   * Добавление хаммера с двумя ладами на текущей позиции курсора
+   * 
+   * @param fromFret - Начальный лад
+   * @param toFret - Конечный лад
+   */
+  const addHammerAtCursor = useCallback((fromFret: number, toFret: number) => {
+    if (isReadOnly || isProcessingRef.current) return;
+    isProcessingRef.current = true;
+    
+    setTabData(prev => {
+      const newMeasures = [...prev.measures];
+      const measure = { ...newMeasures[cursor.measureIndex] };
+      const strings = [...measure.strings];
+      const string = { ...strings[cursor.stringIndex] };
+      const notes = [...string.notes];
+      
+      // Создаем ноту с хаммером (два лада)
+      const noteData: any = { 
+        fret: fromFret,  // Основной лад - начальный
+        hammer: {
+          fromFret: fromFret,
+          toFret: toFret
+        }
+      };
+      
+      notes[cursor.noteIndex] = { ...notes[cursor.noteIndex], ...noteData };
+      string.notes = notes;
+      strings[cursor.stringIndex] = string;
+      measure.strings = strings;
+      newMeasures[cursor.measureIndex] = measure;
+      
+      return { ...prev, measures: newMeasures };
+    });
+
+    // Автоматическое перемещение курсора на следующую позицию
+    setCursor(prev => ({ 
+      ...prev, 
+      noteIndex: Math.min(prev.noteIndex + 1, notesPerMeasure - 1) 
+    }));
+
+    setTimeout(() => { 
+      isProcessingRef.current = false; 
+    }, 100);
+  }, [cursor, isReadOnly, notesPerMeasure]);
+
+  /**
+   * Добавление слайда с двумя ладами на текущей позиции курсора
+   * Направление слайда определяется автоматически:
+   * - если toFret > fromFret: слайд вверх (/)
+   * - если toFret < fromFret: слайд вниз (\)
+   * 
+   * @param fromFret - Начальный лад
+   * @param toFret - Конечный лад
+   */
+  const addSlideAtCursor = useCallback((fromFret: number, toFret: number) => {
+    if (isReadOnly || isProcessingRef.current) return;
+    isProcessingRef.current = true;
+    
+    // Определяем направление слайда автоматически
+    const direction: 'up' | 'down' = toFret > fromFret ? 'up' : 'down';
+    
+    setTabData(prev => {
+      const newMeasures = [...prev.measures];
+      const measure = { ...newMeasures[cursor.measureIndex] };
+      const strings = [...measure.strings];
+      const string = { ...strings[cursor.stringIndex] };
+      const notes = [...string.notes];
+      
+      // Создаем начальную ноту со слайдом
+      const noteData: any = { 
+        fret: fromFret,
+        slide: direction
+      };
+      
+      notes[cursor.noteIndex] = { ...notes[cursor.noteIndex], ...noteData };
+      
+      // Добавляем целевую ноту на следующей позиции
+      if (cursor.noteIndex + 1 < notesPerMeasure) {
+        const nextNoteData: any = { fret: toFret };
+        notes[cursor.noteIndex + 1] = { ...notes[cursor.noteIndex + 1], ...nextNoteData };
+      }
+      
+      string.notes = notes;
+      strings[cursor.stringIndex] = string;
+      measure.strings = strings;
+      newMeasures[cursor.measureIndex] = measure;
+      
+      return { ...prev, measures: newMeasures };
+    });
+
+    // Автоматическое перемещение курсора на позицию после слайда
+    setCursor(prev => ({ 
+      ...prev, 
+      noteIndex: Math.min(prev.noteIndex + 2, notesPerMeasure - 1) 
+    }));
+
+    setTimeout(() => { 
+      isProcessingRef.current = false; 
+    }, 100);
+  }, [cursor, isReadOnly, notesPerMeasure]);
 
   /**
    * Удаление ноты на текущей позиции курсора
@@ -376,6 +482,8 @@ const TabEditor: React.FC<TabEditorProps> = ({
     
     setCursor({ measureIndex, stringIndex, noteIndex });
     setPendingFret('');
+    setPendingHammerInput('');
+    setPendingSlideInput('');
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
   }, [isReadOnly]);
 
@@ -394,33 +502,115 @@ const TabEditor: React.FC<TabEditorProps> = ({
       e.preventDefault();
       if (isProcessingRef.current) return;
       
-      setPendingFret(prev => {
-        const newPending = prev + e.key;
-        
-        // Двузначный лад (10-24)
-        if (newPending.length === 2) {
-          const fretValue = parseInt(newPending, 10);
-          if (fretValue >= 0 && fretValue <= MAX_FRET) {
-            addNoteAtCursor(fretValue);
+      if (selectedTool === 'hammer') {
+        // Для хаммера накапливаем ввод
+        setPendingHammerInput(prev => {
+          const newInput = prev + e.key;
+          
+          // Проверяем, не закончили ли мы ввод двух ладов
+          const parts = newInput.trim().split(/\s+/);
+          
+          if (parts.length === 2) {
+            const fromFret = parseInt(parts[0], 10);
+            const toFret = parseInt(parts[1], 10);
+            
+            if (fromFret >= 0 && fromFret <= MAX_FRET && toFret >= 0 && toFret <= MAX_FRET) {
+              addHammerAtCursor(fromFret, toFret);
+            }
+            clearFretTimeout();
+            return '';
           }
-          clearFretTimeout();
-          return '';
+          
+          if (timeoutRef.current) clearTimeout(timeoutRef.current);
+          timeoutRef.current = setTimeout(() => {
+            setPendingHammerInput(current => {
+              if (current.trim().length > 0 && !current.includes(' ')) {
+                return current + ' ';
+              }
+              return current;
+            });
+            clearFretTimeout();
+          }, 500);
+          
+          return newInput;
+        });
+      } else if (selectedTool === 'slide') {
+        // Для слайда накапливаем ввод (только два лада через пробел)
+        setPendingSlideInput(prev => {
+          const newInput = prev + e.key;
+          
+          // Проверяем, не закончили ли мы ввод двух ладов
+          const parts = newInput.trim().split(/\s+/);
+          
+          if (parts.length === 2) {
+            const fromFret = parseInt(parts[0], 10);
+            const toFret = parseInt(parts[1], 10);
+            
+            if (fromFret >= 0 && fromFret <= MAX_FRET && toFret >= 0 && toFret <= MAX_FRET) {
+              addSlideAtCursor(fromFret, toFret);
+            }
+            clearFretTimeout();
+            return '';
+          }
+          
+          if (timeoutRef.current) clearTimeout(timeoutRef.current);
+          timeoutRef.current = setTimeout(() => {
+            setPendingSlideInput(current => {
+              if (current.trim().length > 0 && !current.includes(' ')) {
+                return current + ' ';
+              }
+              return current;
+            });
+            clearFretTimeout();
+          }, 500);
+          
+          return newInput;
+        });
+      } else {
+        // Обычный ввод ноты
+        setPendingFret(prev => {
+          const newPending = prev + e.key;
+          
+          // Двузначный лад (10-24)
+          if (newPending.length === 2) {
+            const fretValue = parseInt(newPending, 10);
+            if (fretValue >= 0 && fretValue <= MAX_FRET) {
+              addNoteAtCursor(fretValue);
+            }
+            clearFretTimeout();
+            return '';
+          }
+          
+          if (timeoutRef.current) clearTimeout(timeoutRef.current);
+          
+          // Таймер для однозначного лада (0-9)
+          timeoutRef.current = setTimeout(() => {
+            const fretValue = parseInt(newPending, 10);
+            if (!isNaN(fretValue) && fretValue >= 0 && fretValue <= 9) {
+              addNoteAtCursor(fretValue);
+            }
+            setPendingFret('');
+            clearFretTimeout();
+          }, 500);
+          
+          return newPending;
+        });
+      }
+      return;
+    }
+
+    // Обработка пробела для разделения ладов
+    if (e.key === ' ') {
+      e.preventDefault();
+      if (selectedTool === 'hammer') {
+        if (pendingHammerInput.trim().length > 0 && !pendingHammerInput.includes(' ')) {
+          setPendingHammerInput(prev => prev + ' ');
         }
-        
-        if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        
-        // Таймер для однозначного лада (0-9)
-        timeoutRef.current = setTimeout(() => {
-          const fretValue = parseInt(newPending, 10);
-          if (!isNaN(fretValue) && fretValue >= 0 && fretValue <= 9) {
-            addNoteAtCursor(fretValue);
-          }
-          setPendingFret('');
-          clearFretTimeout();
-        }, 500);
-        
-        return newPending;
-      });
+      } else if (selectedTool === 'slide') {
+        if (pendingSlideInput.trim().length > 0 && !pendingSlideInput.includes(' ')) {
+          setPendingSlideInput(prev => prev + ' ');
+        }
+      }
       return;
     }
 
@@ -461,6 +651,8 @@ const TabEditor: React.FC<TabEditorProps> = ({
         break;
       case 'Escape':
         setPendingFret('');
+        setPendingHammerInput('');
+        setPendingSlideInput('');
         clearFretTimeout();
         break;
       default:
@@ -471,7 +663,7 @@ const TabEditor: React.FC<TabEditorProps> = ({
         else if (e.key === 's') setSelectedTool('slide');
         break;
     }
-  }, [addNoteAtCursor, clearFretTimeout, cursor, isReadOnly, handleDeleteNote, notesPerMeasure]);
+  }, [addNoteAtCursor, addHammerAtCursor, addSlideAtCursor, clearFretTimeout, cursor, isReadOnly, handleDeleteNote, notesPerMeasure, selectedTool, pendingHammerInput, pendingSlideInput]);
 
   // ==================== ОБРАБОТЧИКИ ДЕЙСТВИЙ ====================
 
@@ -896,7 +1088,19 @@ const TabEditor: React.FC<TabEditorProps> = ({
       </div>
 
       {/* Индикатор ввода лада */}
-      {pendingFret && !isReadOnly && (
+      {selectedTool === 'hammer' && pendingHammerInput && (
+        <div className="fret-indicator hammer-input-indicator">
+          🔨 Хаммер: {pendingHammerInput}
+          {!pendingHammerInput.includes(' ') && <span className="hint"> (нажмите пробел для разделения)</span>}
+        </div>
+      )}
+      {selectedTool === 'slide' && pendingSlideInput && (
+        <div className="fret-indicator slide-input-indicator">
+          🎸 Слайд: {pendingSlideInput}
+          {!pendingSlideInput.includes(' ') && <span className="hint"> (лад пробел)</span>}
+        </div>
+      )}
+      {selectedTool !== 'hammer' && selectedTool !== 'slide' && pendingFret && !isReadOnly && (
         <div className="fret-indicator">
           Лад: {pendingFret}
         </div>
@@ -1006,6 +1210,7 @@ const TabEditor: React.FC<TabEditorProps> = ({
               borderRadius: '50%',
               cursor: 'grab'
             }}
+             onMouseDown={handlePlayheadMouseDown}
           >
             <div className="playhead-dot" />
           </div>
@@ -1021,13 +1226,15 @@ const TabEditor: React.FC<TabEditorProps> = ({
           <span>Инструмент: {
             selectedTool === 'note' ? 'Нота' :
             selectedTool === 'bend' ? 'Бенд' :
-            selectedTool === 'hammer' ? 'Хаммер' :
-            selectedTool === 'vibrato' ? 'Вибрато' : 'Слайд'
+            selectedTool === 'hammer' ? 'Хаммер (5 пробел 7)' :
+            selectedTool === 'vibrato' ? 'Вибрато' : 'Слайд (5 пробел 7)'
           }</span>
           <span>Масштаб: {zoom}%</span>
           <span>Вид: {tabLayout === 'horizontal' ? '↔️ Горизонтальный' : '↕️ Вертикальный'}</span>
           <span>Размер: {notesPerMeasure === 4 ? '4/4' : notesPerMeasure === 8 ? '8/8' : '16/16'}</span>
           {pendingFret && <span>Ввод лада: {pendingFret}</span>}
+          {selectedTool === 'hammer' && pendingHammerInput && <span>🔨 Ввод хаммера: {pendingHammerInput}</span>}
+          {selectedTool === 'slide' && pendingSlideInput && <span>🎸 Ввод слайда: {pendingSlideInput}</span>}
           {isReadOnly && <span>🔒 Только чтение</span>}
           {isPublic && <span>🌍 Опубликовано</span>}
         </div>

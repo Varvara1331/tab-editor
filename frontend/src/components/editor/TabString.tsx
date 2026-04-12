@@ -56,18 +56,28 @@ const TabString: React.FC<TabStringProps> = ({
 }) => {
   /**
    * Получение символа для отображения ноты с учётом эффектов
+   * Слайд НЕ отображается в ноте, только в разделителе
    */
   const getNoteSymbol = (note: Note): string => {
     if (note.fret === null) return '-';
     let symbol = note.fret.toString();
     
-    // Эффекты отображаются в определённом порядке
+    // Эффекты (кроме слайда)
     if (note.bend) symbol = `(${symbol})`;
-    if (note.hammer) symbol = `h${symbol}`;
+    
+    // Хаммер отображается как "5h7" в одной ноте
+    if (note.hammer && typeof note.hammer === 'object') {
+      return `${note.hammer.fromFret}h${note.hammer.toFret}`;
+    }
+    if (note.hammer === true) {
+      symbol = `h${symbol}`;
+    }
+    
     if (note.pull) symbol = `p${symbol}`;
     if (note.vibrato) symbol = `${symbol}~`;
     
-    // Для слайда не меняем символ, так как он отображается в разделителе
+    // Слайд - не добавляем ничего к символу ноты
+    
     return symbol;
   };
 
@@ -79,11 +89,6 @@ const TabString: React.FC<TabStringProps> = ({
     if (currentNote.slide === 'up') return '/';
     if (currentNote.slide === 'down') return '\\';
     if (currentNote.slide === 'both') return '↕';
-    
-    // Слайд от следующей ноты к текущей (обратный)
-    if (nextNote?.slide === 'up') return '/';
-    if (nextNote?.slide === 'down') return '\\';
-    if (nextNote?.slide === 'both') return '↕';
     
     return '-';
   };
@@ -150,6 +155,9 @@ const TabString: React.FC<TabStringProps> = ({
           else if (isSlideEnd(index)) slideHighlightClass = 'slide-end';
           else if (isBetweenSlideCells(index)) slideHighlightClass = 'slide-between';
 
+          // Получаем символ ноты (без слайда)
+          const noteSymbol = getNoteSymbol(note);
+          
           return (
             <React.Fragment key={`note-${index}`}>
               <div 
@@ -162,13 +170,14 @@ const TabString: React.FC<TabStringProps> = ({
                 tabIndex={0}
                 style={{ position: 'relative' }}
               >
-                <span className="note-symbol">{getNoteSymbol(note)}</span>
+                <span className="note-symbol">{noteSymbol}</span>
                 {isPlaying && (
                   <div className="playing-indicator">
                     <div className="playing-wave"></div>
                   </div>
                 )}
               </div>
+              {/* Разделитель - здесь отображается символ слайда */}
               {index < notes.length - 1 && (
                 <span className={`separator ${isSlideConn ? 'slide-connector' : ''}`}>
                   {separatorSymbol}

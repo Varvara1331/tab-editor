@@ -12,8 +12,11 @@ export interface NoteArticulation {
   /** Бенд (подтяжка струны) */
   bend?: boolean;
   /** Слайд (скольжение): 'up' - вверх, 'down' - вниз, 'both' - в обе стороны */
-  slide?: 'up' | 'down' | 'both';
-  hammer?: boolean;
+  slide?: 'up' | 'down';
+   hammer?: {
+    fromFret: number;
+    toFret: number;
+  } | boolean;
   /** Пулл-офф (срыв с лада) */
   pull?: boolean;
   /** Вибрато */

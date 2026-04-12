@@ -25,13 +25,6 @@ interface TabPlayerProps {
  * Компонент плеера табулатур.
  * 
  * @component
- * @example
- * ```typescript
- * <TabPlayer
- *   tabData={tabData}
- *   onPositionChange={(pos) => setCurrentPosition(pos)}
- * />
- * ```
  */
 const TabPlayer: React.FC<TabPlayerProps> = ({ 
   tabData, 
@@ -45,6 +38,7 @@ const TabPlayer: React.FC<TabPlayerProps> = ({
   const initializationPromiseRef = useRef<Promise<void> | null>(null);
   const isMountedRef = useRef(true);
   const isDraggingRef = useRef(false);
+  const lastScrolledPositionRef = useRef<{ measureIndex: number; noteIndex: number } | null>(null);
 
   const { 
     isPlaying, 
@@ -113,6 +107,60 @@ const TabPlayer: React.FC<TabPlayerProps> = ({
   }, [currentPosition, onPositionChange]);
 
   /**
+   * Прокрутка контейнера к текущей позиции воспроизведения
+   * @param force - Принудительная прокрутка (игнорирует флаг перетаскивания)
+   */
+  const scrollToCurrentPosition = useCallback((force: boolean = false) => {
+    if (!currentPosition || !measuresContainerRef?.current) return;
+    
+    // Проверяем, нужно ли прокручивать
+    if (!force && isDraggingRef.current) return;
+    
+    // Проверяем, не была ли уже прокрутка к этой позиции (избегаем лишних прокруток)
+    const positionKey = `${currentPosition.measureIndex}:${currentPosition.noteIndex}`;
+    if (lastScrolledPositionRef.current && 
+        lastScrolledPositionRef.current.measureIndex === currentPosition.measureIndex &&
+        lastScrolledPositionRef.current.noteIndex === currentPosition.noteIndex) {
+      return;
+    }
+    
+    const noteElements = document.querySelectorAll(
+      `.note-cell[data-measure="${currentPosition.measureIndex}"][data-note="${currentPosition.noteIndex}"]`
+    );
+    
+    if (noteElements.length > 0 && measuresContainerRef.current) {
+      const noteElement = noteElements[0] as HTMLElement;
+      const containerRect = measuresContainerRef.current.getBoundingClientRect();
+      const noteRect = noteElement.getBoundingClientRect();
+      const scrollLeft = measuresContainerRef.current.scrollLeft;
+      
+      const leftPosition = noteRect.left - containerRect.left + scrollLeft + (noteRect.width / 2);
+      const containerWidth = measuresContainerRef.current.clientWidth;
+      
+      // Проверяем, видна ли позиция в окне контейнера
+      const noteLeftRelativeToContainer = noteRect.left - containerRect.left;
+      const noteRightRelativeToContainer = noteRect.right - containerRect.left;
+      const isVisible = noteLeftRelativeToContainer >= 0 && noteRightRelativeToContainer <= containerWidth;
+      
+      // Прокручиваем, если позиция не видна ИЛИ принудительно
+      if (!isVisible || force) {
+        const targetScroll = noteRect.left - containerRect.left + scrollLeft - containerWidth / 2 + noteRect.width / 2;
+        
+        measuresContainerRef.current.scrollTo({
+          left: Math.max(0, targetScroll),
+          behavior: force ? 'auto' : 'smooth'
+        });
+        
+        // Запоминаем последнюю прокрученную позицию
+        lastScrolledPositionRef.current = {
+          measureIndex: currentPosition.measureIndex,
+          noteIndex: currentPosition.noteIndex
+        };
+      }
+    }
+  }, [currentPosition, measuresContainerRef]);
+
+  /**
    * Обновление позиции полоски воспроизведения
    */
   const updatePlayheadPosition = useCallback(() => {
@@ -138,19 +186,11 @@ const TabPlayer: React.FC<TabPlayerProps> = ({
         });
       }
       
-      // Авто-скролл только если играет и не перетаскивается
-      if (isPlaying && !isDraggingRef) {
-        const containerWidth = measuresContainerRef.current.clientWidth;
-        const targetScroll = leftPosition - containerWidth / 2;
-        if (targetScroll > 0) {
-          measuresContainerRef.current.scrollTo({
-            left: targetScroll,
-            behavior: 'smooth'
-          });
-        }
-      }
+      // Авто-скролл: прокручиваем, если позиция не видна
+      // Всегда прокручиваем при воспроизведении, игнорируем только при активном перетаскивании
+      scrollToCurrentPosition(false);
     }
-  }, [currentPosition, measuresContainerRef, onPlayheadPosition, isPlaying]);
+  }, [currentPosition, measuresContainerRef, onPlayheadPosition, scrollToCurrentPosition]);
 
   // Обновление полоски при изменении позиции
   useEffect(() => {
@@ -179,6 +219,26 @@ const TabPlayer: React.FC<TabPlayerProps> = ({
       window.removeEventListener('seekToPosition' as any, handleSeekToPosition);
     };
   }, [seekToPosition, isPlaying, pause]);
+
+  /**
+   * Обработчик начала перетаскивания полоски
+   * Устанавливает флаг, чтобы отключить автоскролл во время перетаскивания
+   */
+  const handleDragStart = useCallback(() => {
+    isDraggingRef.current = true;
+  }, []);
+
+  /**
+   * Обработчик окончания перетаскивания полоски
+   * Сбрасывает флаг и выполняет принудительную прокрутку к текущей позиции
+   */
+  const handleDragEnd = useCallback(() => {
+    isDraggingRef.current = false;
+    // Принудительно прокручиваем к текущей позиции после перетаскивания
+    setTimeout(() => {
+      scrollToCurrentPosition(true);
+    }, 50);
+  }, [scrollToCurrentPosition]);
 
   /**
    * Обработчик кнопки Play/Pause
@@ -214,6 +274,10 @@ const TabPlayer: React.FC<TabPlayerProps> = ({
       pause();
     } else {
       await play();
+      // При начале воспроизведения принудительно прокручиваем к текущей позиции
+      setTimeout(() => {
+        scrollToCurrentPosition(true);
+      }, 100);
     }
   };
 
