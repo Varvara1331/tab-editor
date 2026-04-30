@@ -264,6 +264,7 @@ const TabEditor: React.FC<TabEditorProps> = ({
           const currentNotes = string.notes;
           let newNotes;
           
+          
           if (newSize > currentNotes.length) {
             // Добавление пустых нот в конец
             newNotes = [
@@ -279,8 +280,11 @@ const TabEditor: React.FC<TabEditorProps> = ({
           
           return { ...string, notes: newNotes };
         });
+        const newTimeSignature: [number, number] = 
+          newSize === 4 ? [4, 4] : 
+          newSize === 8 ? [8, 8] : [16, 16];
         
-        return { ...measure, strings: newStrings };
+        return { ...measure, strings: newStrings, timeSignature: newTimeSignature };
       });
       
       // ВАЖНО: сохраняем notesPerMeasure в tabData
@@ -983,7 +987,7 @@ const TabEditor: React.FC<TabEditorProps> = ({
   useEffect(() => {
     if (tabData.measures && tabData.measures.length > 0) {
       // Получаем реальную длину массива нот из первого такта первой струны
-      const actualNotesPerMeasure = tabData.measures[0]?.strings[0]?.notes?.length || 16;
+      const actualNotesPerMeasure = tabData.notesPerMeasure || tabData.measures[0]?.strings[0]?.notes?.length || 16;
       
       // Используем notesPerMeasure из tabData или фактическую длину
       const targetNotesPerMeasure = tabData.notesPerMeasure || actualNotesPerMeasure;

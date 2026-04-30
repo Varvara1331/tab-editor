@@ -8,27 +8,6 @@ import { TabData, Note } from '../../types/tab';
 import { escapeHtml, escapeXml } from '../stringUtils';
 
 /**
- * Преобразование названия ноты в MIDI номер
- * 
- * @param noteName - Название ноты с октавой (например, 'E4')
- * @returns MIDI номер (0-127)
- * @private
- */
-const noteToMidi = (noteName: string): number => {
-  const notes: Record<string, number> = {
-    'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3,
-    'E': 4, 'F': 5, 'F#': 6, 'Gb': 6, 'G': 7, 'G#': 8,
-    'Ab': 8, 'A': 9, 'A#': 10, 'Bb': 10, 'B': 11,
-  };
-  const match = noteName.match(/^([A-Ga-g][#b]?)(\d+)$/);
-  if (!match) return 40;
-  const note = match[1].toUpperCase();
-  const octave = parseInt(match[2]);
-  const semitone = notes[note] || 0;
-  return (octave + 1) * 12 + semitone;
-};
-
-/**
  * Получение количества позиций в такте из первой струны
  * 
  * @param measure - Такт табулатуры
@@ -56,100 +35,66 @@ const getDisplayTimeSignature = (notesPerMeasure: number): string => {
 };
 
 /**
+ * Получение целевого лада для хаммера (поддержка обоих форматов: число или объект)
+ */
+const getHammerTarget = (note: Note): number | null => {
+  if (typeof note.hammer === 'number') return note.hammer;
+  if (note.hammer && typeof note.hammer === 'object' && 'toFret' in note.hammer) {
+    return (note.hammer as any).toFret;
+  }
+  return null;
+};
+
+/**
+ * Получение целевого лада для пулла (поддержка обоих форматов: число или объект)
+ */
+const getPullTarget = (note: Note): number | null => {
+  if (typeof note.pull === 'number') return note.pull;
+  if (note.pull && typeof note.pull === 'object' && 'toFret' in note.pull) {
+    return (note.pull as any).toFret;
+  }
+  return null;
+};
+
+/**
  * Экспорт табулатуры в формат MusicXML
  * 
  * @param tabData - Данные табулатуры
  * @returns XML строка в формате MusicXML
  */
 export const exportToMusicXML = (tabData: TabData): string => {
-  const midiToNoteName = (midi: number): { step: string; alter: number; octave: number } => {
-    const noteNames = ['C', 'C', 'D', 'D', 'E', 'F', 'F', 'G', 'G', 'A', 'A', 'B'];
-    const alterations = [0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 1, 0];
-    const noteIndex = midi % 12;
-    const octave = Math.floor(midi / 12) - 1;
-    
-    return {
-      step: noteNames[noteIndex],
-      alter: alterations[noteIndex],
-      octave: octave
+  const noteToMidi = (noteName: string): number => {
+    const notes: { [key: string]: number } = {
+      'C': 0, 'C#': 1, 'Db': 1, 'D': 2, 'D#': 3, 'Eb': 3,
+      'E': 4, 'F': 5, 'F#': 6, 'Gb': 6, 'G': 7, 'G#': 8,
+      'Ab': 8, 'A': 9, 'A#': 10, 'Bb': 10, 'B': 11
     };
+    const match = noteName.match(/^([A-Ga-g][#b]?)(\d+)$/);
+    if (!match) return 40;
+    const note = match[1].toUpperCase();
+    const octave = parseInt(match[2]);
+    const semitone = notes[note] || 0;
+    return (octave + 1) * 12 + semitone;
   };
   
-  // Сбор всех нот с информацией о длительности
-  const allNotes: Array<{
-    measureIndex: number;
-    position: number;
-    stringIndex: number;
-    fret: number;
-    midi: number;
-    noteName: { step: string; alter: number; octave: number };
-    effects: Note;
-    duration: number;
-  }> = [];
+  const midiToNoteName = (midi: number): { step: string; alter: number; octave: number } => {
+    const noteNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+    const noteIndex = midi % 12;
+    const octave = Math.floor(midi / 12) - 1;
+    let step = noteNames[noteIndex];
+    let alter = 0;
+    if (step.includes('#')) { alter = 1; step = step[0]; }
+    else if (step.includes('b')) { alter = -1; step = step[0]; }
+    return { step, alter, octave };
+  };
   
+  const notesPerMeasure = tabData.notesPerMeasure || 
+    tabData.measures[0]?.strings[0]?.notes?.length || 16;
+  
+  const DIVISIONS = notesPerMeasure;
+  const DURATION = 1;
+  const NOTE_TYPE = notesPerMeasure === 4 ? 'quarter' : notesPerMeasure === 8 ? 'eighth' : '16th';
   const numStrings = tabData.tuning.length;
-  
-  tabData.measures.forEach((measure, measureIndex) => {
-    const notesPerMeasure = getNotesPerMeasure(measure);
-    const durationPerPosition = 16 / notesPerMeasure;
-    
-    // Идем по струнам в обратном порядке (от нижней к верхней для MusicXML)
-    for (let stringIndex = numStrings - 1; stringIndex >= 0; stringIndex--) {
-      const tabString = measure.strings[stringIndex];
-      const tuningNote = tabData.tuning[stringIndex];
-      const baseMidi = noteToMidi(tuningNote);
-      
-      tabString.notes.forEach((note, position) => {
-        if (note.fret !== null && note.fret >= 0) {
-          const midiNumber = baseMidi + note.fret;
-          const noteName = midiToNoteName(midiNumber);
-          
-          let duration = durationPerPosition;
-          if (note.duration) {
-            duration = (note.duration / 4) * 4;
-          }
-          
-          // MusicXML нумерует струны снизу вверх (1 - самая нижняя/толстая)
-          const musicXMLStringIndex = stringIndex + 1;
-          
-          allNotes.push({
-            measureIndex,
-            position,
-            stringIndex: musicXMLStringIndex,
-            fret: note.fret,
-            midi: midiNumber,
-            noteName,
-            effects: note,
-            duration: Math.max(1, Math.min(duration, notesPerMeasure))
-          });
-        }
-      });
-    }
-  });
-  
-  // Сортируем ноты по такту, позиции и струне
-  allNotes.sort((a, b) => {
-    if (a.measureIndex !== b.measureIndex) return a.measureIndex - b.measureIndex;
-    if (a.position !== b.position) return a.position - b.position;
-    return a.stringIndex - b.stringIndex;
-  });
-  
-  // Группируем ноты по тактам и позициям
-  const notesByMeasureAndPosition: { 
-    [key: number]: { 
-      [key: number]: typeof allNotes 
-    } 
-  } = {};
-  
-  allNotes.forEach(note => {
-    if (!notesByMeasureAndPosition[note.measureIndex]) {
-      notesByMeasureAndPosition[note.measureIndex] = {};
-    }
-    if (!notesByMeasureAndPosition[note.measureIndex][note.position]) {
-      notesByMeasureAndPosition[note.measureIndex][note.position] = [];
-    }
-    notesByMeasureAndPosition[note.measureIndex][note.position].push(note);
-  });
   
   let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 3.1 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">
@@ -180,17 +125,14 @@ export const exportToMusicXML = (tabData: TabData): string => {
   <part id="P1">`;
   
   tabData.measures.forEach((measure, measureIndex) => {
-    const timeSignature = measure.timeSignature || [4, 4];
-    const notesPerMeasure = getNotesPerMeasure(measure);
-    const divisions = 16;
+    const measureSize = measure.strings[0]?.notes?.length || notesPerMeasure;
+    const timeSignature = measure.timeSignature || 
+      (measureSize === 4 ? [4,4] : measureSize === 8 ? [8,8] : [16,16]);
     
     xml += `
-    <measure number="${measureIndex + 1}">`;
-    
-    // Атрибуты такта
-    xml += `
+    <measure number="${measureIndex + 1}">
       <attributes>
-        <divisions>${divisions}</divisions>
+        <divisions>${DIVISIONS}</divisions>
         <key>
           <fifths>0</fifths>
           <mode>major</mode>
@@ -207,7 +149,7 @@ export const exportToMusicXML = (tabData: TabData): string => {
           <staff-lines>${numStrings}</staff-lines>`;
     
     // Настройка струн
-    for (let i = numStrings - 1; i >= 0; i--) {
+    for (let i = 0; i < numStrings; i++) {
       const line = numStrings - i;
       const tuningNote = tabData.tuning[i];
       const match = tuningNote.match(/^([A-Ga-g][#b]?)(\d+)$/);
@@ -215,22 +157,23 @@ export const exportToMusicXML = (tabData: TabData): string => {
       if (match) {
         let step = match[1].toUpperCase();
         let alter = 0;
-        let stepName = step[0];
         
-        if (step === 'C#') { stepName = 'C'; alter = 1; }
-        else if (step === 'Db') { stepName = 'C'; alter = -1; }
-        else if (step === 'D#') { stepName = 'D'; alter = 1; }
-        else if (step === 'Eb') { stepName = 'D'; alter = -1; }
-        else if (step === 'F#') { stepName = 'F'; alter = 1; }
-        else if (step === 'Gb') { stepName = 'F'; alter = -1; }
-        else if (step === 'G#') { stepName = 'G'; alter = 1; }
-        else if (step === 'Ab') { stepName = 'G'; alter = -1; }
-        else if (step === 'A#') { stepName = 'A'; alter = 1; }
-        else if (step === 'Bb') { stepName = 'A'; alter = -1; }
+        const alterMap: { [key: string]: { step: string; alter: number } } = {
+          'C#': { step: 'C', alter: 1 }, 'Db': { step: 'C', alter: -1 },
+          'D#': { step: 'D', alter: 1 }, 'Eb': { step: 'D', alter: -1 },
+          'F#': { step: 'F', alter: 1 }, 'Gb': { step: 'F', alter: -1 },
+          'G#': { step: 'G', alter: 1 }, 'Ab': { step: 'G', alter: -1 },
+          'A#': { step: 'A', alter: 1 }, 'Bb': { step: 'A', alter: -1 }
+        };
+        
+        if (alterMap[step]) {
+          step = alterMap[step].step;
+          alter = alterMap[step].alter;
+        }
         
         xml += `
           <staff-tuning line="${line}">
-            <tuning-step>${stepName}</tuning-step>
+            <tuning-step>${step}</tuning-step>
             ${alter !== 0 ? `<tuning-alter>${alter}</tuning-alter>` : ''}
             <tuning-octave>${parseInt(match[2])}</tuning-octave>
           </staff-tuning>`;
@@ -241,117 +184,129 @@ export const exportToMusicXML = (tabData: TabData): string => {
         </staff-details>
       </attributes>`;
     
-    // Генерация нот
-    let currentPosition = 0;
-    
-    while (currentPosition < notesPerMeasure) {
-      const notesAtPosition = notesByMeasureAndPosition[measureIndex]?.[currentPosition] || [];
+    // Генерируем каждую позицию в такте
+    for (let position = 0; position < measureSize; position++) {
+      // Собираем ВСЕ ноты на этой конкретной позиции со всех струн
+      const notesAtThisPosition: Array<{
+        stringIndex: number;
+        fret: number;
+        midi: number;
+        noteName: { step: string; alter: number; octave: number };
+        effects: Note;
+      }> = [];
       
-      if (notesAtPosition.length === 0) {
-        // Пауза
-        const durationType = notesPerMeasure === 4 ? 'quarter' : notesPerMeasure === 8 ? 'eighth' : '16th';
-        const durationValue = notesPerMeasure === 4 ? 4 : notesPerMeasure === 8 ? 2 : 1;
-        
-        xml += `
-      <note>
-        <rest/>
-        <duration>${durationValue}</duration>
-        <voice>1</voice>
-        <type>${durationType}</type>
-      </note>`;
-      } else {
-        // Нота или аккорд
-        const sortedNotes = [...notesAtPosition].sort((a, b) => a.stringIndex - b.stringIndex);
-        
-        let durationType = '16th';
-        let durationValue = 1;
-        
-        if (notesPerMeasure === 4) {
-          durationType = 'quarter';
-          durationValue = 4;
-        } else if (notesPerMeasure === 8) {
-          durationType = 'eighth';
-          durationValue = 2;
-        } else {
-          durationType = '16th';
-          durationValue = 1;
+      for (let stringIdx = 0; stringIdx < numStrings; stringIdx++) {
+        const stringNotes = measure.strings[stringIdx]?.notes;
+        if (stringNotes && position < stringNotes.length) {
+          const note = stringNotes[position];
+          if (note && note.fret !== null && note.fret >= 0) {
+            const baseMidi = noteToMidi(tabData.tuning[stringIdx]);
+            const midiNumber = baseMidi + note.fret;
+            const noteName = midiToNoteName(midiNumber);
+            
+            notesAtThisPosition.push({
+              stringIndex: stringIdx + 1,
+              fret: note.fret,
+              midi: midiNumber,
+              noteName,
+              effects: note
+            });
+          }
         }
-        
-        sortedNotes.forEach((note, idx) => {
-          const isChord = idx > 0;
-          
-          xml += `
-      <note${isChord ? ' chord' : ''}>
-        <pitch>
-          <step>${note.noteName.step}</step>
-          ${note.noteName.alter !== 0 ? `<alter>${note.noteName.alter}</alter>` : ''}
-          <octave>${note.noteName.octave}</octave>
-        </pitch>
-        <duration>${durationValue}</duration>
-        <voice>1</voice>
-        <type>${durationType}</type>
-        <notations>
-          <technical>
-            <string>${note.stringIndex}</string>
-            <fret>${note.fret}</fret>
-          </technical>`;
-          
-          // Добавляем эффекты
-          const effects = note.effects;
-          
-          if (effects.bend) {
-            xml += `
-          <ornaments>
-            <bend>
-              <bend-alter>2</bend-alter>
-            </bend>
-          </ornaments>`;
-          }
-          
-          if (effects.vibrato) {
-            xml += `
-          <ornaments>
-            <wavy-line type="start"/>
-          </ornaments>`;
-          }
-          
-          if (effects.hammer) {
-            xml += `
-          <technical>
-            <hammer-on/>
-          </technical>`;
-          }
-          
-          if (effects.pull) {
-            xml += `
-          <technical>
-            <pull-off/>
-          </technical>`;
-          }
-          
-          if (effects.slide) {
-            const slideType = effects.slide === 'up' ? 'slide-up' : 'slide-down';
-            xml += `
-          <technical>
-            <slide type="${slideType}"/>
-          </technical>`;
-          }
-          
-          xml += `
-        </notations>
-      </note>`;
-        });
       }
       
-      currentPosition++;
-    }
-    
-    // Добавляем тактовую черту
-    if (measureIndex < tabData.measures.length - 1) {
-      xml += `
-      <barline location="right">
-        <bar-style>light-heavy</bar-style>
-      </barline>`;
+      if (notesAtThisPosition.length === 0) {
+        // Пауза
+        xml += `
+        <note>
+          <rest/>
+          <duration>${DURATION}</duration>
+          <voice>1</voice>
+          <type>${NOTE_TYPE}</type>
+        </note>`;
+      } else {
+        // Сортируем ноты аккорда по номеру струны (от нижней к верхней)
+        notesAtThisPosition.sort((a, b) => a.stringIndex - b.stringIndex);
+        
+        // Генерируем все ноты аккорда
+        for (let i = 0; i < notesAtThisPosition.length; i++) {
+          const note = notesAtThisPosition[i];
+          
+          // Открываем тег note
+          xml += `
+        <note>`;
+          
+          // Добавляем тег chord для всех нот, кроме первой
+          if (i > 0) {
+            xml += `
+          <chord/>`;
+          }
+          
+          // Добавляем pitch
+          xml += `
+          <pitch>
+            <step>${note.noteName.step}</step>
+            ${note.noteName.alter !== 0 ? `<alter>${note.noteName.alter}</alter>` : ''}
+            <octave>${note.noteName.octave}</octave>
+          </pitch>
+          <duration>${DURATION}</duration>
+          <voice>1</voice>
+          <type>${NOTE_TYPE}</type>`;
+          
+          // Добавляем notations с эффектами
+          xml += `
+          <notations>
+            <technical>
+              <string>${note.stringIndex}</string>
+              <fret>${note.fret}</fret>`;
+          
+          // Бенд
+          if (note.effects.bend) {
+            xml += `
+              <bend>
+                <bend-alter>2</bend-alter>
+              </bend>`;
+          }
+          
+          // Слайд
+          if (note.effects.slide === 'up') {
+            xml += `
+              <slide type="start"/>`;
+          } else if (note.effects.slide === 'down') {
+            xml += `
+              <slide type="start"/>`;
+          }
+          
+          // Хаммер
+          const hammerTarget = getHammerTarget(note.effects);
+          if (hammerTarget !== null) {
+            xml += `
+              <hammer-on>${hammerTarget}</hammer-on>`;
+          }
+          
+          // Пулл
+          const pullTarget = getPullTarget(note.effects);
+          if (pullTarget !== null) {
+            xml += `
+              <pull-off>${pullTarget}</pull-off>`;
+          }
+          
+          xml += `
+            </technical>`;
+          
+          // Вибрато (в ornaments, не в technical)
+          if (note.effects.vibrato) {
+            xml += `
+            <ornaments>
+              <wavy-line type="start"/>
+            </ornaments>`;
+          }
+          
+          xml += `
+          </notations>
+        </note>`;
+        }
+      }
     }
     
     xml += `
@@ -462,12 +417,21 @@ export const exportToPDF = async (tabData: TabData): Promise<Blob> => {
             html += `<div style="width:${cellWidth}px;text-align:center;padding:4px;font-family:monospace;font-size:12px">--</div>`;
           } else {
             let symbol = note.fret.toString();
-            if (note.bend) symbol = `(${symbol})`;
-            else if (note.slide === 'up') symbol = `${symbol}/`;
-            else if (note.slide === 'down') symbol = `\\${symbol}`;
-            else if (note.hammer) symbol = `h${symbol}`;
-            else if (note.pull) symbol = `p${symbol}`;
-            else if (note.vibrato) symbol = `${symbol}~`;
+            if (note.bend) {
+              symbol = `(${symbol})`;
+            } else if (note.slide === 'up') {
+              symbol = `${symbol}/`;
+            } else if (note.slide === 'down') {
+              symbol = `\\${symbol}`;
+            } else if (getHammerTarget(note) !== null) {
+              const target = getHammerTarget(note);
+              symbol = `${symbol}h${target}`;
+            } else if (getPullTarget(note) !== null) {
+              const target = getPullTarget(note);
+              symbol = `${symbol}p${target}`;
+            } else if (note.vibrato) {
+              symbol = `${symbol}~`;
+            }
             html += `<div style="width:${cellWidth}px;text-align:center;padding:4px;font-family:monospace;font-size:12px;font-weight:bold">${escapeHtml(symbol)}</div>`;
           }
         });
@@ -561,13 +525,23 @@ export const exportToText = (tabData: TabData): string => {
           result += '--';
         } else {
           const fretStr = note.fret.toString().padStart(2, '0');
-          if (note.bend) result += `(${fretStr})`;
-          else if (note.slide === 'up') result += `${fretStr}/`;
-          else if (note.slide === 'down') result += `\\${fretStr}`;
-          else if (note.hammer) result += `h${fretStr}`;
-          else if (note.pull) result += `p${fretStr}`;
-          else if (note.vibrato) result += `${fretStr}~`;
-          else result += fretStr;
+          if (note.bend) {
+            result += `(${fretStr})`;
+          } else if (note.slide === 'up') {
+            result += `${fretStr}/`;
+          } else if (note.slide === 'down') {
+            result += `\\${fretStr}`;
+          } else if (getHammerTarget(note) !== null) {
+            const target = getHammerTarget(note);
+            result += `${fretStr}h${target}`;
+          } else if (getPullTarget(note) !== null) {
+            const target = getPullTarget(note);
+            result += `${fretStr}p${target}`;
+          } else if (note.vibrato) {
+            result += `${fretStr}~`;
+          } else {
+            result += fretStr;
+          }
         }
       });
       result += '\n';
@@ -620,12 +594,26 @@ export const exportToGP = (tabData: TabData): Blob => {
         stringNumber: string.stringNumber,
         notes: string.notes.map(note => {
           if (note.fret === null) return { fret: null };
+          
           const gpNote: any = { fret: note.fret };
-          if (note.bend) gpNote.effect = "bend";
-          if (note.slide) gpNote.effect = `slide_${note.slide}`;
-          if (note.hammer) gpNote.effect = "hammer_on";
-          if (note.pull) gpNote.effect = "pull_off";
-          if (note.vibrato) gpNote.effect = "vibrato";
+          
+          // Определяем эффект в порядке приоритета
+          if (note.bend) {
+            gpNote.effect = "bend";
+          } else if (note.slide === 'up') {
+            gpNote.effect = "slide_up";
+          } else if (note.slide === 'down') {
+            gpNote.effect = "slide_down";
+          } else if (getHammerTarget(note) !== null) {
+            gpNote.effect = "hammer_on";
+            gpNote.hammerTarget = getHammerTarget(note);
+          } else if (getPullTarget(note) !== null) {
+            gpNote.effect = "pull_off";
+            gpNote.pullTarget = getPullTarget(note);
+          } else if (note.vibrato) {
+            gpNote.effect = "vibrato";
+          }
+          
           return gpNote;
         })
       }))
