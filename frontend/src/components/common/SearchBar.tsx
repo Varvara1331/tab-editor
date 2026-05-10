@@ -123,7 +123,6 @@ const SearchBar: React.FC<SearchBarProps> = memo(({
 
   return (
     <div className="search-wrapper">
-      <span className="search-icon" aria-hidden="true">🔍</span>
       <input
         ref={inputRef}
         type="text"

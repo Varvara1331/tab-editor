@@ -34,6 +34,8 @@ interface TabStringProps {
   slideStartCell?: number;
   /** Конечная ячейка слайда */
   slideEndCell?: number;
+   /** Показывать ли название струны/строя (только для первого такта) */
+  showStringLabel?: boolean;
 }
 
 /**
@@ -53,6 +55,7 @@ const TabString: React.FC<TabStringProps> = ({
   onPositionDrag, 
   slideStartCell, 
   slideEndCell,
+  showStringLabel = true,
 }) => {
   /**
    * Получение символа для отображения ноты с учётом эффектов
@@ -142,7 +145,12 @@ const TabString: React.FC<TabStringProps> = ({
 
   return (
     <div className={`tab-string ${isActive ? 'active' : ''}`}>
-      <span className="string-label">{stringNote}│{stringNumber}</span>
+       {showStringLabel && (
+        <span className="string-label">{stringNote}│{stringNumber}</span>
+      )}
+      {!showStringLabel && (
+        <span className="string-label string-label-empty"></span>
+      )}
       <div className="notes-container">
         {notes.map((note, index) => {
           const nextNote = notes[index + 1];

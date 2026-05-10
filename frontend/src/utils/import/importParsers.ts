@@ -47,14 +47,21 @@ export const createNoteFromImport = (importedNote: any): Note => {
     }
   }
   
-  // Обработка hammer
-  if (importedNote.hammer === true || importedNote.hammer === 'true' || importedNote.hammer === 1) {
-    note.hammer = true;
-  }
-  
-  // Обработка pull
-  if (importedNote.pull === true || importedNote.pull === 'true' || importedNote.pull === 1) {
-    note.pull = true;
+  // Обработка hammer (формат hammer может быть: boolean, число, или объект {fromFret, toFret})
+  if (importedNote.hammer !== undefined && importedNote.hammer !== null) {
+    if (typeof importedNote.hammer === 'object' && 'fromFret' in importedNote.hammer && 'toFret' in importedNote.hammer) {
+      // Полный объект хаммера
+      note.hammer = importedNote.hammer;
+    } else if (typeof importedNote.hammer === 'number') {
+      // Числовой формат (только целевой лад)
+      note.hammer = {
+        fromFret: importedNote.fret,
+        toFret: importedNote.hammer
+      };
+    } else if (importedNote.hammer === true) {
+      // Булевый формат (без указания целевого лада)
+      note.hammer = true;
+    }
   }
   
   // Обработка vibrato
@@ -70,11 +77,14 @@ export const createNoteFromImport = (importedNote: any): Note => {
         break;
       case 'hammer_on':
       case 'hammer':
-        note.hammer = true;
-        break;
-      case 'pull_off':
-      case 'pull':
-        note.pull = true;
+        if (importedNote.hammerTarget) {
+          note.hammer = {
+            fromFret: importedNote.fret,
+            toFret: importedNote.hammerTarget
+          };
+        } else {
+          note.hammer = true;
+        }
         break;
       case 'vibrato':
         note.vibrato = true;
@@ -89,20 +99,12 @@ export const createNoteFromImport = (importedNote: any): Note => {
     }
   }
   
-  // Обработка эффектов из MusicXML
-  if (importedNote.notations) {
-    const notations = importedNote.notations;
-    if (notations.ornaments) {
-      if (notations.ornaments.bend) note.bend = true;
-      if (notations.ornaments.wavyLine) note.vibrato = true;
-    }
-    if (notations.technical) {
-      if (notations.technical.hammerOn) note.hammer = true;
-      if (notations.technical.pullOff) note.pull = true;
-      if (notations.technical.slide) {
-        note.slide = notations.technical.slide === 'up' ? 'up' : 'down';
-      }
-    }
+  // Обработка hammerTarget (из GP формата)
+  if (importedNote.hammerTarget !== undefined) {
+    note.hammer = {
+      fromFret: importedNote.fret,
+      toFret: importedNote.hammerTarget
+    };
   }
   
   return note;
@@ -256,6 +258,93 @@ export const importFromGpJson = (content: string): TabData => {
 };
 
 /**
+ * Извлечение эффектов из MusicXML ноты
+ * 
+ * @param noteElement - XML элемент ноты
+ * @returns Объект с эффектами
+ * @private
+ */
+function extractEffectsFromMusicXMLNote(noteElement: Element): {
+  bend?: boolean;
+  vibrato?: boolean;
+  slide?: 'up' | 'down';
+  hammer?: boolean;
+  hammerTarget?: number;
+} {
+  const effects: {
+    bend?: boolean;
+    vibrato?: boolean;
+    slide?: 'up' | 'down';
+    hammer?: boolean;
+    hammerTarget?: number;
+  } = {};
+  
+  const notations = noteElement.querySelector('notations');
+  if (!notations) return effects;
+  
+  const technical = notations.querySelector('technical');
+  const ornaments = notations.querySelector('ornaments');
+  
+  // Обработка бенда - ищем в technical (основное место)
+  if (technical) {
+    const bend = technical.querySelector('bend');
+    if (bend) {
+      effects.bend = true;
+    }
+  }
+  
+  // Также проверяем ornaments на случай других форматов
+  if (ornaments) {
+    const bend = ornaments.querySelector('bend');
+    if (bend) {
+      effects.bend = true;
+    }
+    
+    const vibrato = ornaments.querySelector('vibrato');
+    const wavyLine = ornaments.querySelector('wavy-line');
+    if (vibrato || wavyLine) {
+      effects.vibrato = true;
+    }
+  }
+  
+  // Обработка вибрато также может быть в technical
+  if (technical) {
+    const vibrato = technical.querySelector('vibrato');
+    if (vibrato) {
+      effects.vibrato = true;
+    }
+  }
+  
+  // Обработка технических эффектов
+  if (technical) {
+    // Хаммер-он
+    const hammerOn = technical.querySelector('hammer-on');
+    if (hammerOn) {
+      const type = hammerOn.getAttribute('type');
+      if (type === 'start') {
+        effects.hammer = true;
+        // Извлекаем целевой лад из текстового содержимого
+        const hammerText = hammerOn.textContent;
+        if (hammerText && !isNaN(parseInt(hammerText))) {
+          effects.hammerTarget = parseInt(hammerText);
+        }
+      }
+    }
+    
+    // Слайд
+    const slide = technical.querySelector('slide');
+    if (slide) {
+      const type = slide.getAttribute('type');
+      if (type === 'start') {
+        effects.slide = 'up';
+      }
+    }
+  }
+  
+  return effects;
+}
+
+/**
  * Импорт табулатуры из MusicXML формата
  * 
  * @param content - Содержимое MusicXML файла
@@ -288,7 +377,7 @@ export const importFromMusicXML = async (content: string): Promise<TabData> => {
   }
   
   // Если не нашли настройку, используем стандартную
-  const finalTuning = tuning.length === 6 ? tuning : ['E4', 'B3', 'G3', 'D3', 'A2', 'E2'];
+  const finalTuning = tuning.length >= 4 ? tuning : ['E4', 'B3', 'G3', 'D3', 'A2', 'E2'];
   const tuningLength = finalTuning.length;
   const measures: TabMeasure[] = [];
   let globalNotesPerMeasure = 16;
@@ -299,7 +388,7 @@ export const importFromMusicXML = async (content: string): Promise<TabData> => {
     const measure = measureElements[measureIdx];
     
     // Получаем divisions (количество делений на четверть)
-    let divisions = 16;
+    let divisions = 4;
     const attributes = measure.querySelector('attributes');
     if (attributes) {
       const divisionsElem = attributes.querySelector('divisions');
@@ -321,126 +410,187 @@ export const importFromMusicXML = async (content: string): Promise<TabData> => {
       }
     }
     
-    // Вычисляем количество 16-х нот в такте
-    let notesPerMeasure = beats;
+    // Вычисляем длительность 16-й ноты в divisions
+    const SIXTEENTH_DIVISIONS = divisions / 4;
     
-    // Для первого такта сохраняем глобальный размер
-    if (measureIdx === 0) {
-      globalNotesPerMeasure = notesPerMeasure;
-    }
+    // Создаем временное хранилище для нот
+    const notesAtPositions: Map<number, Map<number, Note>> = new Map();
+    let currentPosition = 0;
     
-    // Создаем пустые струны с правильным количеством позиций
-    const strings: any[] = [];
-    for (let i = 0; i < tuningLength; i++) {
-      strings.push({ 
-        stringNumber: i, 
-        notes: Array.from({ length: notesPerMeasure }, () => createEmptyNote()) 
-      });
-    }
-    
-    // Собираем все ноты такта
+    // Получаем все ноты в такте
     const notes = measure.querySelectorAll('note');
-    let currentSixteenthPosition = 0;
-    let chordNotes: { stringIndex: number; fret: number; effects: any }[] = [];
+    let pendingChord: Array<{
+      stringIndex: number;
+      fret: number;
+      effects: ReturnType<typeof extractEffectsFromMusicXMLNote>;
+    }> = [];
+    let currentDuration = SIXTEENTH_DIVISIONS;
     
     for (let i = 0; i < notes.length; i++) {
       const noteElement = notes[i];
       const isRest = noteElement.querySelector('rest') !== null;
       const isChord = noteElement.getAttribute('chord') !== null;
       
-      let durationDivisions = 0;
+      // Получаем длительность
       const durationElem = noteElement.querySelector('duration');
       if (durationElem && durationElem.textContent) {
-        durationDivisions = parseInt(durationElem.textContent);
+        currentDuration = parseInt(durationElem.textContent);
       }
       
-      let durationInSixteenths = 1;
-      if (durationDivisions > 0 && divisions > 0) {
-        durationInSixteenths = (durationDivisions * 16) / divisions;
-        durationInSixteenths = Math.max(1, Math.round(durationInSixteenths));
-      }
+      // Конвертируем в количество 16-х нот
+      let durationInSixteenths = Math.max(1, Math.round(currentDuration / SIXTEENTH_DIVISIONS));
       
       if (isRest) {
-        if (chordNotes.length > 0) {
-          chordNotes.forEach(({ stringIndex, fret, effects }) => {
-            if (currentSixteenthPosition < notesPerMeasure && strings[stringIndex]?.notes[currentSixteenthPosition]) {
-              strings[stringIndex].notes[currentSixteenthPosition] = { fret, ...effects };
-            }
-          });
-          chordNotes = [];
+        // Пауза - просто перемещаем позицию
+        if (pendingChord.length > 0) {
+          pendingChord = [];
         }
-        currentSixteenthPosition += durationInSixteenths;
-      } else {
-        const technical = noteElement.querySelector('technical');
-        const stringEl = technical?.querySelector('string');
-        const fretEl = technical?.querySelector('fret');
+        currentPosition += durationInSixteenths;
+        continue;
+      }
+      
+      // Извлекаем информацию о ноте
+      const technical = noteElement.querySelector('technical');
+      const stringEl = technical?.querySelector('string');
+      const fretEl = technical?.querySelector('fret');
+      
+      if (stringEl && fretEl && stringEl.textContent && fretEl.textContent) {
+        const stringIndex = parseInt(stringEl.textContent) - 1;
+        const fret = parseInt(fretEl.textContent);
         
-        if (stringEl && fretEl && stringEl.textContent && fretEl.textContent) {
-          const stringIndex = parseInt(stringEl.textContent) - 1;
-          const fret = parseInt(fretEl.textContent);
+        if (stringIndex >= 0 && stringIndex < tuningLength && fret >= 0) {
+          // Извлекаем эффекты
+          const effects = extractEffectsFromMusicXMLNote(noteElement);
           
-          if (stringIndex >= 0 && stringIndex < tuningLength && fret >= 0) {
-            const effects: any = {};
-            const notations = noteElement.querySelector('notations');
-            if (notations) {
-              const ornaments = notations.querySelector('ornaments');
-              const technical2 = notations.querySelector('technical');
-              
-              if (ornaments) {
-                if (ornaments.querySelector('bend')) effects.bend = true;
-                if (ornaments.querySelector('wavy-line')) effects.vibrato = true;
+          if (isChord) {
+            // Добавляем в аккорд
+            pendingChord.push({ stringIndex, fret, effects });
+          } else {
+            // Завершаем предыдущий аккорд
+            if (pendingChord.length > 0) {
+              if (!notesAtPositions.has(currentPosition)) {
+                notesAtPositions.set(currentPosition, new Map());
               }
-              if (technical2) {
-                if (technical2.querySelector('hammer-on')) effects.hammer = true;
-                if (technical2.querySelector('pull-off')) effects.pull = true;
-                if (technical2.querySelector('slide')) effects.slide = 'up';
+              const positionMap = notesAtPositions.get(currentPosition)!;
+              
+              pendingChord.forEach(({ stringIndex: idx, fret: f, effects: eff }) => {
+                const note: Note = { fret: f };
+                if (eff.bend) note.bend = true;
+                if (eff.vibrato) note.vibrato = true;
+                if (eff.slide) note.slide = eff.slide;
+                
+                if (eff.hammer) {
+                  if (eff.hammerTarget) {
+                    note.hammer = {
+                      fromFret: f,
+                      toFret: eff.hammerTarget
+                    };
+                  } else {
+                    note.hammer = true;
+                  }
+                }
+                
+                positionMap.set(idx, note);
+              });
+              pendingChord = [];
+              currentPosition += durationInSixteenths;
+            }
+            
+            // Обрабатываем текущую ноту
+            if (!notesAtPositions.has(currentPosition)) {
+              notesAtPositions.set(currentPosition, new Map());
+            }
+            const positionMap = notesAtPositions.get(currentPosition)!;
+            
+            const note: Note = { fret };
+            if (effects.bend) note.bend = true;
+            if (effects.vibrato) note.vibrato = true;
+            if (effects.slide) note.slide = effects.slide;
+            
+            if (effects.hammer) {
+              if (effects.hammerTarget) {
+                note.hammer = {
+                  fromFret: fret,
+                  toFret: effects.hammerTarget
+                };
+              } else {
+                note.hammer = true;
               }
             }
             
-            if (isChord) {
-              chordNotes.push({ stringIndex, fret, effects });
+            positionMap.set(stringIndex, note);
+            
+            // Проверяем, является ли следующая нота частью аккорда
+            const nextNote = notes[i + 1];
+            if (nextNote && nextNote.getAttribute('chord') !== null) {
+              pendingChord.push({ stringIndex, fret, effects });
             } else {
-              if (chordNotes.length > 0) {
-                chordNotes.forEach(({ stringIndex: idx, fret: f, effects: eff }) => {
-                  if (currentSixteenthPosition < notesPerMeasure && strings[idx]?.notes[currentSixteenthPosition]) {
-                    strings[idx].notes[currentSixteenthPosition] = { fret: f, ...eff };
-                  }
-                });
-                chordNotes = [];
-                currentSixteenthPosition += durationInSixteenths;
-              }
-              
-              const nextNote = notes[i + 1];
-              if (nextNote && nextNote.getAttribute('chord') !== null) {
-                chordNotes.push({ stringIndex, fret, effects });
-              } else {
-                if (currentSixteenthPosition < notesPerMeasure && strings[stringIndex]?.notes[currentSixteenthPosition]) {
-                  strings[stringIndex].notes[currentSixteenthPosition] = { fret, ...effects };
-                }
-                currentSixteenthPosition += durationInSixteenths;
-              }
+              currentPosition += durationInSixteenths;
             }
           }
-        } else {
-          if (chordNotes.length > 0) {
-            chordNotes = [];
-          }
-          currentSixteenthPosition += durationInSixteenths;
         }
       }
     }
     
-    if (chordNotes.length > 0) {
-      chordNotes.forEach(({ stringIndex, fret, effects }) => {
-        if (currentSixteenthPosition < notesPerMeasure && strings[stringIndex]?.notes[currentSixteenthPosition]) {
-          strings[stringIndex].notes[currentSixteenthPosition] = { fret, ...effects };
+    // Добавляем последний аккорд если есть
+    if (pendingChord.length > 0) {
+      if (!notesAtPositions.has(currentPosition)) {
+        notesAtPositions.set(currentPosition, new Map());
+      }
+      const positionMap = notesAtPositions.get(currentPosition)!;
+      
+      pendingChord.forEach(({ stringIndex, fret, effects }) => {
+        const note: Note = { fret };
+        if (effects.bend) note.bend = true;
+        if (effects.vibrato) note.vibrato = true;
+        if (effects.slide) note.slide = effects.slide;
+        
+        if (effects.hammer) {
+          if (effects.hammerTarget) {
+            note.hammer = {
+              fromFret: fret,
+              toFret: effects.hammerTarget
+            };
+          } else {
+            note.hammer = true;
+          }
         }
+        
+        positionMap.set(stringIndex, note);
+      });
+      currentPosition += 1;
+    }
+    
+    // Определяем количество позиций в такте
+    const positions = Array.from(notesAtPositions.keys()).sort((a, b) => a - b);
+    const maxPosition = positions.length > 0 ? Math.max(...positions) + 1 : (beats === 4 && beatType === 4 ? 16 : beats);
+    
+    if (measureIdx === 0) {
+      globalNotesPerMeasure = maxPosition;
+    }
+    
+    // Создаем массив струн с нотами
+    const strings: any[] = [];
+    for (let i = 0; i < tuningLength; i++) {
+      const fullNotes: Note[] = Array.from({ length: maxPosition }, () => createEmptyNote());
+      
+      // Заполняем ноты из временного хранилища
+      for (const [position, positionMap] of notesAtPositions.entries()) {
+        const note = positionMap.get(i);
+        if (note && position < maxPosition) {
+          fullNotes[position] = note;
+        }
+      }
+      
+      strings.push({
+        stringNumber: i,
+        notes: fullNotes
       });
     }
     
-    measures.push({ 
-      id: `measure-${measureIdx}-${Date.now()}`, 
-      strings: strings, 
+    measures.push({
+      id: `measure-${measureIdx}-${Date.now()}`,
+      strings: strings,
       timeSignature: [beats, beatType],
       tempo: undefined
     });
@@ -466,35 +616,57 @@ export const importFromMusicXML = async (content: string): Promise<TabData> => {
 };
 
 /**
- * Извлечение эффектов из MusicXML ноты
+ * Основная функция импорта табулатуры (автоопределение формата)
  * 
- * @param noteElement - XML элемент ноты
- * @returns Объект с эффектами
- * @private
+ * @param content - Содержимое файла
+ * @param fileName - Имя файла (опционально)
+ * @returns Promise с объектом TabData
+ * @throws {Error} При неизвестном формате или ошибке парсинга
  */
-function extractEffectsFromMusicXMLNote(noteElement: Element): any {
-  const effectNote: any = {};
-  const notations = noteElement.querySelector('notations');
+export const importTabFromFile = async (content: string, fileName?: string): Promise<TabData> => {
+  // Определяем формат по содержимому
+  const trimmedContent = content.trim();
   
-  if (notations) {
-    const ornaments = notations.querySelector('ornaments');
-    const technical = notations.querySelector('technical');
-    
-    if (ornaments) {
-      if (ornaments.querySelector('bend')) effectNote.bend = true;
-      if (ornaments.querySelector('wavy-line')) effectNote.vibrato = true;
+  // Проверка на JSON
+  if (trimmedContent.startsWith('{') || trimmedContent.startsWith('[')) {
+    try {
+      const data = JSON.parse(trimmedContent);
+      
+      // Проверяем, содержит ли JSON поля, характерные для Guitar Pro
+      if (data.format === 'guitar-pro-compatible' || data.song || data.measures?.[0]?.voices) {
+        return importFromGpJson(trimmedContent);
+      }
+      
+      // Обычный JSON формат
+      return importFromJson(trimmedContent);
+    } catch (e) {
+      // Невалидный JSON, пробуем другие форматы
     }
-    
-    if (technical) {
-      if (technical.querySelector('hammer-on')) effectNote.hammer = true;
-      if (technical.querySelector('pull-off')) effectNote.pull = true;
-      if (technical.querySelector('slide')) {
-        const slide = technical.querySelector('slide');
-        const slideType = slide?.getAttribute('type');
-        effectNote.slide = slideType === 'slide-up' || slideType === 'up' ? 'up' : 'down';
+  }
+  
+  // Проверка на MusicXML (начинается с <?xml или <score-partwise)
+  if (trimmedContent.startsWith('<?xml') || trimmedContent.startsWith('<score-partwise')) {
+    return await importFromMusicXML(trimmedContent);
+  }
+  
+  // Проверка по расширению файла
+  if (fileName) {
+    const ext = fileName.split('.').pop()?.toLowerCase();
+    if (ext === 'musicxml' || ext === 'xml') {
+      return await importFromMusicXML(content);
+    }
+    if (ext === 'gpjson' || ext === 'gp') {
+      return importFromGpJson(content);
+    }
+    if (ext === 'json') {
+      try {
+        return importFromJson(content);
+      } catch (e) {
+        // Если не удалось, пробуем GP JSON
+        return importFromGpJson(content);
       }
     }
   }
   
-  return effectNote;
-}
+  throw new Error('Неизвестный формат файла. Поддерживаются форматы: JSON, Guitar Pro JSON, MusicXML');
+};

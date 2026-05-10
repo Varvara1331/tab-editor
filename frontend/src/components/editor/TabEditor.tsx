@@ -12,10 +12,22 @@ import TabString from './TabString';
 import TabControls from './TabControls';
 import TabPlayer from './TabPlayer';
 import ExportModal from '../modals/ExportModal';
-import MeasureSizeSelector from './MeasureSizeSelector';
 import { saveToLibrary, updateInLibrary } from '../../services/libraryService';
 import { getCurrentUser } from '../../services/authService';
 import './TabEditor.css';
+import { 
+  Guitar, 
+  Save, 
+  Rocket,
+  Download, 
+  Globe, 
+  Eye, 
+  Plus,
+  Minus,
+  Grid2X2,
+  Grid3X3,
+  Loader2
+} from 'lucide-react';
 
 // ==================== КОНСТАНТЫ ====================
 
@@ -30,33 +42,17 @@ const MAX_FRET = 24;
 
 // ==================== ИНТЕРФЕЙСЫ ====================
 
-/**
- * Свойства компонента TabEditor
- */
 interface TabEditorProps {
-  /** Начальные данные табулатуры (при редактировании существующей) */
   initialTabData?: TabData;
-  /** Функция обратного вызова при изменении данных */
   onTabDataChange?: () => void;
-  /** Функция обратного вызова при сохранении */
   onTabSaved?: () => void;
-  /** Функция обратного вызова для создания новой табулатуры */
   onNewTabRequest?: () => void;
-  /** Функция обратного вызова при изменении состояния (для сохранения в localStorage) */
   onStateChange?: (state: any) => void;
-  /** Восстановленное состояние (из localStorage) */
   restoredState?: any;
 }
 
 // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
 
-/**
- * Инициализация массива тактов с пустыми нотами
- * 
- * @param count - Количество тактов
- * @param notesCount - Количество нот в такте (по умолчанию 16)
- * @returns Массив пустых тактов
- */
 const initializeMeasures = (count: number, notesCount: number = 16): TabMeasure[] => {
   return Array.from({ length: count }, (_, i) => ({
     id: `measure-${i}-${Date.now()}`,
@@ -68,16 +64,8 @@ const initializeMeasures = (count: number, notesCount: number = 16): TabMeasure[
   }));
 };
 
-/**
- * Главный компонент редактора табулатур
- * 
- * @component
- * @param props - Свойства компонента
- * @returns Отрисованный редактор табулатур
- */
 const TabEditor: React.FC<TabEditorProps> = ({ 
   initialTabData, 
-  onTabDataChange, 
   onTabSaved, 
   onNewTabRequest, 
   onStateChange, 
@@ -85,10 +73,16 @@ const TabEditor: React.FC<TabEditorProps> = ({
 }) => {
   const currentUser = getCurrentUser();
   const hasRestoredRef = useRef<boolean>(false);
+  
+  // Refs
+  const measuresContainerRef = useRef<HTMLDivElement>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isProcessingRef = useRef<boolean>(false);
+  const isDraggingRef = useRef<boolean>(false);
+  const tabPlayerRef = useRef<any>(null); // Ссылка на компонент плеера
 
   // ==================== СОСТОЯНИЯ ====================
 
-  /** Количество нот в такте (размер такта: 4, 8 или 16) */
   const [notesPerMeasure, setNotesPerMeasure] = useState<number>(() => {
     if (restoredState?.notesPerMeasure !== undefined && !hasRestoredRef.current) {
       return restoredState.notesPerMeasure;
@@ -102,14 +96,11 @@ const TabEditor: React.FC<TabEditorProps> = ({
     return 16;
   });
 
-  /** Данные табулатуры */
   const [tabData, setTabData] = useState<TabData>(() => {
-    // Восстановление сохранённого состояния
     if (restoredState?.tabData && !hasRestoredRef.current) { 
       hasRestoredRef.current = true; 
       return restoredState.tabData; 
     }
-    // Редактирование существующей табулатуры
     if (initialTabData) {
       const loadedNotesPerMeasure = initialTabData.notesPerMeasure || 
                                     initialTabData.measures[0]?.strings[0]?.notes?.length || 
@@ -124,7 +115,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
         notesPerMeasure: loadedNotesPerMeasure
       };
     }
-    // Новая табулатура
     return { 
       id: undefined, 
       userId: currentUser?.id, 
@@ -140,7 +130,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
     };
   });
 
-  /** Режим только для чтения (просмотр чужой табулатуры) */
   const [isReadOnly, setIsReadOnly] = useState<boolean>(() => {
     if (restoredState?.isReadOnly !== undefined && !hasRestoredRef.current) {
       return restoredState.isReadOnly;
@@ -148,7 +137,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
     return tabData.isOwn === false;
   });
 
-  /** Публичный статус табулатуры */
   const [isPublic, setIsPublic] = useState<boolean>(() => {
     if (restoredState?.isPublic !== undefined && !hasRestoredRef.current) {
       return restoredState.isPublic;
@@ -156,7 +144,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
     return tabData.isPublic || false;
   });
 
-  /** Флаг новой табулатуры (ещё не сохранённой) */
   const [isNewTab, setIsNewTab] = useState<boolean>(() => {
     if (restoredState?.isNewTab !== undefined && !hasRestoredRef.current) {
       return restoredState.isNewTab;
@@ -164,84 +151,36 @@ const TabEditor: React.FC<TabEditorProps> = ({
     return !tabData.id;
   });
 
-  /** Текущая позиция курсора (такт, струна, нота) */
   const [cursor, setCursor] = useState<CursorPosition>(() => 
     restoredState?.cursor && !hasRestoredRef.current 
       ? restoredState.cursor 
       : { measureIndex: 0, stringIndex: 0, noteIndex: 0 }
   );
   
-  /** Выбранный инструмент для редактирования */
   const [selectedTool, setSelectedTool] = useState<'note' | 'bend' | 'hammer' | 'vibrato' | 'slide'>(() => 
     restoredState?.selectedTool && !hasRestoredRef.current 
       ? restoredState.selectedTool 
       : 'note'
   );
   
-  /** Текущая позиция воспроизведения (для плеера) */
   const [playingPosition, setPlayingPosition] = useState<CursorPosition | null>(null);
-  
-  /** Позиция полоски воспроизведения (в пикселях) */
   const [playheadLeft, setPlayheadLeft] = useState<number | null>(null);
-  
-  /** Флаг перетаскивания полоски воспроизведения */
+  const [playheadTop, setPlayheadTop] = useState<number | null>(null);
+  const [currentMeasureHeight, setCurrentMeasureHeight] = useState<number>(100);
   const [isDraggingPlayhead, setIsDraggingPlayhead] = useState<boolean>(false);
-  
-  /** Ожидаемый ввод лада (для двузначных чисел) */
   const [pendingFret, setPendingFret] = useState<string>('');
-  
-  /** Ожидаемый ввод для хаммера (накапливает оба лада через пробел) */
   const [pendingHammerInput, setPendingHammerInput] = useState<string>('');
-  
-  /** Ожидаемый ввод для слайда (накапливает первый и второй лад через пробел) */
   const [pendingSlideInput, setPendingSlideInput] = useState<string>('');
-  
-  /** Уровень масштабирования (50-200%) */
-  const [zoom, setZoom] = useState<number>(() => 
-    restoredState?.zoom !== undefined && !hasRestoredRef.current 
-      ? restoredState.zoom 
-      : 100
-  );
-  
-  /** Имя файла для экспорта */
-  const [fileName] = useState<string>(() => 
-    restoredState?.fileName && !hasRestoredRef.current 
-      ? restoredState.fileName 
-      : 'Без названия.gp'
-  );
-  
-  /** Флаг открытия модального окна экспорта */
+  const [zoom, setZoom] = useState<number>(() => restoredState?.zoom || 100);
+  const [fileName] = useState<string>(() => restoredState?.fileName || 'Без названия.gp');
   const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
-  
-  /** Флаг сохранения (для предотвращения повторных сохранений) */
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  
-  /** Раскладка табулатуры: горизонтальная (в строку) или вертикальная (в столбец) */
   const [tabLayout, setTabLayout] = useState<'horizontal' | 'vertical'>(() => 
-    restoredState?.tabLayout && !hasRestoredRef.current 
-      ? restoredState.tabLayout 
-      : 'horizontal'
+    restoredState?.tabLayout || 'horizontal'
   );
-
-  // ==================== REFS ====================
-  
-  /** Ref контейнера с тактами (для скролла и позиционирования) */
-  const measuresContainerRef = useRef<HTMLDivElement>(null);
-  
-  /** Таймер для двузначного ввода лада */
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-  
-  /** Флаг обработки (для предотвращения конфликтов) */
-  const isProcessingRef = useRef<boolean>(false);
-  
-  /** Флаг перетаскивания (для глобальных обработчиков) */
-  const isDraggingRef = useRef<boolean>(false);
 
   // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
 
-  /**
-   * Очистка таймера ввода лада
-   */
   const clearFretTimeout = useCallback(() => { 
     if (timeoutRef.current) { 
       clearTimeout(timeoutRef.current); 
@@ -249,12 +188,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
     } 
   }, []);
 
-  /**
-   * Изменение размера такта (количества позиций)
-   * При изменении размера все такты адаптируются (добавляются/удаляются пустые ноты)
-   * 
-   * @param newSize - Новый размер такта (4, 8 или 16)
-   */
   const handleNotesPerMeasureChange = useCallback((newSize: number) => {
     if (isReadOnly) return;
     
@@ -264,15 +197,12 @@ const TabEditor: React.FC<TabEditorProps> = ({
           const currentNotes = string.notes;
           let newNotes;
           
-          
           if (newSize > currentNotes.length) {
-            // Добавление пустых нот в конец
             newNotes = [
               ...currentNotes,
               ...Array.from({ length: newSize - currentNotes.length }, () => ({ fret: null }))
             ];
           } else if (newSize < currentNotes.length) {
-            // Обрезание лишних нот
             newNotes = currentNotes.slice(0, newSize);
           } else {
             newNotes = currentNotes;
@@ -281,13 +211,11 @@ const TabEditor: React.FC<TabEditorProps> = ({
           return { ...string, notes: newNotes };
         });
         const newTimeSignature: [number, number] = 
-          newSize === 4 ? [4, 4] : 
-          newSize === 8 ? [8, 8] : [16, 16];
+          newSize === 4 ? [4, 4] : newSize === 8 ? [8, 8] : [16, 16];
         
         return { ...measure, strings: newStrings, timeSignature: newTimeSignature };
       });
       
-      // ВАЖНО: сохраняем notesPerMeasure в tabData
       return { 
         ...prev, 
         measures: newMeasures,
@@ -297,18 +225,12 @@ const TabEditor: React.FC<TabEditorProps> = ({
     
     setNotesPerMeasure(newSize);
     
-    // Корректировка позиции курсора
     setCursor(prev => ({
       ...prev,
       noteIndex: Math.min(prev.noteIndex, newSize - 1)
     }));
   }, [isReadOnly]);
 
-  /**
-   * Добавление ноты на текущей позиции курсора
-   * 
-   * @param fretValue - Номер лада (0-24)
-   */
   const addNoteAtCursor = useCallback((fretValue: number) => {
     if (isReadOnly || isProcessingRef.current) return;
     isProcessingRef.current = true;
@@ -321,7 +243,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
       const notes = [...string.notes];
       const noteData: any = { fret: fretValue };
       
-      // Добавление эффекта в зависимости от выбранного инструмента
       if (selectedTool === 'bend') {
         noteData.bend = true;
       } else if (selectedTool === 'vibrato') {
@@ -337,7 +258,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
       return { ...prev, measures: newMeasures };
     });
 
-    // Автоматическое перемещение курсора на следующую позицию
     setCursor(prev => ({ 
       ...prev, 
       noteIndex: Math.min(prev.noteIndex + 1, notesPerMeasure - 1) 
@@ -348,12 +268,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
     }, 100);
   }, [cursor, selectedTool, isReadOnly, notesPerMeasure]);
 
-  /**
-   * Добавление хаммера с двумя ладами на текущей позиции курсора
-   * 
-   * @param fromFret - Начальный лад
-   * @param toFret - Конечный лад
-   */
   const addHammerAtCursor = useCallback((fromFret: number, toFret: number) => {
     if (isReadOnly || isProcessingRef.current) return;
     isProcessingRef.current = true;
@@ -365,9 +279,8 @@ const TabEditor: React.FC<TabEditorProps> = ({
       const string = { ...strings[cursor.stringIndex] };
       const notes = [...string.notes];
       
-      // Создаем ноту с хаммером (два лада)
       const noteData: any = { 
-        fret: fromFret,  // Основной лад - начальный
+        fret: fromFret,
         hammer: {
           fromFret: fromFret,
           toFret: toFret
@@ -383,7 +296,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
       return { ...prev, measures: newMeasures };
     });
 
-    // Автоматическое перемещение курсора на следующую позицию
     setCursor(prev => ({ 
       ...prev, 
       noteIndex: Math.min(prev.noteIndex + 1, notesPerMeasure - 1) 
@@ -394,20 +306,10 @@ const TabEditor: React.FC<TabEditorProps> = ({
     }, 100);
   }, [cursor, isReadOnly, notesPerMeasure]);
 
-  /**
-   * Добавление слайда с двумя ладами на текущей позиции курсора
-   * Направление слайда определяется автоматически:
-   * - если toFret > fromFret: слайд вверх (/)
-   * - если toFret < fromFret: слайд вниз (\)
-   * 
-   * @param fromFret - Начальный лад
-   * @param toFret - Конечный лад
-   */
   const addSlideAtCursor = useCallback((fromFret: number, toFret: number) => {
     if (isReadOnly || isProcessingRef.current) return;
     isProcessingRef.current = true;
     
-    // Определяем направление слайда автоматически
     const direction: 'up' | 'down' = toFret > fromFret ? 'up' : 'down';
     
     setTabData(prev => {
@@ -417,7 +319,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
       const string = { ...strings[cursor.stringIndex] };
       const notes = [...string.notes];
       
-      // Создаем начальную ноту со слайдом
       const noteData: any = { 
         fret: fromFret,
         slide: direction
@@ -425,7 +326,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
       
       notes[cursor.noteIndex] = { ...notes[cursor.noteIndex], ...noteData };
       
-      // Добавляем целевую ноту на следующей позиции
       if (cursor.noteIndex + 1 < notesPerMeasure) {
         const nextNoteData: any = { fret: toFret };
         notes[cursor.noteIndex + 1] = { ...notes[cursor.noteIndex + 1], ...nextNoteData };
@@ -439,7 +339,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
       return { ...prev, measures: newMeasures };
     });
 
-    // Автоматическое перемещение курсора на позицию после слайда
     setCursor(prev => ({ 
       ...prev, 
       noteIndex: Math.min(prev.noteIndex + 2, notesPerMeasure - 1) 
@@ -450,9 +349,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
     }, 100);
   }, [cursor, isReadOnly, notesPerMeasure]);
 
-  /**
-   * Удаление ноты на текущей позиции курсора
-   */
   const handleDeleteNote = useCallback(() => {
     if (isReadOnly) return;
     
@@ -474,13 +370,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
     });
   }, [cursor, isReadOnly]);
 
-  /**
-   * Обработчик клика по ноте для установки курсора
-   * 
-   * @param measureIndex - Индекс такта
-   * @param stringIndex - Индекс струны
-   * @param noteIndex - Индекс ноты в такте
-   */
   const handleNoteClick = useCallback((measureIndex: number, stringIndex: number, noteIndex: number) => {
     if (isReadOnly) return;
     
@@ -491,27 +380,19 @@ const TabEditor: React.FC<TabEditorProps> = ({
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
   }, [isReadOnly]);
 
-  /**
-   * Глобальный обработчик клавиш для навигации и ввода нот
-   */
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (isReadOnly) return;
     
-    // Игнорирование ввода в полях ввода
     const target = e.target as HTMLElement;
     if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
 
-    // Ввод цифр для указания лада
     if (e.key >= '0' && e.key <= '9') {
       e.preventDefault();
       if (isProcessingRef.current) return;
       
       if (selectedTool === 'hammer') {
-        // Для хаммера накапливаем ввод
         setPendingHammerInput(prev => {
           const newInput = prev + e.key;
-          
-          // Проверяем, не закончили ли мы ввод двух ладов
           const parts = newInput.trim().split(/\s+/);
           
           if (parts.length === 2) {
@@ -539,11 +420,8 @@ const TabEditor: React.FC<TabEditorProps> = ({
           return newInput;
         });
       } else if (selectedTool === 'slide') {
-        // Для слайда накапливаем ввод (только два лада через пробел)
         setPendingSlideInput(prev => {
           const newInput = prev + e.key;
-          
-          // Проверяем, не закончили ли мы ввод двух ладов
           const parts = newInput.trim().split(/\s+/);
           
           if (parts.length === 2) {
@@ -571,11 +449,9 @@ const TabEditor: React.FC<TabEditorProps> = ({
           return newInput;
         });
       } else {
-        // Обычный ввод ноты
         setPendingFret(prev => {
           const newPending = prev + e.key;
           
-          // Двузначный лад (10-24)
           if (newPending.length === 2) {
             const fretValue = parseInt(newPending, 10);
             if (fretValue >= 0 && fretValue <= MAX_FRET) {
@@ -587,7 +463,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
           
           if (timeoutRef.current) clearTimeout(timeoutRef.current);
           
-          // Таймер для однозначного лада (0-9)
           timeoutRef.current = setTimeout(() => {
             const fretValue = parseInt(newPending, 10);
             if (!isNaN(fretValue) && fretValue >= 0 && fretValue <= 9) {
@@ -603,7 +478,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
       return;
     }
 
-    // Обработка пробела для разделения ладов
     if (e.key === ' ') {
       e.preventDefault();
       if (selectedTool === 'hammer') {
@@ -618,7 +492,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
       return;
     }
 
-    // Навигация по табулатуре
     switch (e.key) {
       case 'ArrowRight':
         e.preventDefault();
@@ -660,7 +533,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
         clearFretTimeout();
         break;
       default:
-        // Выбор инструмента
         if (e.key === 'b') setSelectedTool('bend');
         else if (e.key === 'h') setSelectedTool('hammer');
         else if (e.key === 'v') setSelectedTool('vibrato');
@@ -669,11 +541,35 @@ const TabEditor: React.FC<TabEditorProps> = ({
     }
   }, [addNoteAtCursor, addHammerAtCursor, addSlideAtCursor, clearFretTimeout, cursor, isReadOnly, handleDeleteNote, notesPerMeasure, selectedTool, pendingHammerInput, pendingSlideInput]);
 
+  // ==================== НОВЫЙ ЭФФЕКТ ДЛЯ УПРАВЛЕНИЯ ПЛЕЕРОМ ====================
+  
+  // Обработчик клавиш для управления плеером (пробел и enter)
+  useEffect(() => {
+    if (isReadOnly) return;
+
+    const handlePlayerKeys = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      // Игнорируем, если пользователь печатает в инпуте
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+      
+      // Обработка пробела и Enter
+      if (e.code === 'Space' || e.code === 'Enter') {
+        e.preventDefault(); // Предотвращаем скролл страницы при пробеле
+        e.stopPropagation();
+        
+        // Вызываем метод toggle у плеера через ref
+        if (tabPlayerRef.current) {
+          tabPlayerRef.current.toggle();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handlePlayerKeys);
+    return () => window.removeEventListener('keydown', handlePlayerKeys);
+  }, [isReadOnly]);
+
   // ==================== ОБРАБОТЧИКИ ДЕЙСТВИЙ ====================
 
-  /**
-   * Добавление нового такта
-   */
   const addMeasure = () => {
     if (isReadOnly) return;
     setTabData(prev => ({ 
@@ -690,25 +586,14 @@ const TabEditor: React.FC<TabEditorProps> = ({
     }));
   };
 
-  /**
-   * Удаление такта
-   * 
-   * @param index - Индекс удаляемого такта
-   */
   const removeMeasure = (index: number) => {
     if (isReadOnly || tabData.measures.length <= 1) return;
     setTabData(prev => ({ ...prev, measures: prev.measures.filter((_, i) => i !== index) }));
   };
 
-  /** Увеличение масштаба (макс. 200%) */
   const handleZoomIn = () => setZoom(prev => Math.min(prev + 10, 200));
-  
-  /** Уменьшение масштаба (мин. 50%) */
   const handleZoomOut = () => setZoom(prev => Math.max(prev - 10, 50));
 
-  /**
-   * Сохранение табулатуры в библиотеку
-   */
   const handleSaveToLibrary = async () => {
     if (!tabData.isOwn) {
       alert('Нельзя сохранять чужие табулатуры');
@@ -719,7 +604,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
     setIsSaving(true);
     
     try {
-      // Добавление метаданных о размере такта
       const tabDataWithMeta = {
         ...tabData,
         notesPerMeasure: notesPerMeasure,
@@ -727,7 +611,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
       
       const success = await saveToLibrary(tabDataWithMeta);
       if (success) {
-        // Для новой табулатуры получаем ID от сервера
         if (isNewTab && tabData.id === undefined) {
           const { getLibrary } = await import('../../services/libraryService');
           const updatedTabs = await getLibrary();
@@ -758,12 +641,8 @@ const TabEditor: React.FC<TabEditorProps> = ({
     }
   };
 
-  /** Открытие модального окна экспорта */
   const handleDownload = () => setIsExportModalOpen(true);
   
-  /**
-   * Публикация/скрытие табулатуры
-   */
   const handlePublish = async () => {
     if (!tabData.isOwn) {
       alert('Нельзя публиковать чужие табулатуры');
@@ -790,60 +669,48 @@ const TabEditor: React.FC<TabEditorProps> = ({
     }
   };
 
-  /**
-   * Обработчик изменения названия
-   */
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => { 
     if (!isReadOnly) setTabData(prev => ({ ...prev, title: e.target.value })); 
   };
   
-  /**
-   * Обработчик изменения исполнителя
-   */
   const handleArtistChange = (e: React.ChangeEvent<HTMLInputElement>) => { 
     if (!isReadOnly) setTabData(prev => ({ ...prev, artist: e.target.value })); 
   };
   
-  /**
-   * Обработчик изменения строя
-   */
   const handleTuningChange = (newTuning: string[]) => { 
-    if (!isReadOnly) setTabData({ ...tabData, tuning: newTuning }); 
+    if (!isReadOnly) setTabData(prev => ({ ...prev, tuning: newTuning })); 
   };
   
-  /**
-   * Обработчик изменения позиции воспроизведения
-   */
   const handlePlayingPositionChange = useCallback((position: CursorPosition) => {
     setPlayingPosition(position);
   }, []);
 
-  // ==================== ОБРАБОТЧИКИ ПОЛОСКИ ВОСПРОИЗВЕДЕНИЯ ====================
-
-  /**
-   * Обработчик позиции полоски от плеера
-   */
-  const handlePlayheadPosition = useCallback((position: { left: number; measureIndex: number; noteIndex: number } | null) => {
+  const handlePlayheadPosition = useCallback((position: { left: number; top: number; measureIndex: number; noteIndex: number; height?: number } | null) => {
     if (position && !isDraggingRef.current) {
-      setPlayheadLeft(position.left);
+      if (tabLayout === 'horizontal') {
+        setPlayheadLeft(position.left);
+        setPlayheadTop(null);
+      } else {
+        setPlayheadTop(position.top);
+        setPlayheadLeft(position.left);
+        if (position.height) {
+          setCurrentMeasureHeight(position.height);
+        }
+      }
     } else if (position === null) {
       setPlayheadLeft(null);
+      setPlayheadTop(null);
     }
-  }, []);
+  }, [tabLayout]);
 
-  /**
-   * Начало перетаскивания полоски
-   */
   const handlePlayheadMouseDown = useCallback((e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDraggingPlayhead(true);
     isDraggingRef.current = true;
     
-    // Меняем курсор на время перетаскивания
-    document.body.style.cursor = 'ew-resize';
+    document.body.style.cursor = tabLayout === 'horizontal' ? 'ew-resize' : 'ns-resize';
     
-    // Сразу обрабатываем позицию под курсором
     const element = document.elementFromPoint(e.clientX, e.clientY);
     const noteCell = element?.closest('.note-cell');
     if (noteCell) {
@@ -854,11 +721,29 @@ const TabEditor: React.FC<TabEditorProps> = ({
         const containerRect = measuresContainerRef.current?.getBoundingClientRect();
         const noteRect = noteCell.getBoundingClientRect();
         const scrollLeft = measuresContainerRef.current?.scrollLeft || 0;
+        const scrollTop = measuresContainerRef.current?.scrollTop || 0;
+        
         if (containerRect) {
-          const leftPosition = noteRect.left - containerRect.left + scrollLeft + (noteRect.width / 2);
-          setPlayheadLeft(leftPosition);
+          if (tabLayout === 'horizontal') {
+            const leftPosition = noteRect.left - containerRect.left + scrollLeft + (noteRect.width / 2);
+            setPlayheadLeft(leftPosition);
+          } else {
+            const measureElement = noteCell.closest('.measure');
+            if (measureElement) {
+              const measureRect = measureElement.getBoundingClientRect();
+              const topPosition = measureRect.top - containerRect.top + scrollTop;
+              const leftPosition = noteRect.left - containerRect.left + scrollLeft + (noteRect.width / 2);
+              setPlayheadTop(topPosition);
+              setPlayheadLeft(leftPosition);
+              setCurrentMeasureHeight(measureRect.height);
+            } else {
+              const topPosition = noteRect.top - containerRect.top + scrollTop;
+              const leftPosition = noteRect.left - containerRect.left + scrollLeft + (noteRect.width / 2);
+              setPlayheadTop(topPosition);
+              setPlayheadLeft(leftPosition);
+            }
+          }
           
-          // Отправляем событие для плеера
           const event = new CustomEvent('seekToPosition', {
             detail: { measureIndex, noteIndex }
           });
@@ -866,15 +751,11 @@ const TabEditor: React.FC<TabEditorProps> = ({
         }
       }
     }
-  }, []);
+  }, [tabLayout]);
 
-  /**
-   * Глобальный обработчик движения мыши (для перетаскивания полоски)
-   */
   const handleGlobalMouseMove = useCallback((e: MouseEvent) => {
     if (!isDraggingRef.current || !measuresContainerRef.current) return;
     
-    // Находим элемент под курсором
     const element = document.elementFromPoint(e.clientX, e.clientY);
     const noteCell = element?.closest('.note-cell');
     
@@ -886,23 +767,36 @@ const TabEditor: React.FC<TabEditorProps> = ({
         const containerRect = measuresContainerRef.current.getBoundingClientRect();
         const noteRect = noteCell.getBoundingClientRect();
         const scrollLeft = measuresContainerRef.current.scrollLeft;
+        const scrollTop = measuresContainerRef.current.scrollTop;
+        
         const leftPosition = noteRect.left - containerRect.left + scrollLeft + (noteRect.width / 2);
         
-        // Обновляем позицию полоски во время перетаскивания
-        setPlayheadLeft(leftPosition);
+        if (tabLayout === 'horizontal') {
+          setPlayheadLeft(leftPosition);
+          setPlayheadTop(null);
+        } else {
+          const measureElement = noteCell.closest('.measure');
+          if (measureElement) {
+            const measureRect = measureElement.getBoundingClientRect();
+            const topPosition = measureRect.top - containerRect.top + scrollTop;
+            setPlayheadTop(topPosition);
+            setPlayheadLeft(leftPosition);
+            setCurrentMeasureHeight(measureRect.height);
+          } else {
+            const topPosition = noteRect.top - containerRect.top + scrollTop;
+            setPlayheadTop(topPosition);
+            setPlayheadLeft(leftPosition);
+          }
+        }
         
-        // Отправляем событие для плеера
         const event = new CustomEvent('seekToPosition', {
           detail: { measureIndex, noteIndex }
         });
         window.dispatchEvent(event);
       }
     }
-  }, []);
+  }, [tabLayout]);
 
-  /**
-   * Глобальный обработчик отпускания мыши (окончание перетаскивания)
-   */
   const handleGlobalMouseUp = useCallback(() => {
     setIsDraggingPlayhead(false);
     isDraggingRef.current = false;
@@ -911,9 +805,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
 
   // ==================== ЭФФЕКТЫ ====================
 
-  /**
-   * Сохранение состояния для восстановления (при переключении вкладок)
-   */
   useEffect(() => {
     if (onStateChange && !initialTabData) {
       onStateChange({ 
@@ -931,16 +822,10 @@ const TabEditor: React.FC<TabEditorProps> = ({
     }
   }, [tabData, isReadOnly, isPublic, isNewTab, cursor, selectedTool, zoom, fileName, tabLayout, notesPerMeasure, onStateChange, initialTabData]);
 
-  /**
-   * Сброс флага восстановления при новой загрузке
-   */
   useEffect(() => { 
     if (initialTabData) hasRestoredRef.current = false; 
   }, [initialTabData]);
 
-  /**
-   * Регистрация глобального обработчика клавиш
-   */
   useEffect(() => {
     window.addEventListener('keydown', handleKeyDown);
     return () => { 
@@ -949,9 +834,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
     };
   }, [handleKeyDown]);
 
-  /**
-   * Регистрация глобальных обработчиков для перетаскивания полоски
-   */
   useEffect(() => {
     if (isDraggingPlayhead) {
       window.addEventListener('mousemove', handleGlobalMouseMove);
@@ -964,9 +846,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
     };
   }, [isDraggingPlayhead, handleGlobalMouseMove, handleGlobalMouseUp]);
 
-  /**
-   * Автосохранение при изменениях (с задержкой 2 секунды)
-   */
   useEffect(() => {
     if (!tabData.isOwn || !tabData.id || isSaving || isReadOnly) {
       return;
@@ -979,17 +858,11 @@ const TabEditor: React.FC<TabEditorProps> = ({
     }, 2000);
     
     return () => clearTimeout(timeoutId);
-  }, [tabData, isReadOnly, isSaving, tabData.isOwn]);
+  }, [tabData, isReadOnly, isSaving]);
 
-  /**
-   * Синхронизация размера такта с загруженными данными
-   */
   useEffect(() => {
     if (tabData.measures && tabData.measures.length > 0) {
-      // Получаем реальную длину массива нот из первого такта первой струны
       const actualNotesPerMeasure = tabData.notesPerMeasure || tabData.measures[0]?.strings[0]?.notes?.length || 16;
-      
-      // Используем notesPerMeasure из tabData или фактическую длину
       const targetNotesPerMeasure = tabData.notesPerMeasure || actualNotesPerMeasure;
       
       if (targetNotesPerMeasure !== notesPerMeasure) {
@@ -1002,17 +875,15 @@ const TabEditor: React.FC<TabEditorProps> = ({
   
   return (
     <div className={`tab-editor ${tabLayout}`}>
-      {/* Баннер режима только для чтения */}
       {isReadOnly && (
         <div className="readonly-banner">
           ⚠️ Режим просмотра. Вы не можете изменять эту табулатуру.
         </div>
       )}
       
-      {/* Верхняя панель с информацией о файле и действиями */}
       <div className="editor-header">
         <div className="file-info">
-          <div className="file-icon">🎸</div>
+          <div className="file-icon"><Guitar size={32} /></div>
           <div className="file-details">
             <input 
               type="text" 
@@ -1037,70 +908,65 @@ const TabEditor: React.FC<TabEditorProps> = ({
           </div>
         </div>
         <div className="file-actions">
-          <button className="btn btn-secondary" onClick={onNewTabRequest}>✨ Новая</button>
+          <button className="btn btn-secondary" title="Новая табулатура" onClick={onNewTabRequest}>
+            <Plus size={16} />
+          </button>
           {!isReadOnly && tabData.isOwn && (
             <button 
-              className={`btn ${isPublic ? 'btn-success' : 'btn-secondary'}`} 
+              className={`btn btn-publish ${isPublic ? 'published' : ''}`} 
               onClick={handlePublish} 
               disabled={isSaving}
+              title={isPublic ? 'Скрыть публикацию' : 'Опубликовать'}
             >
-              {isPublic ? '🌍 Опубликовано' : '🚀 Опубликовать'}
+              {isPublic ? <Globe size={16} /> : <Rocket size={16} />}
             </button>
           )}
           {tabData.isOwn && (
             <button 
-              className="btn btn-primary" 
+              className={`btn btn-save ${!isNewTab && tabData.id ? 'saved' : ''}`} 
               onClick={handleSaveToLibrary} 
               disabled={isSaving}
+              title={isSaving ? 'Сохранение...' : 'Сохранить в библиотеку'}
             >
-              {isSaving ? '⏳ Сохранение...' : '💾 Сохранить'}
+              {isSaving ? <Loader2 size={16} className="spinner" /> : <Save size={16} />}
             </button>
           )}
-          <button className="btn btn-secondary" onClick={handleDownload}>⬇️ Скачать</button>
+          <button className="btn btn-secondary" title="Скачать" onClick={handleDownload}>
+            <Download size={16} />
+          </button>
         </div>
       </div>
 
-      {/* Плеер для воспроизведения */}
-      <TabPlayer 
-        tabData={tabData} 
-        onPositionChange={handlePlayingPositionChange}
-        onPlayheadPosition={handlePlayheadPosition}
-        measuresContainerRef={measuresContainerRef}
-      />
-
-      {/* Панель инструментов */}
+      {/* Панель инструментов с плеером внутри */}
       <TabControls 
         selectedTool={selectedTool} 
         onToolSelect={setSelectedTool} 
-        onAddMeasure={addMeasure} 
-        tuning={tabData.tuning} 
-        onTuningChange={handleTuningChange} 
-        onZoomIn={handleZoomIn} 
-        onZoomOut={handleZoomOut} 
+        notesPerMeasure={notesPerMeasure}
+        onNotesPerMeasureChange={handleNotesPerMeasureChange}
         isReadOnly={isReadOnly}
-        layout={tabLayout}
-        onLayoutChange={setTabLayout}
+        tuning={tabData.tuning}
+        onTuningChange={handleTuningChange}
+        player={
+          <TabPlayer 
+            ref={tabPlayerRef}  // Передаем ref для управления плеером
+            tabData={tabData} 
+            onPositionChange={handlePlayingPositionChange}
+            onPlayheadPosition={handlePlayheadPosition}
+            measuresContainerRef={measuresContainerRef}
+          />
+        }
       />
-
-      {/* Селектор размера такта */}
-      <div className="tools-panel" style={{ justifyContent: 'space-between' }}>
-        <MeasureSizeSelector
-          notesPerMeasure={notesPerMeasure}
-          onNotesPerMeasureChange={handleNotesPerMeasureChange}
-          isReadOnly={isReadOnly}
-        />
-      </div>
 
       {/* Индикатор ввода лада */}
       {selectedTool === 'hammer' && pendingHammerInput && (
         <div className="fret-indicator hammer-input-indicator">
-          🔨 Хаммер: {pendingHammerInput}
+          Хаммер: {pendingHammerInput}
           {!pendingHammerInput.includes(' ') && <span className="hint"> (нажмите пробел для разделения)</span>}
         </div>
       )}
       {selectedTool === 'slide' && pendingSlideInput && (
         <div className="fret-indicator slide-input-indicator">
-          🎸 Слайд: {pendingSlideInput}
+          Слайд: {pendingSlideInput}
           {!pendingSlideInput.includes(' ') && <span className="hint"> (лад пробел)</span>}
         </div>
       )}
@@ -1110,28 +976,54 @@ const TabEditor: React.FC<TabEditorProps> = ({
         </div>
       )}
 
+      <div className="canvas-toolbar">
+          <div className="canvas-toolbar-group">
+            <span className="canvas-toolbar-label">Масштаб:</span>
+            <button className="canvas-toolbar-btn" onClick={handleZoomOut} title="Уменьшить" type="button">
+              <Minus size={16} />
+            </button>
+            <span className="canvas-zoom-value">{zoom}%</span>
+            <button className="canvas-toolbar-btn" onClick={handleZoomIn} title="Увеличить" type="button">
+              <Plus size={16} />
+            </button>
+          </div>
+
+          <div className="canvas-toolbar-group">
+            <span className="canvas-toolbar-label">Вид:</span>
+            <div className="canvas-layout-toggle">
+              <button 
+                className={`canvas-layout-btn ${tabLayout === 'horizontal' ? 'active' : ''}`}
+                onClick={() => setTabLayout('horizontal')}
+                title="Горизонтальный (в строку)"
+                type="button"
+              >
+                <Grid2X2 size={14} />
+              </button>
+              <button 
+                className={`canvas-layout-btn ${tabLayout === 'vertical' ? 'active' : ''}`}
+                onClick={() => setTabLayout('vertical')}
+                title="Вертикальный (в столбец)"
+                type="button"
+              >
+                <Grid3X3 size={14} />
+              </button>
+            </div>
+          </div>
+
+          <div className="canvas-toolbar-group">
+            <button className="canvas-add-measure-btn" onClick={addMeasure} disabled={isReadOnly} type="button">
+              <Plus size={14} /> Добавить такт
+            </button>
+          </div>
+        </div>
+
       {/* Холст с табулатурой */}
-      <div 
-        className="tab-canvas" 
-        ref={measuresContainerRef} 
-        style={{ 
-          position: 'relative', 
-          overflow: tabLayout === 'horizontal' ? 'auto' : 'visible',
-          maxHeight: tabLayout === 'vertical' ? 'calc(100vh - 300px)' : 'none'
-        }}
-      >
+      <div className="tab-canvas" ref={measuresContainerRef}>
+
         <div 
           className={`measures-container ${tabLayout}`}
-          style={{ 
-            transform: `scale(${zoom / 100})`, 
-            transformOrigin: '0 0',
-            display: tabLayout === 'horizontal' ? 'flex' : 'block',
-            flexDirection: tabLayout === 'horizontal' ? 'row' : 'column',
-            gap: tabLayout === 'horizontal' ? '20px' : '0',
-            minWidth: tabLayout === 'horizontal' ? 'max-content' : 'auto'
-          }}
+          style={{ transform: `scale(${zoom / 100})`, transformOrigin: '0 0' }}
         >
-          {/* Отображение каждого такта */}
           {tabData.measures.map((measure, measureIndex) => (
             <div 
               key={measure.id} 
@@ -1157,7 +1049,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
                   )}
                 </div>
               </div>
-              {/* Отображение каждой струны */}
               {tabData.tuning.map((note, stringIndex) => (
                 <TabString 
                   key={`${measure.id}-string-${stringIndex}`} 
@@ -1170,6 +1061,7 @@ const TabEditor: React.FC<TabEditorProps> = ({
                   playingPosition={playingPosition}
                   measureIndex={measureIndex} 
                   isReadOnly={isReadOnly} 
+                  showStringLabel={measureIndex === 0}
                 />
               ))}
             </div>
@@ -1180,41 +1072,43 @@ const TabEditor: React.FC<TabEditorProps> = ({
         <div 
           className="tab-playhead" 
           style={{ 
-            display: playheadLeft !== null && playingPosition ? 'block' : 'none',
+            display: (tabLayout === 'horizontal' ? playheadLeft !== null : playheadTop !== null) && playingPosition ? 'block' : 'none',
             position: 'absolute',
-            top: 0,
-            bottom: 0,
-            left: playheadLeft !== null ? `${playheadLeft}px` : '0',
-            width: '3px',
+            ...(tabLayout === 'horizontal' ? {
+              top: 0,
+              bottom: 0,
+              left: playheadLeft !== null ? `${playheadLeft}px` : '0',
+              width: '3px',
+              cursor: 'ew-resize',
+            } : {
+              left: playheadLeft !== null ? `${playheadLeft}px` : '30px',
+              top: playheadTop !== null ? `${playheadTop}px` : '0',
+              width: '3px',
+              height: `${currentMeasureHeight}px`,
+              cursor: 'ns-resize',
+            }),
             backgroundColor: '#ff4444',
             zIndex: 100,
-            cursor: 'ew-resize',
-            transform: 'translateX(-50%)'
+            transform: tabLayout === 'horizontal' ? 'translateX(-50%)' : 'translateX(-50%)',
+            pointerEvents: 'auto'
           }}
           onMouseDown={handlePlayheadMouseDown}
         >
-          <div 
-            className="playhead-line" 
-            style={{ 
-              height: '100%', 
-              width: '100%', 
-              backgroundColor: '#ff4444' 
-            }}
-          />
+          <div className="playhead-line" style={{ height: '100%', width: '100%', backgroundColor: '#ff4444' }} />
           <div 
             className="playhead-handle" 
             style={{ 
-              position: 'absolute', 
-              top: -6, 
-              left: '50%', 
+              position: 'absolute',
+              top: -6,
+              left: '50%',
               transform: 'translateX(-50%)',
-              width: '12px', 
-              height: '12px', 
+              width: '12px',
+              height: '12px',
               backgroundColor: '#ff4444', 
               borderRadius: '50%',
               cursor: 'grab'
             }}
-             onMouseDown={handlePlayheadMouseDown}
+            onMouseDown={handlePlayheadMouseDown}
           >
             <div className="playhead-dot" />
           </div>
@@ -1233,18 +1127,14 @@ const TabEditor: React.FC<TabEditorProps> = ({
             selectedTool === 'hammer' ? 'Хаммер (5 пробел 7)' :
             selectedTool === 'vibrato' ? 'Вибрато' : 'Слайд (5 пробел 7)'
           }</span>
-          <span>Масштаб: {zoom}%</span>
-          <span>Вид: {tabLayout === 'horizontal' ? '↔️ Горизонтальный' : '↕️ Вертикальный'}</span>
-          <span>Размер: {notesPerMeasure === 4 ? '4/4' : notesPerMeasure === 8 ? '8/8' : '16/16'}</span>
           {pendingFret && <span>Ввод лада: {pendingFret}</span>}
-          {selectedTool === 'hammer' && pendingHammerInput && <span>🔨 Ввод хаммера: {pendingHammerInput}</span>}
-          {selectedTool === 'slide' && pendingSlideInput && <span>🎸 Ввод слайда: {pendingSlideInput}</span>}
-          {isReadOnly && <span>🔒 Только чтение</span>}
-          {isPublic && <span>🌍 Опубликовано</span>}
+          {selectedTool === 'hammer' && pendingHammerInput && <span>Ввод хаммера: {pendingHammerInput}</span>}
+          {selectedTool === 'slide' && pendingSlideInput && <span>Ввод слайда: {pendingSlideInput}</span>}
+          {isReadOnly && <span><Eye size={12} /> Только чтение</span>}
+          {isPublic && <span><Globe size={12} /> Опубликовано</span>}
         </div>
       </div>
 
-      {/* Модальное окно экспорта */}
       <ExportModal 
         tabData={tabData} 
         isOpen={isExportModalOpen} 

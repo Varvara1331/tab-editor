@@ -7,6 +7,28 @@
  */
 
 import React, { useState, useEffect } from 'react';
+import {
+  BookOpen,
+  GraduationCap,
+  Target,
+  Clock,
+  CheckCircle,
+  Play,
+  RotateCcw,
+  Zap,
+  ChevronRight,
+  Award,
+  Star,
+  FileText,
+  Eye,
+  Users,
+  Trophy,
+  Sparkles,
+  Music,
+  Film,
+  BookMarked,
+  Library
+} from 'lucide-react';
 import './Theory.css';
 import { 
   getTheoryProgress, 
@@ -17,63 +39,37 @@ import {
   TheoryStatistics 
 } from '../../services/theoryService';
 
-/**
- * Интерфейс статьи
- */
+// ==================== ИНТЕРФЕЙСЫ ====================
+
 interface Article {
-  /** Уникальный идентификатор статьи */
   id: string;
-  /** Название статьи */
   title: string;
-  /** Краткое описание */
   description: string;
-  /** HTML содержимое статьи */
   content: string;
-  /** Примерная продолжительность чтения */
   duration: string;
-  /** Уровень сложности */
   difficulty: 'easy' | 'medium' | 'hard';
-  /** Порядок отображения */
   order: number;
-  /** Тест для проверки знаний (опционально) */
   quiz?: Quiz;
 }
 
-/**
- * Интерфейс теста
- */
 interface Quiz {
-  /** Список вопросов */
   questions: Question[];
-  /** Минимальный процент для прохождения */
   passingScore: number;
 }
 
-/**
- * Интерфейс вопроса
- */
 interface Question {
-  /** Уникальный идентификатор вопроса */
   id: string;
-  /** Текст вопроса */
   text: string;
-  /** Тип вопроса */
   type: 'multiple-choice' | 'true-false' | 'practical';
-  /** Варианты ответов (для multiple-choice) */
   options?: string[];
-  /** Правильный ответ */
   correctAnswer: string | string[];
-  /** Объяснение правильного ответа */
   explanation: string;
-  /** Пример кода (опционально) */
   codeExample?: string;
-  /** Ожидаемый вывод (опционально) */
   expectedOutput?: string;
 }
 
-/**
- * Список статей для обучения
- */
+// ==================== ДАННЫЕ СТАТЕЙ ====================
+
 const articles: Article[] = [
   {
     id: 'intro',
@@ -272,29 +268,17 @@ const articles: Article[] = [
   }
 ];
 
-/**
- * Компонент викторины (теста)
- * 
- * @component
- * @param props - Свойства компонента
- * @param props.quiz - Данные теста
- * @param props.onComplete - Функция обратного вызова при завершении теста
- */
+// ==================== КОМПОНЕНТ ВИКТОРИНЫ ====================
+
 const QuizSection: React.FC<{ quiz: Quiz; onComplete: (passed: boolean, score: number) => void }> = ({ quiz, onComplete }) => {
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
   const [submitted, setSubmitted] = useState(false);
   const [score, setScore] = useState(0);
 
-  /**
-   * Обработчик выбора ответа
-   */
   const handleAnswer = (questionId: string, answer: string | string[]) => {
     setAnswers(prev => ({ ...prev, [questionId]: answer }));
   };
 
-  /**
-   * Обработчик отправки ответов
-   */
   const handleSubmit = () => {
     let correctCount = 0;
     quiz.questions.forEach(q => {
@@ -316,20 +300,20 @@ const QuizSection: React.FC<{ quiz: Quiz; onComplete: (passed: boolean, score: n
     setSubmitted(true);
   };
 
-  /**
-   * Обработчик повторного прохождения теста
-   */
   const handleRetry = () => {
     setAnswers({});
     setSubmitted(false);
     setScore(0);
   };
 
-  // Отображение результатов
   if (submitted) {
+    const passed = score >= quiz.passingScore;
     return (
       <div className="quiz-results">
-        <h4>Результаты теста</h4>
+        <h4>
+          {passed ? <Trophy size={24} /> : <Target size={24} />}
+          {passed ? 'Результаты теста' : 'Тест не пройден'}
+        </h4>
         <div className="score-display">
           <span className="score-value">{Math.round(score)}%</span>
           <div className="score-bar">
@@ -342,11 +326,15 @@ const QuizSection: React.FC<{ quiz: Quiz; onComplete: (passed: boolean, score: n
             : '📚 Попробуйте еще раз, чтобы лучше усвоить материал'}
         </p>
         <div className="quiz-actions">
-          <button className="retry-btn" onClick={handleRetry}>Пройти тест снова</button>
+          <button className="retry-btn" onClick={handleRetry}>
+            <RotateCcw size={16} />
+            Пройти тест снова
+          </button>
           <button 
             className="continue-btn" 
             onClick={() => onComplete(score >= quiz.passingScore, score)}
           >
+            <ChevronRight size={16} />
             {score >= quiz.passingScore ? 'Продолжить' : 'Закрыть'}
           </button>
         </div>
@@ -354,13 +342,18 @@ const QuizSection: React.FC<{ quiz: Quiz; onComplete: (passed: boolean, score: n
     );
   }
 
-  // Отображение формы теста
   return (
     <div className="quiz-section">
-      <h4>📝 Проверьте свои знания</h4>
+      <h4>
+        <GraduationCap size={24} />
+        Проверьте свои знания
+      </h4>
       {quiz.questions.map((q, idx) => (
         <div key={q.id} className="quiz-question">
-          <p className="question-text">{idx + 1}. {q.text}</p>
+          <p className="question-text">
+            <span className="question-number">{idx + 1}</span>
+            {q.text}
+          </p>
           {q.type === 'multiple-choice' && q.options && (
             <div className="options">
               {q.options.map(opt => (
@@ -388,7 +381,7 @@ const QuizSection: React.FC<{ quiz: Quiz; onComplete: (passed: boolean, score: n
                     checked={answers[q.id] === opt}
                     onChange={(e) => handleAnswer(q.id, e.target.value)}
                   />
-                  <span>{opt}</span>
+                  <span>{opt === 'True' ? '✅ Правда' : '❌ Ложь'}</span>
                 </label>
               ))}
             </div>
@@ -396,25 +389,16 @@ const QuizSection: React.FC<{ quiz: Quiz; onComplete: (passed: boolean, score: n
         </div>
       ))}
       <button className="submit-quiz-btn" onClick={handleSubmit}>
+        <CheckCircle size={18} />
         Проверить ответы
       </button>
     </div>
   );
 };
 
-/**
- * Компонент раздела теории
- * 
- * @component
- * @returns Отрисованный компонент теории
- * 
- * @example
- * ```typescript
- * <Theory />
- * ```
- */
+// ==================== ОСНОВНОЙ КОМПОНЕНТ ====================
+
 const Theory: React.FC = () => {
-  // Состояния компонента
   const [progress, setProgress] = useState<TheoryProgress>({ 
     completedArticles: [], 
     lastRead: null, 
@@ -428,7 +412,6 @@ const Theory: React.FC = () => {
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'medium' | 'hard'>('all');
   const [showQuiz, setShowQuiz] = useState(false);
 
-  // Загрузка данных при монтировании
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
@@ -448,9 +431,6 @@ const Theory: React.FC = () => {
     loadData();
   }, []);
 
-  /**
-   * Обработчик завершения теста
-   */
   const handleQuizComplete = async (passed: boolean, score: number) => {
     if (passed && selectedArticle && !progress.completedArticles.includes(selectedArticle.id)) {
       try {
@@ -466,17 +446,11 @@ const Theory: React.FC = () => {
     setShowQuiz(false);
   };
 
-  /**
-   * Обработчик выбора статьи
-   */
   const handleArticleClick = (article: Article) => {
     setSelectedArticle(article);
     setShowQuiz(false);
   };
 
-  /**
-   * Получение CSS класса для бейджа сложности
-   */
   const getDifficultyColor = (difficulty: string): string => {
     switch (difficulty) {
       case 'easy': return 'easy';
@@ -486,9 +460,6 @@ const Theory: React.FC = () => {
     }
   };
 
-  /**
-   * Получение текста для бейджа сложности
-   */
   const getDifficultyText = (difficulty: string): string => {
     switch (difficulty) {
       case 'easy': return 'Начинающий';
@@ -498,7 +469,15 @@ const Theory: React.FC = () => {
     }
   };
 
-  // Фильтрация статей
+  const getDifficultyIcon = (difficulty: string) => {
+    switch (difficulty) {
+      case 'easy': return <Zap size={12} />;
+      case 'medium': return <Target size={12} />;
+      case 'hard': return <Award size={12} />;
+      default: return null;
+    }
+  };
+
   const filteredArticles = articles
     .filter(article => 
       article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -511,7 +490,6 @@ const Theory: React.FC = () => {
   const totalCount = articles.length;
   const completionPercentage = (completedCount / totalCount) * 100;
 
-  // Экран загрузки
   if (isLoading) {
     return (
       <div className="theory-container">
@@ -525,12 +503,17 @@ const Theory: React.FC = () => {
 
   return (
     <div className="theory-container">
-      {/* Заголовок и прогресс */}
       <div className="theory-header">
-        <h2>📚 Теория музыки и табулатур</h2>
+        <h2>
+          <Library size={28} />
+          Теория музыки и табулатур
+        </h2>
         <div className="progress-overview">
           <div className="progress-stats">
-            <span className="progress-text">Прогресс: {completedCount}/{totalCount} статей</span>
+            <span className="progress-text">
+              <BookMarked size={14} />
+              Прогресс: {completedCount}/{totalCount} статей
+            </span>
             <div className="progress-bar-container">
               <div 
                 className="progress-bar-fill" 
@@ -541,15 +524,20 @@ const Theory: React.FC = () => {
           </div>
           {statistics && (
             <div className="stats-mini">
-              <span>⭐ {statistics.totalPoints} очков</span>
-              <span>📊 {Math.round(statistics.averageScore)}% средний балл</span>
+              <span>
+                <Star size={14} />
+                {statistics.totalPoints} очков
+              </span>
+              <span>
+                <Target size={14} />
+                {Math.round(statistics.averageScore)}% средний балл
+              </span>
             </div>
           )}
         </div>
       </div>
 
       <div className="theory-content">
-        {/* Боковая панель со списком статей */}
         <aside className="theory-sidebar">
           <div className="search-filter">
             <input
@@ -586,17 +574,26 @@ const Theory: React.FC = () => {
                 <div className="article-header">
                   <h3>{article.title}</h3>
                   {progress.completedArticles.includes(article.id) && (
-                    <span className="completed-badge" aria-label="Изучено">✓</span>
+                    <span className="completed-badge" aria-label="Изучено">
+                      <CheckCircle size={14} />
+                    </span>
                   )}
                 </div>
                 <p className="article-description">{article.description}</p>
                 <div className="article-meta">
                   <span className={`difficulty-badge ${getDifficultyColor(article.difficulty)}`}>
+                    {getDifficultyIcon(article.difficulty)}
                     {getDifficultyText(article.difficulty)}
                   </span>
-                  <span className="duration-badge">⏱ {article.duration}</span>
+                  <span className="duration-badge">
+                    <Clock size={11} />
+                    {article.duration}
+                  </span>
                   {article.quiz && !progress.completedArticles.includes(article.id) && (
-                    <span className="quiz-badge">📝 Тест</span>
+                    <span className="quiz-badge">
+                      <GraduationCap size={11} />
+                      Тест
+                    </span>
                   )}
                 </div>
               </div>
@@ -604,7 +601,6 @@ const Theory: React.FC = () => {
           </div>
         </aside>
 
-        {/* Основная область с содержимым статьи */}
         <main className="theory-main">
           {selectedArticle ? (
             <div className="article-viewer">
@@ -612,9 +608,13 @@ const Theory: React.FC = () => {
                 <h2>{selectedArticle.title}</h2>
                 <div className="article-meta">
                   <span className={`difficulty-badge ${getDifficultyColor(selectedArticle.difficulty)}`}>
+                    {getDifficultyIcon(selectedArticle.difficulty)}
                     {getDifficultyText(selectedArticle.difficulty)}
                   </span>
-                  <span className="duration-badge">⏱ {selectedArticle.duration}</span>
+                  <span className="duration-badge">
+                    <Clock size={12} />
+                    {selectedArticle.duration}
+                  </span>
                 </div>
               </div>
               
@@ -631,14 +631,16 @@ const Theory: React.FC = () => {
                         onClick={() => setShowQuiz(true)}
                         type="button"
                       >
-                        📝 Пройти тест для завершения
+                        <GraduationCap size={18} />
+                        Пройти тест для завершения
                       </button>
                     </div>
                   )}
                   {progress.completedArticles.includes(selectedArticle.id) && (
                     <div className="article-complete">
                       <div className="complete-badge">
-                        ✅ Статья изучена 
+                        <CheckCircle size={20} />
+                        Статья изучена 
                         {progress.quizScores[selectedArticle.id] && (
                           <span className="quiz-score"> (Балл: {progress.quizScores[selectedArticle.id]}%)</span>
                         )}
@@ -657,21 +659,32 @@ const Theory: React.FC = () => {
             </div>
           ) : (
             <div className="theory-welcome">
-              <div className="welcome-icon">🎸</div>
+              <div className="welcome-icon">
+                <Music size={80} />
+              </div>
               <h2>Добро пожаловать в раздел теории!</h2>
               <p>Выберите статью из списка слева, чтобы начать изучение табулатур.</p>
               <div className="quick-stats">
                 <div className="stat">
                   <span className="stat-value">{statistics?.totalArticlesCompleted || 0}</span>
-                  <span className="stat-label">Изучено статей</span>
+                  <span className="stat-label">
+                    <BookOpen size={14} />
+                    Изучено статей
+                  </span>
                 </div>
                 <div className="stat">
                   <span className="stat-value">{statistics?.totalPoints || 0}</span>
-                  <span className="stat-label">Всего очков</span>
+                  <span className="stat-label">
+                    <Star size={14} />
+                    Всего очков
+                  </span>
                 </div>
                 <div className="stat">
                   <span className="stat-value">{Math.round(statistics?.averageScore || 0)}%</span>
-                  <span className="stat-label">Средний балл</span>
+                  <span className="stat-label">
+                    <Target size={14} />
+                    Средний балл
+                  </span>
                 </div>
               </div>
             </div>

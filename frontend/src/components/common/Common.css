@@ -3,7 +3,20 @@
  * @module components/common
  */
 
-/* LoadingSpinner */
+/* ============================================
+   АНИМАЦИИ (если нет в App.css)
+   ============================================ */
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ============================================
+   LOADING SPINNER
+   ============================================ */
+
 .loading-container {
   display: flex;
   flex-direction: column;
@@ -38,57 +51,10 @@
   font-size: 14px;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
+/* ============================================
+   SEARCH BAR
+   ============================================ */
 
-/* EmptyState */
-.empty-state {
-  text-align: center;
-  padding: 60px 20px;
-}
-
-.empty-icon {
-  font-size: 64px;
-  margin-bottom: 20px;
-  opacity: 0.7;
-}
-
-.empty-state h3 {
-  color: #2d3748;
-  font-size: 22px;
-  margin-bottom: 10px;
-}
-
-.empty-state p {
-  color: #4a5568;
-  margin-bottom: 25px;
-  max-width: 400px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.empty-state .action-btn {
-  background: rgba(245, 70, 57, 0.8);
-  color: white;
-  padding: 10px 24px;
-  border: none;
-  border-radius: 24px;
-  font-size: 14px;
-  font-weight: bold;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.empty-state .action-btn:hover {
-  background: rgba(245, 70, 57, 1);
-  transform: translateY(-2px);
-  box-shadow: 0 0 15px 2px rgba(245, 70, 57, 0.5);
-}
-
-/* SearchBar */
 .search-wrapper {
   background-color: rgba(31, 28, 19, 0.9);
   display: flex;
@@ -101,10 +67,6 @@
   border: 7px inset rgba(245, 70, 57, 0.47);
   box-shadow: 0 0 10px 0px #74281b;
   border-radius: 24px;
-}
-
-.search-icon {
-  font-size: 18px;
 }
 
 .search-wrapper .search-input {
@@ -136,4 +98,173 @@
 .search-clear:hover {
   color: #f54639;
   transform: scale(1.1);
+}
+
+/* ============================================
+   LIBRARY HEADER (уникальные стили)
+   ============================================ */
+
+.library-header {
+  text-align: center;
+  padding: 30px 40px;
+  margin-bottom: 30px;
+  background: rgba(42, 37, 32, 0.8);
+  border-radius: 20px;
+  border: 3px solid rgba(245, 70, 57, 0.3);
+  box-shadow: 0 0 15px 5px rgba(116, 40, 27, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.library-header-icon {
+  color: var(--color-primary);
+  filter: drop-shadow(0 0 8px rgba(245, 70, 57, 0.5));
+  animation: iconFloat 3s ease-in-out infinite;
+}
+
+@keyframes iconFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+.library-title {
+  font-size: 32px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: #f54639;
+  text-transform: uppercase;
+  text-shadow: 0 0 10px rgba(245, 70, 57, 0.5);
+  margin: 0;
+}
+
+.library-subtitle {
+  color: #c1bcb2;
+  font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.library-search {
+  padding: 0 40px;
+  margin-bottom: 30px;
+}
+
+.search-results-info {
+  margin-top: 10px;
+  color: #c1bcb2;
+  font-size: 14px;
+  text-align: center;
+}
+
+.library-view-tabs {
+  display: flex;
+  gap: 10px;
+  padding: 0 40px;
+  margin-bottom: 25px;
+  flex-wrap: wrap;
+}
+
+.view-tab {
+  padding: 12px 24px;
+  background: rgba(31, 28, 19, 0.6);
+  border: 2px solid rgba(245, 70, 57, 0.3);
+  border-radius: 24px;
+  color: #dedddc;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: "Courier New", monospace;
+}
+
+.view-tab svg {
+  transition: all 0.3s ease;
+}
+
+.view-tab:hover svg {
+  transform: scale(1.1);
+}
+
+.view-tab:hover {
+  background: rgba(245, 70, 57, 0.1);
+  border-color: rgba(245, 70, 57, 0.5);
+  transform: translateY(-2px);
+}
+
+.view-tab.active {
+  background: rgba(245, 70, 57, 0.2);
+  border-color: rgba(245, 70, 57, 0.7);
+  box-shadow: 0 0 10px 2px rgba(245, 70, 57, 0.3);
+}
+
+.view-tab.active svg {
+  color: var(--color-primary);
+  filter: drop-shadow(0 0 4px rgba(245, 70, 57, 0.5));
+}
+
+.library-import {
+  padding: 0 40px;
+  margin-bottom: 30px;
+}
+
+.import-tab-btn {
+  width: 100%;
+  padding: 12px 24px;
+  background: rgba(245, 70, 57, 0.8);
+  border: none;
+  border-radius: 24px;
+  color: #dedddc;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: "Courier New", monospace;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.import-tab-btn svg {
+  transition: transform 0.3s ease;
+}
+
+.import-tab-btn:hover svg {
+  transform: scale(1.1);
+}
+
+.import-tab-btn:hover {
+  background: rgba(245, 70, 57, 1);
+  transform: translateY(-2px);
+  box-shadow: 0 0 15px 2px rgba(245, 70, 57, 0.5);
+}
+
+/* ============================================
+   АДАПТИВНОСТЬ
+   ============================================ */
+
+@media (max-width: 1024px) {
+  .library-search,
+  .library-view-tabs,
+  .library-import {
+    padding: 0 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .library-title {
+    font-size: 24px;
+  }
+  
+  .library-view-tabs {
+    flex-direction: column;
+  }
+  
+  .view-tab {
+    justify-content: center;
+  }
 }

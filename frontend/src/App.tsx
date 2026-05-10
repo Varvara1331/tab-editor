@@ -13,6 +13,7 @@ import Library from './components/library/Library';
 import Theory from './components/theory/Theory';
 import { useAuthState } from './hooks/useAuthState';
 import { useNavigation } from './hooks/useNavigation';
+import { Music, Library as LibraryIcon, Globe, BookOpen, LogOut, User } from 'lucide-react';
 
 import './App.css';
 
@@ -48,12 +49,28 @@ const App: React.FC = () => {
     resetEditorForUser(currentUser?.id);
   }, [currentUser, resetEditorForUser]);
 
-  // Конфигурация кнопок навигации
+  // Конфигурация кнопок навигации - только иконки
   const navButtons = useMemo(() => [
-    { id: 'editor' as const, label: '🎸 Редактор', ariaLabel: 'Редактор табулатур' },
-    { id: 'library' as const, label: '📚 Библиотека', ariaLabel: 'Моя библиотека' },
-    { id: 'public' as const, label: '🌍 Публикации', ariaLabel: 'Публичные табулатуры' },
-    { id: 'theory' as const, label: '📖 Теория', ariaLabel: 'Теория музыки' },
+    { 
+      id: 'editor' as const, 
+      icon: Music,
+      ariaLabel: 'Редактор табулатур' 
+    },
+    { 
+      id: 'library' as const, 
+      icon: LibraryIcon,
+      ariaLabel: 'Моя библиотека' 
+    },
+    { 
+      id: 'public' as const, 
+      icon: Globe,
+      ariaLabel: 'Публичные табулатуры' 
+    },
+    { 
+      id: 'theory' as const, 
+      icon: BookOpen,
+      ariaLabel: 'Теория музыки' 
+    },
   ], []);
 
   // Экран загрузки
@@ -76,7 +93,7 @@ const App: React.FC = () => {
     <div className="app">
       <header className="app-header">
         <nav className="app-nav" aria-label="Основная навигация">
-          {navButtons.map(({ id, label, ariaLabel }) => (
+          {navButtons.map(({ id, icon: Icon, ariaLabel }) => (
             <button
               key={id}
               className={`nav-btn ${activeTab === id ? 'active' : ''}`}
@@ -84,13 +101,15 @@ const App: React.FC = () => {
               type="button"
               aria-label={ariaLabel}
               aria-current={activeTab === id ? 'page' : undefined}
+              title={ariaLabel}  // Подсказка при наведении
             >
-              {label}
+              <Icon size={24} className="nav-icon" />
             </button>
           ))}
         </nav>
 
         <div className="user-info">
+          <User size={18} className="user-icon" />
           <span className="username" aria-label="Имя пользователя">
             {currentUser?.username}
           </span>
@@ -99,8 +118,9 @@ const App: React.FC = () => {
             onClick={handleLogout}
             type="button"
             aria-label="Выйти из системы"
+            title="Выйти"
           >
-            Выйти
+            <LogOut size={18} className="logout-icon" />
           </button>
         </div>
       </header>

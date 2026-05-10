@@ -8,7 +8,8 @@
 import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'axios';
 
 /** Базовый URL API */
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
+const API_URL = 'http://147.78.9.180:15000/api';
+//const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 /**
  * Ключи для хранения данных в localStorage

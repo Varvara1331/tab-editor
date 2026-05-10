@@ -6,6 +6,14 @@
  */
 
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
+import { 
+  Music, 
+  Star, 
+  FolderOpen, 
+  Import,
+  Heart, 
+  Lock
+} from 'lucide-react';
 import { LibraryItem } from '../../services/libraryService';
 import { TabData } from '../../types/tab';
 import { useTabsLibrary } from '../../hooks/useTabsLibrary';
@@ -34,19 +42,6 @@ interface LibraryProps {
 
 /**
  * Компонент библиотеки пользователя
- * 
- * @component
- * @param props - Свойства компонента
- * @returns Отрисованный компонент библиотеки
- * 
- * @example
- * ```typescript
- * <Library 
- *   onSelectTab={(tabData) => openEditor(tabData)}
- *   refreshTrigger={refreshFlag}
- *   onFavoritesChanged={() => updateFavorites()}
- * />
- * ```
  */
 const Library: React.FC<LibraryProps> = memo(({ 
   onSelectTab, 
@@ -61,21 +56,20 @@ const Library: React.FC<LibraryProps> = memo(({
   const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState<boolean>(false);
 
-  // Хуки (должны быть вызваны до любых условных возвратов)
+  // Хуки
   const { currentUser, isLoading: authLoading } = useAuth();
   const { 
     myTabs, 
     favorites, 
     isLoading, 
     processingId, 
-    loadTabs, 
     deleteMyTab, 
     removeFromFavs, 
     filterTabs, 
     refresh 
   } = useTabsLibrary();
 
-  // Обновление при изменении refreshTrigger (например, после сохранения)
+  // Обновление при изменении refreshTrigger
   useEffect(() => {
     if (refreshTrigger && currentUser) {
       refresh();
@@ -174,158 +168,119 @@ const Library: React.FC<LibraryProps> = memo(({
   const filteredFavorites = useMemo(() => filterTabs(favorites, searchQuery), [favorites, searchQuery, filterTabs]);
   const currentTabs = activeSection === 'my' ? filteredMyTabs : filteredFavorites;
 
-  // Условные возвраты (только после всех хуков)
-  
-  // Загрузка аутентификации
+  // Условные возвраты
   if (authLoading) {
-    return (
-      <div className="library-page">
-        <div className="library-container">
-          <LoadingSpinner message="Проверка авторизации..." />
-        </div>
-      </div>
-    );
+    return <LoadingSpinner message="Проверка авторизации..." />;
   }
 
-  // Не авторизован
   if (!currentUser) {
     return (
-      <div className="library-page">
-        <div className="library-container">
-          <EmptyState
-            icon="🔒"
-            title="Требуется авторизация"
-            message="Пожалуйста, войдите в систему для доступа к библиотеке"
-          />
-        </div>
-      </div>
+      <EmptyState
+        icon={<Lock size={48} />}
+        title="Требуется авторизация"
+        message="Пожалуйста, войдите в систему для доступа к библиотеке"
+      />
     );
   }
 
-  // Загрузка данных
-  if (isLoading) {
-    return (
-      <div className="library-page">
-        <div className="library-container">
-          <div className="library-header">
-            <h2>📚 Библиотека</h2>
-            <p>Ваши табулатуры и избранное</p>
-          </div>
-          <div className="library-loading">
-            <LoadingSpinner message="Загрузка библиотеки..." />
-          </div>
-        </div>
-      </div>
-    );
+  if (isLoading && myTabs.length === 0 && favorites.length === 0) {
+    return <LoadingSpinner message="Загрузка библиотеки..." />;
   }
 
   return (
-    <div className="library-page">
-      <div className="library-container">
-        {/* Заголовок */}
-        <div className="library-header">
-          <div className="header-title">
-            <h2>📚 Моя библиотека</h2>
-            <p>Управляйте своими табулатурами и избранным</p>
-          </div>
-          <div className="header-actions">
-            <button 
-              className="btn btn-import" 
-              onClick={() => setIsImportModalOpen(true)} 
-              title="Импортировать табулатуру из файла" 
-              type="button"
-            >
-              📂 Импорт
-            </button>
-          </div>
-        </div>
+    <div className="library-container">
+      {/* Заголовок */}
+      <div className="library-header">
+        <h2 className="library-title">МОЯ БИБЛИОТЕКА</h2>
+        <p className="library-subtitle">Управляйте своими табулатурами и избранным</p>
+      </div>
 
-        {/* Статистика */}
-        <div className="library-stats">
-          <div className="stat-card">
-            <div className="stat-icon" aria-hidden="true">🎸</div>
-            <div className="stat-info">
-              <div className="stat-value">{myTabs.length}</div>
-              <div className="stat-label">Мои табулатуры</div>
-            </div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-icon" aria-hidden="true">⭐</div>
-            <div className="stat-info">
-              <div className="stat-value">{favorites.length}</div>
-              <div className="stat-label">В избранном</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Вкладки */}
-        <div className="library-tabs">
-          <button 
-            className={`section-tab ${activeSection === 'my' ? 'active' : ''}`} 
-            onClick={() => setActiveSection('my')} 
-            type="button"
-          >
-            🎸 Мои табулатуры
-            <span className="tab-count">{myTabs.length}</span>
-          </button>
-          <button 
-            className={`section-tab ${activeSection === 'favorites' ? 'active' : ''}`} 
-            onClick={() => setActiveSection('favorites')} 
-            type="button"
-          >
-            ⭐ Избранное
-            <span className="tab-count">{favorites.length}</span>
-          </button>
-        </div>
-
-        {/* Поиск */}
-        <div className="library-search">
-          <SearchBar 
-            value={searchQuery}
-            onChange={setSearchQuery}
-            onClear={() => setSearchQuery('')}
-            placeholder={`Поиск в ${activeSection === 'my' ? 'моих табулатурах' : 'избранном'}...`}
-          />
-        </div>
-
-        {/* Список табулатур */}
-        {currentTabs.length === 0 ? (
-          <EmptyState
-            icon={activeSection === 'my' ? '🎸' : '⭐'}
-            title={activeSection === 'my' ? 'У вас пока нет табулатур' : 'Избранное пусто'}
-            message={
-              activeSection === 'my' 
-                ? 'Создайте новую табулатуру в редакторе, импортируйте из файла или добавьте из публикаций' 
-                : 'Добавляйте понравившиеся табулатуры из раздела "Публикации"'
-            }
-            action={activeSection === 'my' ? {
-              label: 'Создать новую табулатуру',
-              onClick: handleNewTab
-            } : undefined}
-          />
-        ) : (
-          <div className="library-grid">
-            {currentTabs.map((tab: LibraryItem) => {
-              const isOwn = activeSection === 'my';
-              const isFav = activeSection === 'favorites';
-              return (
-                <TabCard
-                  key={tab.id}
-                  tab={tab}
-                  type={activeSection}
-                  onEdit={() => handleEdit(tab)}
-                  onExport={() => handleExport(tab)}
-                  onDelete={isOwn ? handleDeleteMyTab : undefined}
-                  onRemoveFromFavorites={isFav ? handleRemoveFromFavorites : undefined}
-                  processingId={processingId}
-                  originalAuthor={isFav ? tab.originalAuthor : undefined}
-                  isOwn={isOwn}
-                />
-              );
-            })}
+      {/* Поиск */}
+      <div className="library-search">
+        <SearchBar 
+          value={searchQuery}
+          onChange={setSearchQuery}
+          onClear={() => setSearchQuery('')}
+          placeholder={`Поиск в ${activeSection === 'my' ? 'моих табулатурах' : 'избранном'}...`}
+        />
+        {searchQuery && (
+          <div className="search-results-info">
+            Найдено: {currentTabs.length} результатов по запросу "{searchQuery}"
           </div>
         )}
       </div>
+
+      {/* Вкладки переключения - только иконки, текст в счетчике справа */}
+      <div className="library-view-tabs">
+        <button 
+          className={`view-tab ${activeSection === 'my' ? 'active' : ''}`} 
+          onClick={() => setActiveSection('my')} 
+          type="button"
+          title="Мои табулатуры"
+        >
+          <FolderOpen size={20} />
+          <span className="tab-count">{myTabs.length}</span>
+        </button>
+        <button 
+          className={`view-tab ${activeSection === 'favorites' ? 'active' : ''}`} 
+          onClick={() => setActiveSection('favorites')} 
+          type="button"
+          title="Избранное"
+        >
+          <Star size={20} />
+          <span className="tab-count">{favorites.length}</span>
+        </button>
+      </div>
+
+      {/* Кнопка импорта */}
+      <div className="library-import">
+        <button 
+          className="import-tab-btn" 
+          onClick={() => setIsImportModalOpen(true)} 
+          type="button"
+        >
+          <Import size={18} />
+          <span>Импортировать табулатуру</span>
+        </button>
+      </div>
+
+      {/* Список табулатур */}
+      {currentTabs.length === 0 ? (
+        <EmptyState
+          icon={activeSection === 'my' ? <FolderOpen size={48} /> : <Heart size={48} />}
+          title={activeSection === 'my' ? 'У вас пока нет табулатур' : 'Избранное пусто'}
+          message={
+            activeSection === 'my' 
+              ? 'Создайте новую табулатуру в редакторе, импортируйте из файла или добавьте из публикаций' 
+              : 'Добавляйте понравившиеся табулатуры из раздела "Публикации"'
+          }
+          action={activeSection === 'my' ? {
+            label: 'Создать новую табулатуру',
+            onClick: handleNewTab
+          } : undefined}
+        />
+      ) : (
+        <div className="library-grid">
+          {currentTabs.map((tab: LibraryItem) => {
+            const isOwn = activeSection === 'my';
+            const isFav = activeSection === 'favorites';
+            return (
+              <TabCard
+                key={tab.id}
+                tab={tab}
+                type={activeSection}
+                onSelect={() => handleEdit(tab)}
+                onExport={() => handleExport(tab)}
+                onDelete={isOwn ? handleDeleteMyTab : undefined}
+                onRemoveFromFavorites={isFav ? handleRemoveFromFavorites : undefined}
+                processingId={processingId}
+                originalAuthor={isFav ? tab.originalAuthor : undefined}
+                isOwn={isOwn}
+              />
+            );
+          })}
+        </div>
+      )}
 
       {/* Модальные окна */}
       {selectedTabForExport && (

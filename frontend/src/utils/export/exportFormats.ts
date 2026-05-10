@@ -96,6 +96,14 @@ export const exportToMusicXML = (tabData: TabData): string => {
   const NOTE_TYPE = notesPerMeasure === 4 ? 'quarter' : notesPerMeasure === 8 ? 'eighth' : '16th';
   const numStrings = tabData.tuning.length;
   
+  // Счетчики для лиг (slur) и слайдов
+  let slurCounter = 1;
+  let slideCounter = 1;
+  
+  // Хранилище для отслеживания активных эффектов между нотами
+  const activeSlurs: Map<string, { number: number; targetNote: { measureIndex: number; stringIndex: number; position: number } }> = new Map();
+  const activeSlides: Map<string, { number: number; targetNote: { measureIndex: number; stringIndex: number; position: number } }> = new Map();
+  
   let xml = `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE score-partwise PUBLIC "-//Recordare//DTD MusicXML 3.1 Partwise//EN" "http://www.musicxml.org/dtds/partwise.dtd">
 <score-partwise version="3.1">
@@ -193,6 +201,8 @@ export const exportToMusicXML = (tabData: TabData): string => {
         midi: number;
         noteName: { step: string; alter: number; octave: number };
         effects: Note;
+        measureIndex: number;
+        position: number;
       }> = [];
       
       for (let stringIdx = 0; stringIdx < numStrings; stringIdx++) {
@@ -209,7 +219,9 @@ export const exportToMusicXML = (tabData: TabData): string => {
               fret: note.fret,
               midi: midiNumber,
               noteName,
-              effects: note
+              effects: note,
+              measureIndex: measureIndex,
+              position: position
             });
           }
         }
@@ -231,6 +243,34 @@ export const exportToMusicXML = (tabData: TabData): string => {
         // Генерируем все ноты аккорда
         for (let i = 0; i < notesAtThisPosition.length; i++) {
           const note = notesAtThisPosition[i];
+          const effect = note.effects;
+          const noteKey = `${measureIndex}-${note.stringIndex}-${position}`;
+          
+          // Проверяем, является ли эта нота целью активного хаммера/пулла
+          let isHammerTarget = false;
+          let activeSlur = null;
+          for (const [key, value] of activeSlurs.entries()) {
+            if (value.targetNote.measureIndex === measureIndex &&
+                value.targetNote.stringIndex === note.stringIndex &&
+                value.targetNote.position === position) {
+              isHammerTarget = true;
+              activeSlur = value;
+              break;
+            }
+          }
+          
+          // Проверяем, является ли эта нота целью активного слайда
+          let isSlideTarget = false;
+          let activeSlide = null;
+          for (const [key, value] of activeSlides.entries()) {
+            if (value.targetNote.measureIndex === measureIndex &&
+                value.targetNote.stringIndex === note.stringIndex &&
+                value.targetNote.position === position) {
+              isSlideTarget = true;
+              activeSlide = value;
+              break;
+            }
+          }
           
           // Открываем тег note
           xml += `
@@ -253,52 +293,101 @@ export const exportToMusicXML = (tabData: TabData): string => {
           <voice>1</voice>
           <type>${NOTE_TYPE}</type>`;
           
-          // Добавляем notations с эффектами
+          // Добавляем notations
           xml += `
-          <notations>
+          <notations>`;
+          
+          // Technical блок
+          xml += `
             <technical>
               <string>${note.stringIndex}</string>
               <fret>${note.fret}</fret>`;
           
           // Бенд
-          if (note.effects.bend) {
+          if (effect.bend) {
             xml += `
               <bend>
                 <bend-alter>2</bend-alter>
               </bend>`;
           }
           
-          // Слайд
-          if (note.effects.slide === 'up') {
+          // Хаммер или Пулл (начало)
+          const hammerTarget = getHammerTarget(effect);
+          const pullTarget = getPullTarget(effect);
+          
+          if (hammerTarget !== null && !isHammerTarget) {
+            const slurNumber = slurCounter++;
+            activeSlurs.set(noteKey, {
+              number: slurNumber,
+              targetNote: { measureIndex, stringIndex: note.stringIndex, position: position + 1 }
+            });
+            // Добавляем целевой лад в текст элемента
             xml += `
-              <slide type="start"/>`;
-          } else if (note.effects.slide === 'down') {
+              <hammer-on type="start" number="${slurNumber}">${hammerTarget}</hammer-on>`;
+          } else if (pullTarget !== null && !isHammerTarget) {
+            const slurNumber = slurCounter++;
+            activeSlurs.set(noteKey, {
+              number: slurNumber,
+              targetNote: { measureIndex, stringIndex: note.stringIndex, position: position + 1 }
+            });
+            // Добавляем целевой лад в текст элемента
             xml += `
-              <slide type="start"/>`;
+              <pull-off type="start" number="${slurNumber}">${pullTarget}</pull-off>`;
           }
           
-          // Хаммер
-          const hammerTarget = getHammerTarget(note.effects);
-          if (hammerTarget !== null) {
+          // Завершение хаммера или пулла
+          if (isHammerTarget && activeSlur) {
             xml += `
-              <hammer-on>${hammerTarget}</hammer-on>`;
+              <hammer-on type="stop" number="${activeSlur.number}"/>`;
+            activeSlurs.delete(noteKey);
           }
           
-          // Пулл
-          const pullTarget = getPullTarget(note.effects);
-          if (pullTarget !== null) {
+          // Слайд (начало)
+          if (effect.slide === 'up' || effect.slide === 'down') {
+            const slideNumber = slideCounter++;
+            activeSlides.set(noteKey, {
+              number: slideNumber,
+              targetNote: { measureIndex, stringIndex: note.stringIndex, position: position + 1 }
+            });
             xml += `
-              <pull-off>${pullTarget}</pull-off>`;
+              <slide line-type="solid" type="start" number="${slideNumber}"/>`;
+          }
+          
+          // Завершение слайда
+          if (isSlideTarget && activeSlide) {
+            xml += `
+              <slide line-type="solid" type="stop" number="${activeSlide.number}"/>`;
+            activeSlides.delete(noteKey);
           }
           
           xml += `
             </technical>`;
           
-          // Вибрато (в ornaments, не в technical)
-          if (note.effects.vibrato) {
+          // Slur (лига) для хаммера/пулла
+          if ((hammerTarget !== null || pullTarget !== null) && !isHammerTarget) {
+            const slurNumber = slurCounter - 1;
+            xml += `
+            <slur type="start" number="${slurNumber}"/>`;
+          } else if (isHammerTarget && activeSlur) {
+            xml += `
+            <slur type="stop" number="${activeSlur.number}"/>`;
+          }
+          
+          // Slur для слайда
+          if ((effect.slide === 'up' || effect.slide === 'down') && !isSlideTarget) {
+            const slideSlurNumber = slideCounter - 1;
+            xml += `
+            <slur type="start" number="${slideSlurNumber}"/>`;
+          } else if (isSlideTarget && activeSlide) {
+            xml += `
+            <slur type="stop" number="${activeSlide.number}"/>`;
+          }
+          
+          // Вибрато
+          if (effect.vibrato) {
             xml += `
             <ornaments>
-              <wavy-line type="start"/>
+              <vibrato/>
             </ornaments>`;
           }
           

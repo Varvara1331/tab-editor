@@ -8,6 +8,7 @@
 import React, { useState, useCallback, memo, useRef } from 'react';
 import { login, register } from '../../services/authService';
 import './Auth.css';
+const LOGO_PATH = '/logo512.png';
 
 /**
  * Свойства компонента Auth
@@ -146,7 +147,11 @@ const Auth: React.FC<AuthProps> = memo(({ onAuthSuccess }) => {
       <div className="auth-modal">
         {/* Заголовок */}
         <div className="auth-header">
-          <div className="auth-icon" aria-hidden="true">🎸</div>
+          <div className="auth-icon" aria-hidden="true"><img 
+              src={LOGO_PATH}
+              alt="TabEditor Logo" 
+              className="auth-logo"
+            /></div>
           <h2>{isLogin ? 'Вход в аккаунт' : 'Регистрация'}</h2>
           <p className="auth-subtitle">
             {isLogin 

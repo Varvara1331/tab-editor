@@ -32,18 +32,6 @@ interface PublicTabsProps {
 
 /**
  * Компонент списка публичных табулатур
- * 
- * @component
- * @param props - Свойства компонента
- * @returns Отрисованный компонент публичных табулатур
- * 
- * @example
- * ```typescript
- * <PublicTabs 
- *   onSelectTab={(tabData) => openEditor(tabData)}
- *   onFavoritesChanged={() => updateLibrary()}
- * />
- * ```
  */
 const PublicTabs: React.FC<PublicTabsProps> = memo(({ onSelectTab, onFavoritesChanged }) => {
   // Состояния компонента
@@ -51,7 +39,7 @@ const PublicTabs: React.FC<PublicTabsProps> = memo(({ onSelectTab, onFavoritesCh
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [exportTabData, setExportTabData] = useState<TabData | null>(null);
 
-  // Хуки (должны быть вызваны до любых условных возвратов)
+  // Хуки
   const { currentUser, isLoading: authLoading } = useAuth();
   const { 
     tabs, 
@@ -60,8 +48,7 @@ const PublicTabs: React.FC<PublicTabsProps> = memo(({ onSelectTab, onFavoritesCh
     favoritesStatus, 
     searchQuery, 
     toggleFavorite, 
-    filterTabs, 
-    refresh 
+    filterTabs 
   } = usePublicTabs();
 
   /**
@@ -80,7 +67,7 @@ const PublicTabs: React.FC<PublicTabsProps> = memo(({ onSelectTab, onFavoritesCh
   }, [transformTab, onSelectTab]);
 
   /**
-   * Обработчик экспорта табулатуры
+   * Обработчик экспорта табулатуры (только для модального окна предпросмотра)
    */
   const handleExport = useCallback((tab: PublicTab) => { 
     setExportTabData(transformTab(tab)); 
@@ -94,10 +81,6 @@ const PublicTabs: React.FC<PublicTabsProps> = memo(({ onSelectTab, onFavoritesCh
     const success = await toggleFavorite(tab);
     
     if (success) { 
-      const message = favoritesStatus.get(tab.id) 
-        ? 'Табулатура удалена из избранного' 
-        : 'Табулатура добавлена в избранное';
-      alert(message); 
       onFavoritesChanged?.(); 
     } else { 
       alert('Не удалось выполнить действие'); 
@@ -129,14 +112,11 @@ const PublicTabs: React.FC<PublicTabsProps> = memo(({ onSelectTab, onFavoritesCh
     return selectedTab ? transformTab(selectedTab) : null;
   }, [selectedTab, transformTab]);
 
-  // Условные возвраты (только после всех хуков)
-
-  // Загрузка аутентификации
+  // Условные возвраты
   if (authLoading) {
     return <LoadingSpinner message="Проверка авторизации..." />;
   }
 
-  // Первичная загрузка данных
   if (isLoading && tabs.length === 0) {
     return <LoadingSpinner message="Загрузка публикаций..." />;
   }
@@ -145,8 +125,8 @@ const PublicTabs: React.FC<PublicTabsProps> = memo(({ onSelectTab, onFavoritesCh
     <div className="public-tabs-container">
       {/* Заголовок */}
       <div className="public-tabs-header">
-        <h2>🌍 Публикации</h2>
-        <p>Табулатуры, опубликованные другими пользователями</p>
+        <h2 className="public-tabs-title">ПУБЛИКАЦИИ</h2>
+        <p className="public-tabs-subtitle">Табулатуры, опубликованные другими пользователями</p>
       </div>
 
       {/* Поиск */}
@@ -209,8 +189,7 @@ const PublicTabs: React.FC<PublicTabsProps> = memo(({ onSelectTab, onFavoritesCh
                 key={tab.id}
                 tab={tab}
                 type="public"
-                onEdit={() => handleViewInEditor(tab)}
-                onExport={() => handleExport(tab)}
+                onSelect={() => handleViewInEditor(tab)}
                 onAddToFavorites={() => handleToggleFavorite(tab)}
                 onRemoveFromFavorites={() => handleToggleFavorite(tab)}
                 processingId={processingId}

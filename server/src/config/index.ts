@@ -32,7 +32,7 @@ export const config = {
   nodeEnv: process.env.NODE_ENV || 'development',
   
   /** Разрешённые источники для CORS */
-  corsOrigins: ['http://localhost:3000', 'http://localhost:3001', 'http://localhost:3002'],
+  corsOrigins: ['http://localhost:3000', 'http://localhost:13000', 'http://localhost:15000', 'http://localhost:3001', 'http://localhost:3002', 'http://147.78.9.180:13000', 'http://147.78.9.180:15000'],
   
   /** Лимиты для обработки входящих запросов */
   limits: {

@@ -12,8 +12,8 @@ import React, { memo } from 'react';
  * Свойства компонента EmptyState
  */
 interface EmptyStateProps {
-  /** Иконка (эмодзи или текст) */
-  icon: string;
+  /** Иконка (React-узел, например SVG иконка из lucide-react) */
+  icon: React.ReactNode;
   /** Заголовок сообщения */
   title: string;
   /** Текст сообщения */
@@ -32,8 +32,10 @@ interface EmptyStateProps {
  * 
  * @example
  * ```typescript
+ * import { FolderOpen } from 'lucide-react';
+ * 
  * <EmptyState
- *   icon="📚"
+ *   icon={<FolderOpen size={48} />}
  *   title="Нет табулатур"
  *   message="Создайте свою первую табулатуру"
  *   action={{ label: "Создать", onClick: handleCreate }}

@@ -30,8 +30,8 @@ const app = express();
 app.use(cors({
   origin: config.corsOrigins,
   credentials: true, // Разрешение отправки cookies и заголовков авторизации
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
 
 /**
@@ -143,7 +143,7 @@ const startServer = async (): Promise<void> => {
     await initDatabase();
     
     // Запуск сервера
-    const server = app.listen(config.port, () => {
+    const server = app.listen(config.port, '0.0.0.0', () => {
       console.log(`Server running on http://localhost:${config.port}`);
       console.log(`API Documentation: http://localhost:${config.port}/api-docs`);
       console.log(`Database: SQLite`);
