@@ -19,6 +19,9 @@ import SearchBar from '../common/SearchBar';
 import LoadingSpinner from '../common/LoadingSpinner';
 import EmptyState from '../common/EmptyState';
 import '../library/Library.css';
+import { 
+  Globe
+} from 'lucide-react';
 
 /**
  * Свойства компонента PublicTabs
@@ -168,7 +171,7 @@ const PublicTabs: React.FC<PublicTabsProps> = memo(({ onSelectTab, onFavoritesCh
       {/* Список публикаций */}
       {tabs.length === 0 && !isLoading ? (
         <EmptyState
-          icon="🌍"
+          icon=<Globe size={24} />
           title={searchQuery ? "Ничего не найдено" : "Публикаций не найдено"}
           message={searchQuery 
             ? `По запросу "${searchQuery}" ничего не найдено. Попробуйте изменить поисковый запрос.`

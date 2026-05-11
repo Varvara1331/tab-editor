@@ -2,44 +2,48 @@
  * Стили для компонента Theory
  * @component Theory
  * @description Стилизация раздела теории с обучающими статьями и тестами
- * Обновлено в соответствии с глобальными стилями приложения
+ * Унифицировано в соответствии с глобальными стилями приложения
  */
 
 .theory-container {
   width: 100%;
   max-width: 1538px;
   margin: 0 auto;
-  padding: 20px;
+  padding: var(--spacing-xl);
   min-height: 100vh;
   font-family: "Courier New", monospace;
 }
 
 /* ============================================
-   ЗАГОЛОВОК - ЕДИНЫЙ СТИЛЬ С EDITOR-HEADER
+   ЗАГОЛОВОК - ЕДИНЫЙ СТИЛЬ
    ============================================ */
 
 .theory-header {
-  background: rgba(42, 37, 32, 0.8);
-  border-radius: var(--radius-xl, 20px);
-  padding: 20px 30px;
-  margin-bottom: 20px;
+  background: rgba(42, 37, 32, var(--opacity-high));
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl) var(--spacing-3xl);
+  margin-bottom: var(--spacing-xl);
   border: 1px solid rgba(245, 70, 57, 0.2);
 }
 
 .theory-header h2 {
-  color: #dedddc;
-  font-size: var(--font-size-xl, 28px);
+  color: var(--color-text-light);
+  font-size: var(--font-size-xl);
   text-align: center;
-  margin: 0 0 20px 0;
+  margin: 0 0 var(--spacing-xl) 0;
   font-weight: normal;
   font-family: "Courier New", monospace;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
 }
 
 .progress-overview {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 30px;
+  gap: var(--spacing-3xl);
   flex-wrap: wrap;
 }
 
@@ -47,13 +51,16 @@
   flex: 2;
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: var(--spacing-lg);
   flex-wrap: wrap;
 }
 
 .progress-text {
-  color: #c1bcb2;
-  font-size: var(--font-size-sm, 14px);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
 }
 
 .progress-bar-container {
@@ -61,33 +68,39 @@
   min-width: 200px;
   height: 8px;
   background: rgba(31, 28, 19, 0.6);
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
 .progress-bar-fill {
   height: 100%;
-  background: linear-gradient(90deg, var(--color-primary, #f54639), var(--color-primary-light, #ff6b6b));
-  border-radius: 4px;
-  transition: width var(--transition-base, 0.3s ease);
-  box-shadow: 0 0 4px rgba(245, 70, 57, 0.5);
+  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
+  border-radius: var(--radius-sm);
+  transition: width var(--transition-base);
+  box-shadow: var(--shadow-sm);
 }
 
 .progress-percentage {
-  color: var(--color-primary, #f54639);
+  color: var(--color-primary);
   font-weight: bold;
-  font-size: var(--font-size-md, 18px);
+  font-size: var(--font-size-md);
 }
 
 .stats-mini {
   display: flex;
-  gap: 15px;
-  color: #c1bcb2;
-  font-size: var(--font-size-xs, 13px);
+  gap: var(--spacing-lg);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
   background: rgba(31, 28, 19, 0.6);
-  padding: 8px 15px;
-  border-radius: 20px;
+  padding: var(--spacing-sm) var(--spacing-lg);
+  border-radius: var(--radius-xl);
   border: 1px solid rgba(245, 70, 57, 0.2);
+}
+
+.stats-mini span {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
 }
 
 /* ============================================
@@ -97,7 +110,7 @@
 .theory-content {
   display: grid;
   grid-template-columns: 1fr 3fr;
-  gap: 20px;
+  gap: var(--spacing-xl);
   margin: 0 auto;
   align-items: start;
 }
@@ -108,49 +121,56 @@
 
 .theory-sidebar {
   background: rgba(42, 37, 32, 0.6);
-  border-radius: var(--radius-xl, 20px);
-  padding: 20px;
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-xl);
   border: 1px solid rgba(245, 70, 57, 0.2);
 }
 
 .search-filter {
-  margin-bottom: 20px;
+  margin-bottom: var(--spacing-xl);
 }
 
+/* Поисковая строка - единый стиль с search-wrapper из библиотеки */
 .search-input {
   width: 100%;
-  padding: 10px 15px;
-  background: rgba(31, 28, 19, 0.6);
-  border: 1px solid rgba(245, 70, 57, 0.3);
-  border-radius: var(--radius-2xl, 24px);
-  color: #dedddc;
-  font-size: var(--font-size-sm, 14px);
+  background: rgba(31, 28, 19, 0.9);
+  border: 1px solid rgba(245, 70, 57, 0.2);
+  border-radius: var(--radius-2xl);
+  color: var(--color-text-light);
+  font-size: var(--font-size-base);
   font-family: "Courier New", monospace;
-  transition: all var(--transition-base, 0.3s ease);
+  padding: 12px 16px;
+  transition: all var(--transition-base);
 }
 
 .search-input:focus {
   outline: none;
-  border-color: rgba(245, 70, 57, 0.7);
+  border-color: rgba(245, 70, 57, 0.6);
+  box-shadow: 0 0 8px rgba(245, 70, 57, 0.3);
 }
 
 .search-input::placeholder {
-  color: #c1bcb2;
-  opacity: 0.7;
+  color: var(--color-text-muted);
+  opacity: var(--opacity-muted);
 }
 
+/* Выпадающий список - единый стиль с preset-dropdown и preset-option */
 .filter-select {
   width: 100%;
-  margin-top: 12px;
-  padding: 10px 15px;
-  background: rgba(31, 28, 19, 0.6);
-  border: 1px solid rgba(245, 70, 57, 0.3);
-  border-radius: var(--radius-2xl, 24px);
-  color: #dedddc;
-  font-size: var(--font-size-sm, 14px);
+  margin-top: var(--spacing-md);
+  background: var(--color-bg-darkest);
+  border: 1px solid rgba(245, 70, 57, var(--opacity-medium));
+  border-radius: var(--radius-md);
+  color: var(--color-text-light);
+  font-size: var(--font-size-sm);
   font-family: "Courier New", monospace;
+  padding: 10px 12px;
   cursor: pointer;
-  transition: all var(--transition-base, 0.3s ease);
+  transition: all var(--transition-base);
+}
+
+.filter-select:hover {
+  border-color: rgba(245, 70, 57, 0.6);
 }
 
 .filter-select:focus {
@@ -159,7 +179,8 @@
 }
 
 .filter-select option {
-  background: #2a2520;
+  background: var(--color-bg-darkest);
+  padding: var(--spacing-sm);
 }
 
 /* ============================================
@@ -169,10 +190,10 @@
 .articles-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--spacing-md);
   max-height: 600px;
   overflow-y: auto;
-  padding-right: 5px;
+  padding-right: var(--spacing-xs);
 }
 
 .articles-list::-webkit-scrollbar {
@@ -181,83 +202,90 @@
 
 .articles-list::-webkit-scrollbar-track {
   background: rgba(31, 28, 19, 0.6);
-  border-radius: 3px;
+  border-radius: var(--radius-sm);
 }
 
 .articles-list::-webkit-scrollbar-thumb {
-  background: rgba(245, 70, 57, 0.5);
-  border-radius: 3px;
-  transition: background var(--transition-base, 0.3s ease);
+  background: rgba(245, 70, 57, var(--opacity-medium));
+  border-radius: var(--radius-sm);
 }
 
 .articles-list::-webkit-scrollbar-thumb:hover {
-  background: rgba(245, 70, 57, 0.7);
+  background: rgba(245, 70, 57, var(--opacity-muted));
 }
 
-/* Карточка статьи */
+/* Карточка статьи - единый стиль с article-item */
 .article-item {
-  padding: 16px;
+  padding: var(--spacing-lg);
   background: rgba(31, 28, 19, 0.6);
   border: 1px solid rgba(245, 70, 57, 0.2);
-  border-radius: var(--radius-lg, 15px);
+  border-radius: var(--radius-lg);
   cursor: pointer;
-  transition: all var(--transition-base, 0.3s ease);
+  transition: all var(--transition-base);
 }
 
 .article-item:hover {
   background: rgba(245, 70, 57, 0.1);
-  border-color: rgba(245, 70, 57, 0.5);
+  border-color: rgba(245, 70, 57, var(--opacity-medium));
   transform: translateX(5px);
 }
 
 .article-item.active {
   background: rgba(245, 70, 57, 0.15);
   border-color: rgba(245, 70, 57, 0.6);
-  box-shadow: 0 0 10px 2px rgba(245, 70, 57, 0.2);
+  box-shadow: var(--shadow-glow);
 }
 
 .article-item.completed {
-  border-left: 3px solid var(--color-success, #10b981);
+  border-left: var(--border-width-medium) solid var(--color-success);
 }
 
 .article-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: var(--spacing-sm);
 }
 
 .article-header h3 {
-  color: #dedddc;
-  font-size: var(--font-size-base, 16px);
+  color: var(--color-text-light);
+  font-size: var(--font-size-base);
   font-weight: 600;
   margin: 0;
   font-family: "Courier New", monospace;
 }
 
 .completed-badge {
-  color: var(--color-success, #10b981);
-  font-size: 18px;
+  color: var(--color-success);
+  font-size: var(--font-size-md);
   font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
 }
 
 .article-description {
-  color: #c1bcb2;
-  font-size: var(--font-size-xs, 13px);
-  margin-bottom: 12px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  margin-bottom: var(--spacing-md);
   line-height: 1.4;
 }
 
 .article-meta {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm);
   flex-wrap: wrap;
 }
 
-/* Бейджи */
-.difficulty-badge {
+/* Бейджи - единые стили с отступами */
+.difficulty-badge,
+.duration-badge,
+.quiz-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 4px 10px;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   font-size: 11px;
   font-weight: bold;
   font-family: "Courier New", monospace;
@@ -265,38 +293,30 @@
 
 .difficulty-badge.easy {
   background: rgba(16, 185, 129, 0.15);
-  color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: var(--color-success);
+  border: 1px solid rgba(16, 185, 129, var(--opacity-low));
 }
 
 .difficulty-badge.medium {
   background: rgba(245, 158, 11, 0.15);
-  color: #f59e0b;
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--color-warning);
+  border: 1px solid rgba(245, 158, 11, var(--opacity-low));
 }
 
 .difficulty-badge.hard {
   background: rgba(245, 70, 57, 0.15);
-  color: #f54639;
-  border: 1px solid rgba(245, 70, 57, 0.3);
+  color: var(--color-primary);
+  border: 1px solid rgba(245, 70, 57, var(--opacity-low));
 }
 
 .duration-badge {
-  padding: 4px 10px;
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 20px;
-  font-size: 11px;
-  color: #c1bcb2;
-  font-family: "Courier New", monospace;
+  color: var(--color-text-muted);
 }
 
 .quiz-badge {
-  padding: 4px 10px;
   background: rgba(245, 70, 57, 0.2);
-  border-radius: 20px;
-  font-size: 11px;
-  color: #f54639;
-  font-family: "Courier New", monospace;
+  color: var(--color-primary);
 }
 
 /* ============================================
@@ -305,144 +325,133 @@
 
 .theory-main {
   background: white;
-  border-radius: var(--radius-xl, 20px);
-  padding: 30px;
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-3xl);
   min-height: 500px;
-  outline: 7px outset rgba(245, 70, 57, 0.47);
-  box-shadow: 0 0 10px 10px var(--color-primary-dark, #74281b);
+  outline: var(--border-width-thick) outset rgba(245, 70, 57, 0.47);
+  box-shadow: var(--shadow-lg);
 }
 
 /* Контент статьи */
 .article-viewer {
-  animation: fadeInUp var(--transition-slow, 0.5s ease);
-}
-
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  animation: fadeInUp var(--transition-slow);
 }
 
 .article-viewer .article-header {
-  margin-bottom: 25px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #e2e8f0;
+  margin-bottom: var(--spacing-2xl);
+  padding-bottom: var(--spacing-lg);
+  border-bottom: var(--border-width-thin) solid #e2e8f0;
   flex-wrap: wrap;
   justify-content: space-between;
 }
 
 .article-viewer .article-header h2 {
-  color: #2d3748;
-  font-size: var(--font-size-xl, 28px);
+  color: var(--color-text-dark);
+  font-size: var(--font-size-xl);
   margin: 0;
   font-family: "Courier New", monospace;
 }
 
 .article-viewer .article-meta {
-  margin-top: 10px;
+  margin-top: var(--spacing-sm);
 }
 
 /* Содержимое статьи */
 .article-content {
-  color: #4a5568;
+  color: var(--color-text-gray);
   line-height: 1.8;
-  font-size: var(--font-size-base, 16px);
+  font-size: var(--font-size-base);
 }
 
 .article-content h3 {
-  color: #2d3748;
-  margin: 25px 0 15px 0;
-  font-size: var(--font-size-lg, 22px);
+  color: var(--color-text-dark);
+  margin: var(--spacing-2xl) 0 var(--spacing-lg) 0;
+  font-size: var(--font-size-lg);
   font-family: "Courier New", monospace;
 }
 
 .article-content h4 {
-  color: #2d3748;
-  margin: 20px 0 10px 0;
-  font-size: var(--font-size-md, 18px);
+  color: var(--color-text-dark);
+  margin: var(--spacing-xl) 0 var(--spacing-sm) 0;
+  font-size: var(--font-size-md);
   font-family: "Courier New", monospace;
 }
 
 .article-content p {
-  margin-bottom: 15px;
+  margin-bottom: var(--spacing-lg);
 }
 
 .article-content ul {
-  margin-left: 25px;
-  margin-bottom: 15px;
+  margin-left: var(--spacing-2xl);
+  margin-bottom: var(--spacing-lg);
 }
 
 .article-content li {
-  margin-bottom: 8px;
+  margin-bottom: var(--spacing-sm);
 }
 
 .article-content code {
   background: #f7fafc;
   padding: 2px 6px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-family: "Courier New", monospace;
-  font-size: 14px;
-  color: #f54639;
+  font-size: var(--font-size-sm);
+  color: var(--color-primary);
 }
 
-/* Кнопка теста */
+/* Кнопка теста - единый стиль с btn-primary */
 .quiz-prompt {
   text-align: center;
-  margin-top: 40px;
-  padding-top: 30px;
-  border-top: 2px solid #e2e8f0;
+  margin-top: var(--spacing-4xl);
+  padding-top: var(--spacing-3xl);
+  border-top: var(--border-width-thin) solid #e2e8f0;
 }
 
 .start-quiz-btn {
-  background: rgba(245, 70, 57, 0.8);
+  background: rgba(245, 70, 57, var(--opacity-high));
   color: white;
   border: none;
-  padding: 12px 35px;
-  border-radius: var(--radius-2xl, 30px);
-  font-size: var(--font-size-base, 16px);
+  padding: var(--spacing-md) 35px;
+  border-radius: var(--radius-2xl);
+  font-size: var(--font-size-base);
   font-weight: bold;
   cursor: pointer;
-  transition: all var(--transition-base, 0.3s ease);
+  transition: all var(--transition-base);
   font-family: "Courier New", monospace;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 
 .start-quiz-btn:hover {
   background: rgba(245, 70, 57, 1);
   transform: translateY(-2px);
-  box-shadow: 0 0 15px 2px rgba(245, 70, 57, 0.5);
+  box-shadow: var(--shadow-md);
 }
 
 /* Завершённая статья */
 .article-complete {
   text-align: center;
-  margin-top: 40px;
-  padding: 20px;
+  margin-top: var(--spacing-4xl);
+  padding: var(--spacing-xl);
   background: rgba(16, 185, 129, 0.1);
-  border-radius: var(--radius-lg, 15px);
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(16, 185, 129, var(--opacity-low));
 }
 
 .complete-badge {
-  color: #10b981;
-  font-size: var(--font-size-md, 18px);
+  color: var(--color-success);
+  font-size: var(--font-size-md);
   font-weight: bold;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 
 .quiz-score {
-  font-size: var(--font-size-xs, 14px);
-  color: #4a5568;
-  margin-left: 8px;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-gray);
+  margin-left: var(--spacing-sm);
 }
 
 /* ============================================
@@ -450,52 +459,76 @@
    ============================================ */
 
 .quiz-section {
-  margin-top: 20px;
+  margin-top: var(--spacing-xl);
 }
 
 .quiz-section h4 {
-  color: #2d3748;
-  font-size: var(--font-size-xl, 24px);
-  margin-bottom: 25px;
+  color: var(--color-text-dark);
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--spacing-2xl);
   text-align: center;
   font-family: "Courier New", monospace;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
 }
 
 .quiz-question {
-  margin-bottom: 25px;
-  padding: 20px;
+  margin-bottom: var(--spacing-2xl);
+  padding: var(--spacing-xl);
   background: #f7fafc;
-  border-radius: var(--radius-lg, 15px);
+  border-radius: var(--radius-lg);
   border: 1px solid #e2e8f0;
 }
 
 .question-text {
-  color: #2d3748;
-  font-size: var(--font-size-base, 16px);
+  color: var(--color-text-dark);
+  font-size: var(--font-size-base);
   font-weight: 600;
-  margin-bottom: 15px;
+  margin-bottom: var(--spacing-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.question-number {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: var(--color-primary);
+  color: white;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: bold;
 }
 
 .options {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--spacing-sm);
 }
 
 .option-label {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 15px;
+  gap: var(--spacing-md);
+  padding: 10px var(--spacing-lg);
   background: white;
-  border: 2px solid #e2e8f0;
-  border-radius: var(--radius-md, 12px);
+  border: var(--border-width-thin) solid #e2e8f0;
+  border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all var(--transition-base, 0.3s ease);
+  transition: all var(--transition-base);
+}
+
+.option-label span {
+  color: #1a202c;
 }
 
 .option-label:hover {
-  border-color: #f54639;
+  border-color: var(--color-primary);
   background: rgba(245, 70, 57, 0.05);
   transform: translateX(3px);
 }
@@ -504,30 +537,33 @@
   width: 18px;
   height: 18px;
   cursor: pointer;
-  accent-color: #f54639;
+  accent-color: var(--color-primary);
 }
 
 .submit-quiz-btn {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
   width: 100%;
   max-width: 250px;
-  margin: 40px auto 0;
-  background: rgba(245, 70, 57, 0.8);
+  margin: var(--spacing-4xl) auto 0;
+  background: rgba(245, 70, 57, var(--opacity-high));
   color: white;
   border: none;
-  padding: 12px 25px;
-  border-radius: var(--radius-2xl, 25px);
-  font-size: var(--font-size-base, 16px);
+  padding: var(--spacing-md) var(--spacing-2xl);
+  border-radius: var(--radius-2xl);
+  font-size: var(--font-size-base);
   font-weight: bold;
   cursor: pointer;
-  transition: all var(--transition-base, 0.3s ease);
+  transition: all var(--transition-base);
   font-family: "Courier New", monospace;
 }
 
 .submit-quiz-btn:hover {
   background: rgba(245, 70, 57, 1);
   transform: translateY(-2px);
-  box-shadow: 0 0 10px 2px rgba(245, 70, 57, 0.4);
+  box-shadow: var(--shadow-sm);
 }
 
 /* ============================================
@@ -536,25 +572,29 @@
 
 .quiz-results {
   text-align: center;
-  padding: 30px;
+  padding: var(--spacing-3xl);
 }
 
 .quiz-results h4 {
-  color: #2d3748;
-  font-size: var(--font-size-xl, 24px);
-  margin-bottom: 20px;
+  color: var(--color-text-dark);
+  font-size: var(--font-size-xl);
+  margin-bottom: var(--spacing-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
 }
 
 .score-display {
-  margin-bottom: 20px;
+  margin-bottom: var(--spacing-xl);
 }
 
 .score-value {
   font-size: 64px;
   font-weight: bold;
-  color: #f54639;
+  color: var(--color-primary);
   display: block;
-  margin-bottom: 10px;
+  margin-bottom: var(--spacing-sm);
   font-family: "Courier New", monospace;
 }
 
@@ -564,39 +604,43 @@
   margin: 0 auto;
   height: 8px;
   background: #e2e8f0;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
 .score-fill {
   height: 100%;
-  background: linear-gradient(90deg, #f54639, #ff6b6b);
-  border-radius: 4px;
-  transition: width var(--transition-base, 0.3s ease);
-  box-shadow: 0 0 4px rgba(245, 70, 57, 0.5);
+  background: linear-gradient(90deg, var(--color-primary), var(--color-primary-light));
+  border-radius: var(--radius-sm);
+  transition: width var(--transition-base);
+  box-shadow: var(--shadow-sm);
 }
 
 .score-message {
-  color: #4a5568;
-  font-size: var(--font-size-base, 16px);
-  margin: 15px 0 25px;
+  color: var(--color-text-gray);
+  font-size: var(--font-size-base);
+  margin: var(--spacing-lg) 0 var(--spacing-2xl);
 }
 
 .quiz-actions {
   display: flex;
-  gap: 15px;
+  gap: var(--spacing-lg);
   justify-content: center;
   flex-wrap: wrap;
 }
 
-.retry-btn, .continue-btn {
-  padding: 10px 25px;
+.retry-btn,
+.continue-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-2xl);
   border: none;
-  border-radius: var(--radius-2xl, 25px);
-  font-size: var(--font-size-sm, 14px);
+  border-radius: var(--radius-2xl);
+  font-size: var(--font-size-sm);
   font-weight: bold;
   cursor: pointer;
-  transition: all var(--transition-base, 0.3s ease);
+  transition: all var(--transition-base);
   font-family: "Courier New", monospace;
 }
 
@@ -611,14 +655,14 @@
 }
 
 .continue-btn {
-  background: rgba(245, 70, 57, 0.8);
+  background: rgba(245, 70, 57, var(--opacity-high));
   color: white;
 }
 
 .continue-btn:hover {
   background: rgba(245, 70, 57, 1);
   transform: translateY(-2px);
-  box-shadow: 0 0 10px 2px rgba(245, 70, 57, 0.4);
+  box-shadow: var(--shadow-sm);
 }
 
 /* ============================================
@@ -627,50 +671,46 @@
 
 .theory-welcome {
   text-align: center;
-  padding: 60px 20px;
+  padding: 60px var(--spacing-xl);
 }
 
 .welcome-icon {
   font-size: 80px;
-  margin-bottom: 20px;
+  margin-bottom: var(--spacing-xl);
   animation: bounce 2s ease infinite;
-  filter: drop-shadow(0 0 10px rgba(245, 70, 57, 0.3));
+  filter: drop-shadow(0 0 10px rgba(245, 70, 57, var(--opacity-low)));
 }
 
 @keyframes bounce {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
 }
 
 .theory-welcome h2 {
-  color: #2d3748;
-  font-size: var(--font-size-2xl, 32px);
-  margin-bottom: 15px;
+  color: var(--color-text-dark);
+  font-size: var(--font-size-2xl);
+  margin-bottom: var(--spacing-lg);
   font-family: "Courier New", monospace;
 }
 
 .theory-welcome p {
-  color: #4a5568;
-  font-size: var(--font-size-base, 16px);
-  margin-bottom: 40px;
+  color: var(--color-text-gray);
+  font-size: var(--font-size-base);
+  margin-bottom: var(--spacing-4xl);
 }
 
 .quick-stats {
   display: flex;
   justify-content: center;
-  gap: 40px;
+  gap: var(--spacing-4xl);
   flex-wrap: wrap;
 }
 
 .stat {
   text-align: center;
   background: rgba(245, 70, 57, 0.05);
-  padding: 20px 30px;
-  border-radius: var(--radius-xl, 20px);
+  padding: var(--spacing-xl) var(--spacing-3xl);
+  border-radius: var(--radius-xl);
   min-width: 120px;
   border: 1px solid rgba(245, 70, 57, 0.2);
 }
@@ -679,18 +719,21 @@
   display: block;
   font-size: 48px;
   font-weight: bold;
-  color: #f54639;
+  color: var(--color-primary);
   font-family: "Courier New", monospace;
 }
 
 .stat-label {
-  color: #4a5568;
-  font-size: var(--font-size-sm, 14px);
-  margin-top: 5px;
+  color: var(--color-text-gray);
+  font-size: var(--font-size-sm);
+  margin-top: var(--spacing-xs);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacing-xs);
 }
 
 /* ============================================
-   ЭКРАН ЗАГРУЗКИ
+   ЭКРАН ЗАГРУЗКИ - ЕДИНЫЙ СТИЛЬ
    ============================================ */
 
 .theory-loading {
@@ -700,7 +743,7 @@
   justify-content: center;
   min-height: 400px;
   background: rgba(42, 37, 32, 0.6);
-  border-radius: var(--radius-xl, 20px);
+  border-radius: var(--radius-xl);
   border: 1px solid rgba(245, 70, 57, 0.2);
 }
 
@@ -708,20 +751,14 @@
   width: 50px;
   height: 50px;
   border: 4px solid rgba(245, 70, 57, 0.2);
-  border-top-color: #f54639;
-  border-radius: 50%;
+  border-top-color: var(--color-primary);
+  border-radius: var(--radius-full);
   animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .theory-loading p {
-  margin-top: 15px;
-  color: #c1bcb2;
+  margin-top: var(--spacing-lg);
+  color: var(--color-text-muted);
 }
 
 /* ============================================
@@ -730,12 +767,12 @@
 
 @media (max-width: 1024px) {
   .theory-container {
-    padding: 15px;
+    padding: var(--spacing-lg);
   }
   
   .theory-content {
     grid-template-columns: 1fr;
-    gap: 20px;
+    gap: var(--spacing-xl);
   }
 
   .progress-overview {
@@ -753,7 +790,7 @@
   }
   
   .quick-stats {
-    gap: 20px;
+    gap: var(--spacing-xl);
   }
 }
 
@@ -763,15 +800,15 @@
   }
   
   .theory-header {
-    padding: 15px 20px;
+    padding: var(--spacing-lg) var(--spacing-xl);
   }
   
   .theory-sidebar {
-    padding: 15px;
+    padding: var(--spacing-lg);
   }
   
   .theory-main {
-    padding: 20px;
+    padding: var(--spacing-xl);
   }
   
   .article-viewer .article-header h2 {
@@ -786,11 +823,11 @@
   .quick-stats {
     flex-direction: column;
     align-items: center;
-    gap: 15px;
+    gap: var(--spacing-lg);
   }
   
   .stat {
-    padding: 15px 25px;
+    padding: var(--spacing-lg) var(--spacing-2xl);
     min-width: auto;
     width: 100%;
     max-width: 200px;
@@ -799,7 +836,7 @@
 
 @media (max-width: 480px) {
   .theory-container {
-    padding: 10px;
+    padding: var(--spacing-sm);
   }
   
   .progress-text,
@@ -809,15 +846,15 @@
   
   .stats-mini {
     font-size: 11px;
-    gap: 10px;
+    gap: var(--spacing-sm);
   }
   
   .article-header h3 {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
   }
   
   .article-content {
-    font-size: 14px;
+    font-size: var(--font-size-sm);
   }
   
   .score-value {

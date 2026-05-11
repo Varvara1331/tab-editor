@@ -83,6 +83,7 @@
   justify-content: center;
   align-items: center;
 }
+
 .auth-logo {
   width: 80px;
   height: 80px;
@@ -105,15 +106,6 @@
   }
 }
 
-@keyframes bounce {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
 .auth-header h2 {
   color: #dedddc;
   font-size: 28px;
@@ -133,20 +125,21 @@
   padding: 30px;
 }
 
-/* Группы полей формы */
-.form-group {
+/* Группы полей формы - переопределяем глобальные стили */
+.auth-form .form-group {
   margin-bottom: 20px;
 }
 
-.form-group label {
+.auth-form .form-group label {
   display: block;
-  color: #dedddc;
+  color: #dedddc !important;
   margin-bottom: 8px;
   font-size: 14px;
   font-weight: 500;
+  background: transparent;
 }
 
-.form-group input {
+.auth-form .form-group input {
   width: 100%;
   padding: 12px 15px;
   background: rgba(31, 28, 19, 0.8);
@@ -158,18 +151,18 @@
   font-family: "Courier New", monospace;
 }
 
-.form-group input:focus {
+.auth-form .form-group input:focus {
   outline: none;
   border-color: rgba(245, 70, 57, 0.7);
   box-shadow: 0 0 10px 2px rgba(245, 70, 57, 0.2);
 }
 
-.form-group input::placeholder {
+.auth-form .form-group input::placeholder {
   color: #c1bcb2;
   opacity: 0.6;
 }
 
-.form-group input:disabled {
+.auth-form .form-group input:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -258,7 +251,7 @@
 }
 
 /* Анимация для полей формы при фокусе */
-.form-group input:focus {
+.auth-form .form-group input:focus {
   animation: glow 0.3s ease;
 }
 
@@ -272,10 +265,10 @@
 }
 
 /* Стили для автозаполнения (Webkit) */
-.form-group input:-webkit-autofill,
-.form-group input:-webkit-autofill:hover,
-.form-group input:-webkit-autofill:focus,
-.form-group input:-webkit-autofill:active {
+.auth-form .form-group input:-webkit-autofill,
+.auth-form .form-group input:-webkit-autofill:hover,
+.auth-form .form-group input:-webkit-autofill:focus,
+.auth-form .form-group input:-webkit-autofill:active {
   -webkit-box-shadow: 0 0 0 30px rgba(31, 28, 19, 0.8) inset !important;
   -webkit-text-fill-color: #dedddc !important;
   border-color: rgba(245, 70, 57, 0.5) !important;
@@ -308,7 +301,7 @@
     padding: 20px;
   }
   
-  .form-group input {
+  .auth-form .form-group input {
     padding: 10px 12px;
     font-size: 13px;
   }
@@ -333,7 +326,7 @@
     font-size: 20px;
   }
   
-  .form-group label {
+  .auth-form .form-group label {
     font-size: 12px;
   }
   

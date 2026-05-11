@@ -1,8 +1,6 @@
 /**
  * Общие стили для компонентов Library и PublicTabs
  * @module components/library/Library
- * 
- * Обновлено в соответствии с глобальными стилями приложения
  */
 
 /* ============================================
@@ -14,57 +12,85 @@
   width: 100%;
   max-width: 900px;
   margin: 0 auto;
-  padding: 20px;
+  padding: var(--spacing-xl);
 }
 
 /* ============================================
-   ОБЩИЕ СТИЛИ ДЛЯ ЗАГОЛОВКОВ - ЕДИНЫЙ СТИЛЬ С EDITOR-HEADER
+   ОБЩИЕ СТИЛИ ДЛЯ ЗАГОЛОВКОВ
    ============================================ */
 
 .library-header,
 .public-tabs-header {
   text-align: center;
-  padding: 20px 30px;
-  margin-bottom: 25px;
-  background: rgba(42, 37, 32, 0.8);
-  border-radius: var(--radius-xl, 20px);
+  padding: var(--spacing-xl) var(--spacing-3xl);
+  margin-bottom: var(--spacing-2xl);
+  background: rgba(42, 37, 32, var(--opacity-high));
+  border-radius: var(--radius-xl);
   border: 1px solid rgba(245, 70, 57, 0.2);
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: var(--spacing-sm);
+  position: relative;
+}
+
+.library-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  gap: var(--spacing-xl);
+  flex-wrap: wrap;
+}
+
+.library-header-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--spacing-sm);
+  flex: 1;
 }
 
 .library-header-icon,
 .public-tabs-header-icon {
-  color: var(--color-primary, #f54639);
-  filter: drop-shadow(0 0 8px rgba(245, 70, 57, 0.5));
+  color: var(--color-primary);
+  filter: drop-shadow(0 0 8px rgba(245, 70, 57, var(--opacity-medium)));
   animation: iconFloat 3s ease-in-out infinite;
-}
-
-@keyframes iconFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-5px); }
 }
 
 .library-title,
 .public-tabs-title {
-  font-size: 28px;
+  font-size: var(--font-size-xl);
   font-weight: bold;
   letter-spacing: 2px;
-  color: #f54639;
+  color: var(--color-primary);
   text-transform: uppercase;
-  text-shadow: 0 0 10px rgba(245, 70, 57, 0.5);
+  text-shadow: 0 0 10px rgba(245, 70, 57, var(--opacity-medium));
   margin: 0;
   font-family: "Courier New", monospace;
 }
 
 .library-subtitle,
 .public-tabs-subtitle {
-  color: #c1bcb2;
-  font-size: 14px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
   line-height: 1.5;
   margin: 0;
+}
+
+/* ============================================
+   КНОПКА ИМПОРТА В ЗАГОЛОВКЕ
+   ============================================ */
+
+.library-import-btn {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+/* Скрываем старый стиль */
+.library-import {
+  display: none;
 }
 
 /* ============================================
@@ -74,26 +100,19 @@
 .library-search,
 .public-tabs-search {
   padding: 0;
-  margin-bottom: 25px;
-}
-
-.search-results-info {
-  margin-top: 10px;
-  color: #c1bcb2;
-  font-size: 14px;
-  text-align: center;
+  margin-bottom: var(--spacing-2xl);
 }
 
 /* ============================================
-   ВКЛАДКИ ПЕРЕКЛЮЧЕНИЯ - ЕДИНЫЙ СТИЛЬ С НАВИГАЦИЕЙ
+   ВКЛАДКИ ПЕРЕКЛЮЧЕНИЯ
    ============================================ */
 
 .library-view-tabs,
 .public-view-tabs {
   display: flex;
-  gap: 12px;
+  gap: var(--spacing-md);
   padding: 0;
-  margin-bottom: 25px;
+  margin-bottom: var(--spacing-2xl);
   justify-content: flex-start;
 }
 
@@ -101,127 +120,8 @@
 .view-tab,
 .public-view-tab {
   position: relative;
-  background: transparent !important;
-  border: none !important;
   width: 40px;
   height: 40px;
-  cursor: pointer;
-  transition: all var(--transition-base, 0.3s ease);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: "Courier New", monospace;
-  color: #c1bcb2;
-  border-radius: 0;
-  box-shadow: none !important;
-}
-
-.view-tab svg,
-.public-view-tab svg {
-  color: #c1bcb2;
-  transition: all var(--transition-base, 0.3s ease);
-  stroke-width: 2;
-}
-
-.view-tab:hover,
-.public-view-tab:hover {
-  background: transparent !important;
-  transform: translateY(-2px);
-  border: none !important;
-  box-shadow: none !important;
-}
-
-.view-tab:hover svg,
-.public-view-tab:hover svg {
-  color: var(--color-primary, #f54639);
-  transform: scale(1.1);
-  filter: drop-shadow(0 0 4px rgba(245, 70, 57, 0.4));
-}
-
-.view-tab.active,
-.public-view-tab.active {
-  background: transparent !important;
-  border: none !important;
-  box-shadow: none !important;
-}
-
-.view-tab.active svg,
-.public-view-tab.active svg {
-  color: var(--color-primary, #f54639);
-  filter: drop-shadow(0 0 6px rgba(245, 70, 57, 0.6));
-  animation: iconBounce 0.3s ease;
-}
-
-.view-tab:active,
-.public-view-tab:active {
-  transform: translateY(0);
-}
-
-/* Счетчик для вкладок */
-.tab-count {
-  position: absolute;
-  right: -8px;
-  top: -8px;
-  background: var(--color-primary, #f54639);
-  color: white;
-  font-size: 10px;
-  font-weight: bold;
-  min-width: 18px;
-  height: 18px;
-  border-radius: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 5px;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  font-family: "Courier New", monospace;
-}
-
-@keyframes iconBounce {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); }
-}
-
-/* ============================================
-   КНОПКА ИМПОРТА - ЕДИНЫЙ СТИЛЬ
-   ============================================ */
-
-.library-import {
-  padding: 0;
-  margin-bottom: 25px;
-}
-
-.import-tab-btn {
-  width: 100%;
-  padding: 10px 20px;
-  background: rgba(245, 70, 57, 0.8);
-  border: none;
-  border-radius: var(--radius-2xl, 24px);
-  color: #dedddc;
-  font-size: var(--font-size-base, 16px);
-  font-weight: bold;
-  cursor: pointer;
-  transition: all var(--transition-base, 0.3s ease);
-  font-family: "Courier New", monospace;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.import-tab-btn svg {
-  transition: all var(--transition-base, 0.3s ease);
-}
-
-.import-tab-btn:hover svg {
-  transform: scale(1.1);
-}
-
-.import-tab-btn:hover {
-  background: rgba(245, 70, 57, 1);
-  transform: translateY(-2px);
-  box-shadow: 0 0 15px 2px rgba(245, 70, 57, 0.5);
 }
 
 /* ============================================
@@ -240,7 +140,7 @@
 .tab-card-wrapper {
   position: relative;
   width: 100%;
-  margin-bottom: 40px;
+  margin-bottom: var(--spacing-4xl);
 }
 
 .tab-card-wrapper:last-child {
@@ -248,7 +148,7 @@
 }
 
 /* ============================================
-   КНОПКИ ДЕЙСТВИЙ СЛЕВА ОТ КАРТОЧКИ - ЕДИНЫЙ СТИЛЬ
+   КНОПКИ ДЕЙСТВИЙ СЛЕВА ОТ КАРТОЧКИ
    ============================================ */
 
 .card-actions-side {
@@ -258,76 +158,75 @@
   transform: translateY(-50%);
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--spacing-sm);
   z-index: 1;
 }
 
-/* Базовый стиль для кнопок действий */
 .card-actions-side .nav-btn {
-  background: transparent !important;
-  border: none !important;
   width: 36px;
   height: 36px;
-  border-radius: 0;
-  box-shadow: none !important;
-}
-
-.card-actions-side .nav-btn svg {
-  color: #c1bcb2;
-  transition: all var(--transition-base, 0.3s ease);
-}
-
-.card-actions-side .nav-btn:hover {
-  background: transparent !important;
-  border: none !important;
-  transform: translateY(-2px);
-  box-shadow: none !important;
-}
-
-.card-actions-side .nav-btn:hover svg {
-  color: var(--color-primary, #f54639);
-  transform: scale(1.1);
-  filter: drop-shadow(0 0 4px rgba(245, 70, 57, 0.4));
-}
-
-.card-actions-side .nav-btn:active {
-  transform: translateY(0);
-}
-
-/* Кнопка избранного в активном состоянии */
-.card-actions-side .favorites-btn.in-favorites svg {
-  color: var(--color-primary, #f54639);
-  fill: currentColor;
-}
-
-/* Кнопка удаления - красный цвет */
-.card-actions-side .delete-btn:hover svg,
-.card-actions-side .remove-btn:hover svg {
-  color: #dc2626;
-}
-
-/* Кнопка экспорта */
-.card-actions-side .export-btn:hover svg {
-  color: var(--color-primary, #f54639);
 }
 
 /* ============================================
-   КАРТОЧКА ТАБУЛАТУРЫ - ЕДИНЫЙ СТИЛЬ
+   АКТИВНЫЕ СОСТОЯНИЯ КНОПОК В КАРТОЧКАХ
+   ============================================ */
+
+/* Свечение для активной кнопки избранного (добавлено в избранное) */
+.card-actions-side .favorites-btn.in-favorites svg {
+  color: var(--color-primary);
+  fill: currentColor;
+  filter: drop-shadow(0 0 8px rgba(245, 70, 57, 0.8));
+  animation: iconBounce var(--transition-base);
+}
+
+.card-actions-side .favorites-btn.in-favorites:hover svg {
+  filter: drop-shadow(0 0 12px rgba(245, 70, 57, 1));
+  transform: scale(1.15);
+}
+
+/* Свечение для кнопки удаления из избранного (в публикациях) */
+.card-actions-side .remove-btn.in-favorites svg,
+.card-actions-side .remove-btn:hover svg {
+  color: var(--color-error);
+  filter: drop-shadow(0 0 6px rgba(220, 38, 38, 0.6));
+  transform: scale(1.1);
+}
+
+/* Свечение для кнопки удаления (свои табулатуры) */
+.card-actions-side .delete-btn:hover svg {
+  color: var(--color-error);
+  filter: drop-shadow(0 0 6px rgba(220, 38, 38, 0.6));
+  transform: scale(1.1);
+}
+
+/* Свечение для кнопки экспорта */
+.card-actions-side .export-btn:hover svg {
+  color: var(--color-primary);
+  filter: drop-shadow(0 0 6px rgba(245, 70, 57, 0.6));
+  transform: scale(1.1);
+}
+
+/* ============================================
+   КАРТОЧКА ТАБУЛАТУРЫ
    ============================================ */
 
 .tab-card-wrapper .library-card {
   width: 100%;
   background: white;
-  border-radius: var(--radius-xl, 20px);
+  border-radius: var(--radius-xl);
   overflow: hidden;
-  outline: 7px outset rgba(245, 70, 57, 0.47);
-  box-shadow: 0 0 10px 10px var(--color-primary-dark, #74281b);
-  transition: transform var(--transition-base, 0.3s ease), box-shadow var(--transition-base, 0.3s ease);
+  outline: var(--border-width-thick) outset rgba(245, 70, 57, 0.47);
+  box-shadow: var(--shadow-lg);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
 }
 
 .tab-card-wrapper .library-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 0 12px 12px var(--color-primary-dark, #74281b);
+  box-shadow: var(--shadow-card);
+}
+
+.library-card.clickable {
+  cursor: pointer;
 }
 
 /* Структура карточки */
@@ -335,15 +234,14 @@
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  gap: 16px;
-  padding: 12px 16px;
+  gap: var(--spacing-lg);
+  padding: var(--spacing-md) var(--spacing-lg);
   width: 100%;
 }
 
-/* Левая часть с иконкой и информацией */
 .card-left {
   display: flex;
-  gap: 12px;
+  gap: var(--spacing-md);
   flex: 1;
   min-width: 0;
 }
@@ -352,14 +250,14 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-primary, #f54639);
-  transition: all var(--transition-base, 0.3s ease);
+  color: var(--color-primary);
+  transition: all var(--transition-base);
   flex-shrink: 0;
 }
 
 .tab-card-wrapper .library-card:hover .card-icon svg {
   transform: scale(1.05);
-  filter: drop-shadow(0 0 4px rgba(245, 70, 57, 0.5));
+  filter: drop-shadow(0 0 4px rgba(245, 70, 57, var(--opacity-medium)));
 }
 
 .card-details {
@@ -368,9 +266,9 @@
 }
 
 .card-title {
-  font-size: var(--font-size-base, 16px);
+  font-size: var(--font-size-base);
   font-weight: bold;
-  color: #2d3748;
+  color: var(--color-text-dark);
   margin: 0 0 4px 0;
   white-space: nowrap;
   overflow: hidden;
@@ -379,28 +277,27 @@
 
 .card-metadata {
   display: flex;
-  gap: 16px;
+  gap: var(--spacing-lg);
   margin-bottom: 4px;
   flex-wrap: wrap;
   align-items: center;
 }
 
 .card-artist {
-  font-size: var(--font-size-sm, 15px);
-  color: #4a5568;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-gray);
 }
 
 .card-date {
-  font-size: var(--font-size-xs, 13px);
+  font-size: var(--font-size-xs);
   color: #718096;
 }
 
-/* Правая часть с бейджами */
 .card-right {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 8px;
+  gap: var(--spacing-sm);
   flex-shrink: 0;
 }
 
@@ -409,7 +306,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: var(--font-size-xs, 13px);
+  font-size: var(--font-size-xs);
   background: rgba(245, 70, 57, 0.1);
   padding: 4px 10px;
   border-radius: 16px;
@@ -417,11 +314,11 @@
 }
 
 .card-author svg {
-  color: var(--color-primary, #f54639);
+  color: var(--color-primary);
 }
 
 .author-name {
-  color: #f54639;
+  color: var(--color-primary);
   font-weight: 500;
 }
 
@@ -432,7 +329,7 @@
   gap: 6px;
   padding: 4px 12px;
   border-radius: 16px;
-  font-size: var(--font-size-xs, 13px);
+  font-size: var(--font-size-xs);
   font-weight: bold;
   white-space: nowrap;
   cursor: help;
@@ -444,32 +341,32 @@
 
 .visibility-badge.public {
   background: rgba(16, 185, 129, 0.15);
-  color: #10b981;
-  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: var(--color-success);
+  border: 1px solid rgba(16, 185, 129, var(--opacity-low));
 }
 
 .visibility-badge.public svg {
-  color: #10b981;
+  color: var(--color-success);
 }
 
 .visibility-badge.private {
   background: rgba(245, 158, 11, 0.15);
-  color: #f59e0b;
-  border: 1px solid rgba(245, 158, 11, 0.3);
+  color: var(--color-warning);
+  border: 1px solid rgba(245, 158, 11, var(--opacity-low));
 }
 
 .visibility-badge.private svg {
-  color: #f59e0b;
+  color: var(--color-warning);
 }
 
 .visibility-badge.own-publication {
   background: rgba(245, 70, 57, 0.15);
-  color: #f54639;
-  border: 1px solid rgba(245, 70, 57, 0.3);
+  color: var(--color-primary);
+  border: 1px solid rgba(245, 70, 57, var(--opacity-low));
 }
 
 .visibility-badge.own-publication svg {
-  color: #f54639;
+  color: var(--color-primary);
 }
 
 /* Превью для мобильных устройств */
@@ -480,19 +377,15 @@
 
 .preview-content-mobile {
   font-family: "Courier New", monospace;
-  font-size: var(--font-size-xs, 13px);
+  font-size: var(--font-size-xs);
   color: #718096;
   background: #f7fafc;
   padding: 4px 8px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   display: block;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.library-card.clickable {
-  cursor: pointer;
 }
 
 /* ============================================
@@ -508,6 +401,15 @@
   .library-title,
   .public-tabs-title {
     font-size: 22px;
+  }
+  
+  .library-header-content {
+    flex-direction: column;
+  }
+  
+  .library-import-btn {
+    width: 40px;
+    height: 40px;
   }
   
   .library-view-tabs,
@@ -530,8 +432,8 @@
     transform: none;
     flex-direction: row;
     justify-content: flex-start;
-    gap: 8px;
-    margin-bottom: 8px;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
   }
   
   .card-actions-side .nav-btn {
@@ -581,4 +483,3 @@
     justify-content: center;
   }
 }
-

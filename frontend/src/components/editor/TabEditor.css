@@ -1,61 +1,41 @@
 /**
  * Стили для компонентов редактора табулатур
  * @module components/editor
- * 
- * Обновлено в соответствии с глобальными стилями приложения
- * Добавлены анимации и эффекты из глобальных стилей
  */
 
 /* ============================================
-   БАЗОВЫЕ СТИЛИ И ПЕРЕМЕННЫЕ
+   БАЗОВЫЕ СТИЛИ
    ============================================ */
 
 .tab-editor {
   max-width: 1538px;
   margin: 0 auto;
-  padding: 20px;
+  padding: var(--spacing-xl);
   font-family: "Courier New", monospace;
 }
 
-/* Импорт анимаций из глобальных стилей */
-@keyframes iconBounce {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); }
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
-}
-
 .readonly-banner {
-  background: rgba(245, 70, 57, 0.8);
-  color: #dedddc;
+  background: rgba(245, 70, 57, var(--opacity-high));
+  color: var(--color-text-light);
   text-align: center;
-  padding: 10px;
-  margin-bottom: 20px;
-  border-radius: 10px;
+  padding: var(--spacing-sm);
+  margin-bottom: var(--spacing-xl);
+  border-radius: var(--radius-md);
   font-weight: bold;
 }
 
 /* ============================================
-   ВЕРХНЯЯ ПАНЕЛЬ - ЕДИНЫЙ СТИЛЬ КНОПОК (С АНИМАЦИЕЙ)
+   ВЕРХНЯЯ ПАНЕЛЬ
    ============================================ */
 
 .editor-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background: rgba(42, 37, 32, 0.8);
-  border-radius: var(--radius-xl, 20px);
-  padding: 12px 20px;
-  margin-bottom: 20px;
+  background: rgba(42, 37, 32, var(--opacity-high));
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-md) var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
   border: 1px solid rgba(245, 70, 57, 0.2);
 }
 
@@ -69,7 +49,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-primary, #f54639);
+  color: var(--color-primary);
 }
 
 .file-details {
@@ -80,10 +60,10 @@
 
 .title-input {
   background: rgba(31, 28, 19, 0.6);
-  border: 1px solid rgba(245, 70, 57, 0.3);
-  border-radius: 8px;
-  color: #dedddc;
-  font-size: 18px;
+  border: 1px solid rgba(245, 70, 57, var(--opacity-low));
+  border-radius: var(--radius-sm);
+  color: var(--color-text-light);
+  font-size: var(--font-size-md);
   padding: 5px 10px;
   font-family: "Courier New", monospace;
   width: 250px;
@@ -91,32 +71,32 @@
 
 .title-input:focus {
   outline: none;
-  border-color: rgba(245, 70, 57, 0.7);
+  border-color: rgba(245, 70, 57, var(--opacity-muted));
 }
 
 .artist-input-inline {
   background: none;
   border: none;
-  color: #c1bcb2;
-  font-size: 14px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
   padding: 0;
   font-family: "Courier New", monospace;
 }
 
 .artist-input-inline:focus {
   outline: none;
-  color: #dedddc;
+  color: var(--color-text-light);
 }
 
 .file-details p {
-  color: #c1bcb2;
-  font-size: 14px;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
 }
 
-/* Крупные кнопки в верхней панели - с анимацией как в навигации */
+/* Кнопки в верхней панели */
 .file-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--spacing-sm);
 }
 
 .file-actions .btn {
@@ -124,19 +104,19 @@
   border: none !important;
   padding: 8px 12px;
   cursor: pointer;
-  transition: all var(--transition-base, 0.3s ease);
+  transition: all var(--transition-base);
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  color: #c1bcb2;
-  border-radius: 8px;
+  color: var(--color-text-muted);
+  border-radius: var(--radius-sm);
 }
 
 .file-actions .btn svg {
   width: 20px;
   height: 20px;
-  color: #c1bcb2;
-  transition: all var(--transition-base, 0.3s ease);
+  color: var(--color-text-muted);
+  transition: all var(--transition-base);
 }
 
 .file-actions .btn:hover {
@@ -145,58 +125,58 @@
 }
 
 .file-actions .btn:hover svg {
-  color: var(--color-primary, #f54639);
+  color: var(--color-primary);
   transform: scale(1.1);
   filter: drop-shadow(0 0 4px rgba(245, 70, 57, 0.4));
 }
 
 .file-actions .btn-publish.published svg,
 .file-actions .btn-save.saved svg {
-  color: var(--color-primary, #f54639);
+  color: var(--color-primary);
+  filter: drop-shadow(0 0 6px rgba(245, 70, 57, 0.6));
+  animation: iconBounce var(--transition-base);
 }
 
 /* ============================================
-   ПАНЕЛЬ ИНСТРУМЕНТОВ (ПЛЕЕР СЛЕВА, ЭФФЕКТЫ СПРАВА)
+   ПАНЕЛЬ ИНСТРУМЕНТОВ - УВЕЛИЧЕННЫЙ ТЕКСТ
    ============================================ */
 
 .tools-panel {
   background: rgba(42, 37, 32, 0.6);
-  border-radius: var(--radius-xl, 20px);
-  padding: 12px 20px;
-  margin-bottom: 20px;
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-md) var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
   border: 1px solid rgba(245, 70, 57, 0.2);
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
-  gap: 16px;
+  gap: var(--spacing-lg);
 }
 
-/* Левая часть - плеер */
 .tools-left {
   flex-shrink: 0;
 }
 
-/* Правая часть - эффекты и настройки */
 .tools-right {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--spacing-sm);
   flex: 1;
 }
 
-/* Строки инструментов */
 .tools-row {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--spacing-lg);
   flex-wrap: wrap;
   justify-content: flex-end;
 }
 
+/* Убираем фон у tools-group */
 .tools-group {
-  background: rgba(31, 28, 19, 0.4);
-  border-radius: 20px;
+  background: transparent;
+  border-radius: var(--radius-xl);
   padding: 6px 12px;
   display: flex;
   align-items: center;
@@ -205,55 +185,27 @@
 }
 
 .tools-label {
-  color: #c1bcb2;
-  font-size: 11px;
+  color: var(--color-text-muted);
+  font-size: 13px;  /* было 11px, увеличено на 20% */
   font-weight: 500;
-  text-transform: uppercase;
   letter-spacing: 0.5px;
 }
 
-/* ============================================
-   ЭФФЕКТЫ - КНОПКИ С АНИМАЦИЕЙ
-   ============================================ */
-
+/* Эффекты - кнопки с анимацией */
 .tool-btn {
-  background: transparent !important;
-  border: none !important;
-  cursor: pointer;
-  transition: all var(--transition-base, 0.3s ease);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #c1bcb2;
   padding: 6px 10px;
-  font-size: 13px;
-  font-family: "Courier New", monospace;
-  border-radius: 8px;
-}
-
-.tool-btn:hover {
-  transform: translateY(-2px);
-  color: var(--color-primary, #f54639);
-  background: transparent !important;
-}
-
-.tool-btn.active {
-  color: var(--color-primary, #f54639);
-}
-
-.tool-btn.active svg {
-  filter: drop-shadow(0 0 6px rgba(245, 70, 57, 0.6));
-  animation: iconBounce 0.3s ease;
+  font-size: 16px;  /* было 13px, увеличено на 20% */
+  border-radius: var(--radius-sm);
 }
 
 /* ============================================
-   РАЗМЕР ТАКТА
+   РАЗМЕР ТАКТА - УВЕЛИЧЕННЫЙ ТЕКСТ
    ============================================ */
 
 .measure-size-group {
-  background: rgba(31, 28, 19, 0.4);
+  background: transparent;
   padding: 6px 13px;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
 }
 
 .measure-size-btn {
@@ -261,36 +213,36 @@
   border: none !important;
   cursor: pointer;
   padding: 4px 10px;
-  font-size: 12px;
-  color: #c1bcb2;
+  font-size: 14px;  /* было 12px, увеличено на 20% */
+  color: var(--color-text-muted);
   font-family: "Courier New", monospace;
-  transition: all var(--transition-base, 0.3s ease);
-  border-radius: 16px;
+  transition: all var(--transition-base);
+  border-radius: var(--radius-lg);
 }
 
 .measure-size-btn:hover {
-  color: var(--color-primary, #f54639);
+  color: var(--color-primary);
   transform: translateY(-1px);
   background: transparent !important;
 }
 
 .measure-size-btn.active {
-  color: var(--color-primary, #f54639);
+  color: var(--color-primary);
   filter: drop-shadow(0 0 4px rgba(245, 70, 57, 0.4));
-  animation: iconBounce 0.3s ease;
+  animation: iconBounce var(--transition-base);
 }
 
 /* ============================================
-   НАСТРОЙКА СТРОЯ
+   НАСТРОЙКА СТРОЯ - УВЕЛИЧЕННЫЙ ТЕКСТ
    ============================================ */
 
 .tuning-group {
-  background: rgba(31, 28, 19, 0.4);
+  background: transparent;
   padding: 6px 12px;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   display: flex;
-  align-items: center;
-  gap: 12px;
+  align-items: end;
+  gap: var(--spacing-md);
   flex-wrap: wrap;
 }
 
@@ -300,22 +252,22 @@
 
 .preset-btn {
   background: transparent !important;
-  border: 1px solid rgba(245, 70, 57, 0.3) !important;
-  border-radius: 20px;
+  border: 1px solid rgba(245, 70, 57, var(--opacity-low)) !important;
+  border-radius: var(--radius-xl);
   padding: 4px 10px;
   cursor: pointer;
-  font-size: 11px;
+  font-size: 13px;  /* было 11px, увеличено на 20% */
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #c1bcb2;
+  color: var(--color-text-muted);
   font-family: "Courier New", monospace;
-  transition: all var(--transition-base, 0.3s ease);
+  transition: all var(--transition-base);
 }
 
 .preset-btn:hover {
   border-color: rgba(245, 70, 57, 0.6) !important;
-  color: var(--color-primary, #f54639);
+  color: var(--color-primary);
   transform: translateY(-1px);
 }
 
@@ -324,9 +276,9 @@
   top: 100%;
   left: 0;
   margin-top: 5px;
-  background: #2a2520;
-  border: 1px solid rgba(245, 70, 57, 0.5);
-  border-radius: 12px;
+  background: var(--color-bg-darkest);
+  border: 1px solid rgba(245, 70, 57, var(--opacity-medium));
+  border-radius: var(--radius-md);
   min-width: 160px;
   z-index: 100;
   overflow: hidden;
@@ -338,22 +290,22 @@
   padding: 8px 12px;
   background: none;
   border: none;
-  color: #dedddc;
+  color: var(--color-text-light);
   text-align: left;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 14px;  /* было 12px, увеличено на 20% */
   font-family: "Courier New", monospace;
-  transition: all var(--transition-base, 0.3s ease);
+  transition: all var(--transition-base);
 }
 
 .preset-option:hover {
   background: rgba(245, 70, 57, 0.2);
-  color: var(--color-primary, #f54639);
+  color: var(--color-primary);
 }
 
 .preset-option.active {
-  background: rgba(245, 70, 57, 0.3);
-  color: var(--color-primary, #f54639);
+  background: rgba(245, 70, 57, var(--opacity-low));
+  color: var(--color-primary);
 }
 
 .tuning-inputs {
@@ -370,38 +322,38 @@
 }
 
 .string-number {
-  color: #c1bcb2;
-  font-size: 8px;
+  color: var(--color-text-muted);
+  font-size: 10px;  /* было 8px, увеличено на 20% */
 }
 
 .tuning-input {
   background: rgba(31, 28, 19, 0.6);
-  border: 1px solid rgba(245, 70, 57, 0.3);
-  border-radius: 8px;
-  color: #dedddc;
+  border: 1px solid rgba(245, 70, 57, var(--opacity-low));
+  border-radius: var(--radius-sm);
+  color: var(--color-text-light);
   width: 46px;
   text-align: center;
   padding: 4px;
-  font-size: 11px;
+  font-size: 13px;  /* было 11px, увеличено на 20% */
   font-family: "Courier New", monospace;
 }
 
 .tuning-input:focus {
   outline: none;
-  border-color: rgba(245, 70, 57, 0.7);
+  border-color: rgba(245, 70, 57, var(--opacity-muted));
 }
 
 /* ============================================
-   ПЛЕЕР - ЕДИНЫЙ СТИЛЬ КНОПОК С АНИМАЦИЕЙ
+   ПЛЕЕР - УВЕЛИЧЕННЫЙ ТЕКСТ
    ============================================ */
 
 .player-controls-panel {
-  background: rgba(31, 28, 19, 0.4);
-  border-radius: 30px;
-  padding: 6px 16px;
+  background: transparent;
+  border-radius: var(--radius-3xl);
+  padding: 6px var(--spacing-lg);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: var(--spacing-md);
   flex-wrap: wrap;
 }
 
@@ -410,60 +362,35 @@
   gap: 4px;
 }
 
-.play-btn, .control-btn {
-  background: transparent !important;
-  border: none !important;
+.play-btn,
+.control-btn {
   width: 36px;
   height: 36px;
-  cursor: pointer;
-  transition: all var(--transition-base, 0.3s ease);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #c1bcb2;
-  border-radius: 8px;
-}
-
-.play-btn svg, .control-btn svg {
-  width: 20px;
-  height: 20px;
-  color: #c1bcb2;
-  transition: all var(--transition-base, 0.3s ease);
-}
-
-.play-btn:hover, .control-btn:hover {
-  transform: translateY(-2px);
-  background: transparent !important;
-}
-
-.play-btn:hover svg, .control-btn:hover svg {
-  color: var(--color-primary, #f54639);
-  transform: scale(1.1);
-  filter: drop-shadow(0 0 4px rgba(245, 70, 57, 0.4));
+  border-radius: var(--radius-sm);
 }
 
 .play-btn.playing svg {
-  color: var(--color-primary, #f54639);
+  color: var(--color-primary);
   filter: drop-shadow(0 0 6px rgba(245, 70, 57, 0.6));
-  animation: iconBounce 0.3s ease;
+  animation: iconBounce var(--transition-base);
 }
 
 .tempo-control {
   display: flex;
   align-items: center;
-  gap: 8px;
-  color: #dedddc;
+  gap: var(--spacing-sm);
+  color: var(--color-text-light);
 }
 
 .tempo-control label {
-  font-size: 11px;
+  font-size: 13px;  /* было 11px, увеличено на 20% */
 }
 
 .tempo-control input[type="range"] {
   width: 100px;
   height: 3px;
   -webkit-appearance: none;
-  background: rgba(245, 70, 57, 0.3);
+  background: rgba(245, 70, 57, var(--opacity-low));
   border-radius: 2px;
 }
 
@@ -471,168 +398,118 @@
   -webkit-appearance: none;
   width: 12px;
   height: 12px;
-  border-radius: 50%;
-  background: #f54639;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
   cursor: pointer;
 }
 
 .tempo-control span {
-  font-size: 11px;
+  font-size: 13px;  /* было 11px, увеличено на 20% */
   min-width: 40px;
 }
 
-.position-indicator {
-  color: #c1bcb2;
-  font-size: 10px;
+.position-indicator,
+.loading-indicator,
+.error-indicator {
+  color: var(--color-text-muted);
+  font-size: 12px;  /* было 10px, увеличено на 20% */
   padding: 2px 8px;
   background: rgba(31, 28, 19, 0.6);
-  border-radius: 16px;
-}
-
-.loading-indicator, .error-indicator {
-  color: #c1bcb2;
-  font-size: 10px;
-  padding: 2px 8px;
-  background: rgba(31, 28, 19, 0.6);
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+  border-radius: var(--radius-lg);
 }
 
 .error-indicator {
-  color: #f54639;
+  color: var(--color-primary);
 }
 
 /* ============================================
-   ХОЛСТ С ТАБУЛАТУРОЙ - УЛУЧШЕННЫЙ ТУЛБАР
+   ХОЛСТ С ТАБУЛАТУРОЙ - УВЕЛИЧЕННЫЙ ТЕКСТ
    ============================================ */
 
 .tab-canvas {
   position: relative;
   background: white;
-  border-radius: var(--radius-xl, 20px);
+  border-radius: var(--radius-xl);
   min-height: 400px;
-  outline: 7px outset rgba(245, 70, 57, 0.47);
-  box-shadow: 0 0 10px 10px #74281b;
+  outline: var(--border-width-thick) outset rgba(245, 70, 57, 0.47);
+  box-shadow: var(--shadow-lg);
   overflow: auto;
 }
 
-/* Улучшенный canvas-toolbar - более компактный */
+/* Панель инструментов холста */
 .canvas-toolbar {
-  position: sticky;
-  top: 0;
-  background: rgba(42, 37, 32, 0.95);
-  backdrop-filter: blur(10px);
-  border-bottom: 1px solid rgba(245, 70, 57, 0.3);
-  padding: 6px 16px;
+  background: rgba(42, 37, 32, 0.6);
+  border-radius: var(--radius-xl);
+  padding: var(--spacing-md) var(--spacing-xl);
+  margin-bottom: var(--spacing-xl);
+  border: 1px solid rgba(245, 70, 57, 0.2);
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: var(--spacing-lg);
   flex-wrap: wrap;
-  z-index: 50;
 }
 
+/* Убираем фон у canvas-toolbar-group */
 .canvas-toolbar-group {
+  background: transparent;
+  border-radius: var(--radius-xl);
+  padding: 6px 12px;
   display: flex;
   align-items: center;
   gap: 6px;
-  background: rgba(31, 28, 19, 0.4);
-  padding: 4px 10px;
-  border-radius: 24px;
+  flex-wrap: wrap;
 }
 
 .canvas-toolbar-label {
-  color: #c1bcb2;
-  font-size: 11px;
+  color: var(--color-text-muted);
+  font-size: 13px;  /* было 11px, увеличено на 20% */
   font-weight: 500;
+  letter-spacing: 0.5px;
 }
 
 .canvas-toolbar-btn {
-  background: transparent !important;
-  border: none !important;
-  color: #c1bcb2;
-  width: 26px;
-  height: 26px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--transition-base, 0.3s ease);
+  width: 28px;
+  height: 28px;
   border-radius: 6px;
-}
-
-.canvas-toolbar-btn:hover {
-  transform: translateY(-1px);
-}
-
-.canvas-toolbar-btn:hover svg {
-  color: var(--color-primary, #f54639);
-  transform: scale(1.1);
-  filter: drop-shadow(0 0 4px rgba(245, 70, 57, 0.4));
 }
 
 .canvas-zoom-value {
   min-width: 40px;
   text-align: center;
-  font-size: 12px;
-  color: #dedddc;
+  font-size: 14px;  /* было 12px, увеличено на 20% */
+  color: var(--color-text-light);
 }
 
 .canvas-layout-toggle {
   display: flex;
-  gap: 2px;
+  gap: 4px;
 }
 
 .canvas-layout-btn {
-  background: transparent !important;
-  border: none !important;
-  border-radius: 6px;
-  padding: 4px 8px;
-  cursor: pointer;
-  font-size: 11px;
-  color: #c1bcb2;
-  display: inline-flex;
-  align-items: center;
+  border-radius: var(--radius-sm);
+  padding: 4px 10px;
+  font-size: 14px;  /* было 12px, увеличено на 20% */
   gap: 4px;
-  transition: all var(--transition-base, 0.3s ease);
 }
 
-.canvas-layout-btn.active {
-  color: var(--color-primary, #f54639);
-}
-
-.canvas-layout-btn.active svg {
-  filter: drop-shadow(0 0 6px rgba(245, 70, 57, 0.6));
-  animation: iconBounce 0.3s ease;
-}
-
-.canvas-layout-btn:hover {
-  color: var(--color-primary, #f54639);
-  transform: translateY(-1px);
-}
-
-.canvas-layout-btn:hover svg {
-  transform: scale(1.1);
-  filter: drop-shadow(0 0 4px rgba(245, 70, 57, 0.4));
-}
-
+/* Убираем фон у canvas-add-measure-btn */
 .canvas-add-measure-btn {
   background: transparent !important;
-  border: 1px solid rgba(16, 185, 129, 0.4) !important;
-  border-radius: 20px;
-  padding: 4px 12px;
-  color: #10b981;
-  font-size: 11px;
+  border: 1px solid rgba(245, 70, 57, var(--opacity-low)) !important;
+  border-radius: var(--radius-xl);
+  padding: 6px 14px;
+  color: var(--color-text-muted);
+  font-size: 14px;  /* было 12px, увеличено на 20% */
   display: inline-flex;
   align-items: center;
   gap: 6px;
   cursor: pointer;
-  transition: all var(--transition-base, 0.3s ease);
+  transition: all var(--transition-base);
 }
 
 .canvas-add-measure-btn:hover {
-  border-color: rgba(16, 185, 129, 0.7) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-primary);
   transform: translateY(-1px);
   background: transparent !important;
 }
@@ -641,7 +518,7 @@
 .measures-container {
   display: flex;
   gap: 0;
-  padding: 20px;
+  padding: var(--spacing-xl);
   transition: transform 0.1s ease;
 }
 
@@ -667,6 +544,9 @@
 .tab-editor.vertical .measure {
   min-width: auto;
   width: 100%;
+  margin-bottom: 0;
+  border-bottom: none;
+  padding-bottom: 15px;
 }
 
 /* Разделители тактов */
@@ -681,12 +561,17 @@
 }
 
 .measures-container.vertical .measure:not(:last-child)::after {
+  display: none;
+}
+
+/* Разделители в вертикальной сетке */
+.tab-editor.vertical .measures-container .measure:not(:last-child)::after {
   content: '';
   position: absolute;
-  left: 20px;
-  right: 20px;
-  bottom: -1px;
-  height: 2px;
+  top: 50px;
+  bottom: 20px;
+  right: -1px;
+  width: 2px;
   background: #e2e8f0;
 }
 
@@ -697,27 +582,47 @@
   margin-bottom: 15px;
   padding: 0 0 8px 50px;
   border-bottom: 1px solid #e2e8f0;
+  min-height: 42px;
 }
 
 .measure-number {
-  font-size: 13px;
-  color: #4a5568;
+  font-size: 16px;  /* было 13px, увеличено на 20% */
+  color: var(--color-text-gray);
   font-weight: bold;
 }
 
 .measure-btn {
-  background: transparent !important;
-  border: none !important;
-  color: #f54639;
-  font-size: 18px;
-  cursor: pointer;
+  font-size: 22px;  /* было 18px, увеличено на 20% */
   padding: 0 5px;
-  transition: all var(--transition-base, 0.3s ease);
 }
 
 .measure-btn:hover {
-  color: #dc2626;
-  transform: scale(1.1);
+  color: var(--color-error);
+}
+
+/* Вертикальная раскладка с сеткой */
+.tab-editor.vertical .measures-container {
+  display: grid;
+  gap: 0;
+  width: 100%;
+  padding: var(--spacing-xl);
+  align-items: stretch;
+}
+
+.tab-editor.vertical[data-grid-cols="1"] .measures-container {
+  grid-template-columns: 1fr;
+}
+
+.tab-editor.vertical[data-grid-cols="2"] .measures-container {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.tab-editor.vertical[data-grid-cols="4"] .measures-container {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+.tab-editor.vertical .measure {
+  height: 100%;
 }
 
 /* Струна */
@@ -731,20 +636,24 @@
 
 .tab-string.active {
   background: rgba(245, 70, 57, 0.1);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
 }
 
-.string-label {
+.string-label,
+.string-label-empty {
   width: 50px;
-  font-size: 11px;
-  color: #4a5568;
+  font-size: 13px;  /* было 11px, увеличено на 20% */
+  color: var(--color-text-gray);
   font-weight: bold;
   flex-shrink: 0;
+  line-height: 28px;
+  display: inline-block;
+  vertical-align: middle;
 }
 
 .string-label-empty {
-  width: 50px;
-  flex-shrink: 0;
+  visibility: hidden;
+  color: transparent;
 }
 
 /* Ноты */
@@ -758,43 +667,43 @@
 .note-cell {
   background: #f7fafc;
   border: 2px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   width: 50px;
   min-width: 50px;
   text-align: center;
   padding: 6px 0;
   cursor: pointer;
-  transition: all var(--transition-base, 0.3s ease);
+  transition: all var(--transition-base);
   position: relative;
 }
 
 .note-cell:hover {
   background: #edf2f7;
-  border-color: #f54639;
+  border-color: var(--color-primary);
 }
 
 .note-cell.cursor {
   background: rgba(245, 70, 57, 0.2);
-  border-color: #f54639;
-  box-shadow: 0 0 5px rgba(245, 70, 57, 0.5);
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-sm);
 }
 
 .note-cell.playing {
   background: rgba(16, 185, 129, 0.2);
-  border-color: #10b981;
+  border-color: var(--color-success);
   animation: pulse 0.5s ease;
 }
 
 .note-symbol {
   font-family: "Courier New", monospace;
-  font-size: 14px;
+  font-size: var(--font-size-md);  /* было var(--font-size-sm), увеличено */
   font-weight: bold;
-  color: #2d3748;
+  color: var(--color-text-dark);
 }
 
 .separator {
   font-family: "Courier New", monospace;
-  font-size: 14px;
+  font-size: var(--font-size-md);  /* было var(--font-size-sm), увеличено */
   color: #a0aec0;
   width: 20px;
   text-align: center;
@@ -802,6 +711,9 @@
 
 /* Полоска воспроизведения */
 .tab-playhead {
+  position: absolute;
+  background-color: var(--color-primary);
+  z-index: 100;
   pointer-events: auto;
 }
 
@@ -813,20 +725,38 @@
   cursor: grabbing;
 }
 
+.playhead-line {
+  height: 100%;
+  width: 100%;
+  background-color: var(--color-primary);
+}
+
+.playhead-dot {
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 12px;
+  height: 12px;
+  background-color: var(--color-primary);
+  border-radius: var(--radius-full);
+}
+
 /* Нижняя панель */
 .editor-footer {
-  margin-top: 20px;
+  margin-top: var(--spacing-xl);
 }
 
 .status-bar {
   background: rgba(42, 37, 32, 0.6);
-  border-radius: 15px;
-  padding: 8px 20px;
+  border-radius: var(--radius-xl);
+  padding: 8px var(--spacing-xl);
   display: flex;
-  gap: 20px;
+  gap: var(--spacing-xl);
   flex-wrap: wrap;
-  font-size: 12px;
-  color: #c1bcb2;
+  font-size: 14px;  /* было 12px, увеличено на 20% */
+  color: var(--color-text-muted);
+  border: 1px solid rgba(245, 70, 57, 0.2);
 }
 
 .status-bar span {
@@ -838,14 +768,14 @@
 /* Индикатор ввода лада */
 .fret-indicator {
   position: fixed;
-  bottom: 20px;
-  right: 20px;
+  bottom: var(--spacing-xl);
+  right: var(--spacing-xl);
   background: rgba(42, 37, 32, 0.9);
-  border: 3px solid rgba(245, 70, 57, 0.5);
-  border-radius: 30px;
-  padding: 10px 20px;
-  color: #f54639;
-  font-size: 20px;
+  border: var(--border-width-medium) solid rgba(245, 70, 57, var(--opacity-medium));
+  border-radius: var(--radius-3xl);
+  padding: 10px var(--spacing-xl);
+  color: var(--color-primary);
+  font-size: var(--font-size-xl);
   font-weight: bold;
   z-index: 1000;
 }
@@ -858,39 +788,108 @@
    АДАПТИВНОСТЬ
    ============================================ */
 
+@media (max-width: 1200px) {
+  .tab-editor.vertical[data-grid-cols="4"] .measures-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
 @media (max-width: 1024px) {
-  .tab-editor { padding: 10px; }
-  .editor-header { flex-direction: column; gap: 12px; }
-  .file-actions { flex-wrap: wrap; justify-content: center; }
+  .tab-editor {
+    padding: 10px;
+  }
+  
+  .editor-header {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+  
+  .file-actions {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
 }
 
 @media (max-width: 768px) {
-  .tools-panel { flex-direction: column; align-items: stretch; }
-  .tools-left { align-self: center; }
-  .tools-right { align-items: stretch; }
-  .tools-row { justify-content: center; }
+  .tools-panel {
+    flex-direction: column;
+    align-items: stretch;
+  }
   
-  .note-cell { width: 35px; min-width: 35px; padding: 4px 0; }
-  .note-symbol, .separator { font-size: 11px; }
-  .separator { width: 15px; }
-  .measure { min-width: 250px; }
-  .string-label, .string-label-empty { width: 40px; }
-  .measure-header { padding-left: 40px; }
+  .tools-left {
+    align-self: center;
+  }
   
-  .canvas-toolbar { gap: 10px; }
-  .canvas-toolbar-group { padding: 3px 8px; }
+  .tools-right {
+    align-items: stretch;
+  }
+  
+  .tools-row {
+    justify-content: center;
+  }
+  
+  .note-cell {
+    width: 35px;
+    min-width: 35px;
+    padding: 4px 0;
+  }
+  
+  .note-symbol,
+  .separator {
+    font-size: 11px;
+  }
+  
+  .separator {
+    width: 15px;
+  }
+  
+  .measure {
+    min-width: 250px;
+  }
+  
+  .string-label,
+  .string-label-empty {
+    width: 40px;
+  }
+  
+  .measure-header {
+    padding-left: 40px;
+  }
+  
+  .canvas-toolbar {
+    gap: 10px;
+  }
+  
+  .canvas-toolbar-group {
+    padding: 3px 8px;
+  }
+  
+  .tab-editor.vertical .measures-container {
+    grid-template-columns: 1fr !important;
+  }
+  
+  .tab-editor.vertical .measures-container .measure::after {
+    display: none;
+  }
 }
 
 @media (max-width: 640px) {
-  .tools-row { flex-direction: column; align-items: stretch; }
-  .tools-group { justify-content: center; }
-  .tuning-group { flex-direction: column; align-items: stretch; }
+  .tools-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .tools-group {
+    justify-content: center;
+  }
+  
+  .tuning-group {
+    flex-direction: column;
+    align-items: stretch;
+  }
 }
 
-/* ============================================
-   ВЕРТИКАЛЬНАЯ РАСКЛАДКА
-   ============================================ */
-
+/* Вертикальная раскладка */
 .tab-editor.vertical .tab-canvas {
   overflow-y: auto;
   overflow-x: auto;
@@ -898,197 +897,6 @@
   max-height: calc(100vh - 200px);
 }
 
-.tab-editor.vertical .measures-container {
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-}
-
 .tab-editor.vertical .tab-canvas {
   scroll-behavior: smooth;
-}
-
-/* Крупные кнопки в верхней панели - с анимацией как в навигации */
-.file-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.file-actions .btn {
-  background: transparent !important;
-  border: none !important;
-  padding: 8px 12px;
-  cursor: pointer;
-  transition: all var(--transition-base, 0.3s ease);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #c1bcb2;
-  border-radius: 8px;
-}
-
-.file-actions .btn svg {
-  width: 20px;
-  height: 20px;
-  color: #c1bcb2;
-  transition: all var(--transition-base, 0.3s ease);
-}
-
-.file-actions .btn:hover {
-  transform: translateY(-2px);
-  background: transparent !important;
-}
-
-.file-actions .btn:hover svg {
-  color: var(--color-primary, #f54639);
-  transform: scale(1.1);
-  filter: drop-shadow(0 0 4px rgba(245, 70, 57, 0.4));
-}
-
-/* Активное состояние для кнопки публикации */
-.file-actions .btn-publish.published svg {
-  color: var(--color-primary, #f54639);
-  filter: drop-shadow(0 0 6px rgba(245, 70, 57, 0.6));
-  animation: iconBounce 0.3s ease;
-}
-
-/* Активное состояние для кнопки сохранения */
-.file-actions .btn-save.saved svg {
-  color: var(--color-primary, #f54639);
-  filter: drop-shadow(0 0 6px rgba(245, 70, 57, 0.6));
-  animation: iconBounce 0.3s ease;
-}
-
-/* ============================================
-   ХОЛСТ С ТАБУЛАТУРОЙ
-   ============================================ */
-
-.tab-canvas {
-  position: relative;
-  background: white;
-  border-radius: var(--radius-xl, 20px);
-  min-height: 400px;
-  outline: 7px outset rgba(245, 70, 57, 0.47);
-  box-shadow: 0 0 10px 10px #74281b;
-  overflow: auto;
-}
-
-/* canvas-toolbar - единый стиль с tools-panel */
-.canvas-toolbar {
-  background: rgba(42, 37, 32, 0.6);
-  border-radius: var(--radius-xl, 20px);
-  padding: 12px 20px;
-  margin-bottom: 20px;
-  border: 1px solid rgba(245, 70, 57, 0.2);
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.canvas-toolbar-group {
-  background: rgba(31, 28, 19, 0.4);
-  border-radius: 20px;
-  padding: 6px 12px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.canvas-toolbar-label {
-  color: #c1bcb2;
-  font-size: 11px;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.canvas-toolbar-btn {
-  background: transparent !important;
-  border: none !important;
-  color: #c1bcb2;
-  width: 28px;
-  height: 28px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all var(--transition-base, 0.3s ease);
-  border-radius: 6px;
-}
-
-.canvas-toolbar-btn:hover {
-  transform: translateY(-1px);
-}
-
-.canvas-toolbar-btn:hover svg {
-  color: var(--color-primary, #f54639);
-  transform: scale(1.1);
-  filter: drop-shadow(0 0 4px rgba(245, 70, 57, 0.4));
-}
-
-.canvas-zoom-value {
-  min-width: 40px;
-  text-align: center;
-  font-size: 12px;
-  color: #dedddc;
-}
-
-.canvas-layout-toggle {
-  display: flex;
-  gap: 4px;
-}
-
-.canvas-layout-btn {
-  background: transparent !important;
-  border: none !important;
-  border-radius: 8px;
-  padding: 4px 10px;
-  cursor: pointer;
-  font-size: 12px;
-  color: #c1bcb2;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  transition: all var(--transition-base, 0.3s ease);
-}
-
-.canvas-layout-btn.active {
-  color: var(--color-primary, #f54639);
-}
-
-.canvas-layout-btn.active svg {
-  filter: drop-shadow(0 0 6px rgba(245, 70, 57, 0.6));
-  animation: iconBounce 0.3s ease;
-}
-
-.canvas-layout-btn:hover {
-  color: var(--color-primary, #f54639);
-  transform: translateY(-1px);
-}
-
-.canvas-layout-btn:hover svg {
-  transform: scale(1.1);
-  filter: drop-shadow(0 0 4px rgba(245, 70, 57, 0.4));
-}
-
-.canvas-add-measure-btn {
-  background: transparent !important;
-  border: 1px solid rgba(16, 185, 129, 0.4) !important;
-  border-radius: 20px;
-  padding: 6px 14px;
-  color: #10b981;
-  font-size: 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  transition: all var(--transition-base, 0.3s ease);
-}
-
-.canvas-add-measure-btn:hover {
-  border-color: rgba(16, 185, 129, 0.7) !important;
-  transform: translateY(-1px);
-  background: transparent !important;
 }

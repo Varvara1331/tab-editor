@@ -410,7 +410,7 @@ export const exportToMusicXML = (tabData: TabData): string => {
 };
 
 /**
- * Экспорт табулатуры в PDF
+ * Экспорт табулатуры в PDF (формат: 6 линий-струн с номерами ладов)
  * 
  * @param tabData - Данные табулатуры
  * @returns Promise с Blob PDF файла
@@ -421,166 +421,297 @@ export const exportToPDF = async (tabData: TabData): Promise<Blob> => {
   const jspdfModule = await import('jspdf');
   const jsPDF = jspdfModule.default;
 
-  const container = document.createElement('div');
-  container.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:1200px;background:white;padding:20px;font-family:monospace';
-  
+  const numStrings = tabData.tuning.length;
   const firstMeasureSize = tabData.measures[0] ? getNotesPerMeasure(tabData.measures[0]) : 16;
   const displayTimeSignature = getDisplayTimeSignature(firstMeasureSize);
   
-  let html = `<div style="font-family:monospace;max-width:1100px;margin:0 auto">
-    <h1 style="text-align:center">${escapeHtml(tabData.title)}</h1>`;
+  // Расстояние между струнами
+  const STRING_SPACING = 41;
+  const STAFF_HEIGHT = (numStrings - 1) * STRING_SPACING;
+  const STAFF_TOP_OFFSET = 22;
+  const POSITION_WIDTH = 79;
   
-  if (tabData.artist) {
-    html += `<h3 style="text-align:center">${escapeHtml(tabData.artist)}</h3>`;
+  // Определяем количество тактов в строке в зависимости от размера
+  let MEASURES_PER_ROW = 4; // по умолчанию для 4/4
+  if (firstMeasureSize === 8) {
+    MEASURES_PER_ROW = 2; // для 8/8 - 2 такта
+  } else if (firstMeasureSize === 16) {
+    MEASURES_PER_ROW = 1; // для 16/16 - 1 такт
   }
   
-  html += `
-    <div style="text-align:center;margin-bottom:20px">
-      <p><strong>Строй:</strong> ${tabData.tuning.join(' ')}</p>
-      <p><strong>Размер такта:</strong> ${displayTimeSignature}</p>
-      <p><strong>Количество тактов:</strong> ${tabData.measures.length}</p>
-    </div>
-    <hr/>`;
+  // Высота одной строки табулатуры
+  const ROW_HEIGHT = STAFF_HEIGHT + STAFF_TOP_OFFSET + 50;
   
-  // Группируем такты в строки
-  type MeasureRow = typeof tabData.measures;
-  const rows: MeasureRow[] = [];
-  let currentRow: MeasureRow = [];
-  let currentRowPositions = 0;
+  // Высота заголовка и нижнего колонтитула
+  const HEADER_HEIGHT = 230;
+  const FOOTER_HEIGHT = 70;
   
-  tabData.measures.forEach((measure) => {
-    const notesPerMeasure = getNotesPerMeasure(measure);
-    
-    if (currentRowPositions + notesPerMeasure > 16 && currentRow.length > 0) {
-      rows.push([...currentRow]);
-      currentRow = [measure];
-      currentRowPositions = notesPerMeasure;
-    } else {
-      currentRow.push(measure);
-      currentRowPositions += notesPerMeasure;
-    }
+  // Доступная высота для строк табулатуры на странице A4
+  const PAGE_HEIGHT_PX = 1123;
+  const CONTENT_HEIGHT = PAGE_HEIGHT_PX - HEADER_HEIGHT - FOOTER_HEIGHT;
+  const MAX_ROWS_PER_PAGE = 5;
+  
+  // Группируем такты в строки по фиксированному количеству тактов
+  const rows: typeof tabData.measures[] = [];
+  for (let i = 0; i < tabData.measures.length; i += MEASURES_PER_ROW) {
+    rows.push(tabData.measures.slice(i, i + MEASURES_PER_ROW));
+  }
+  
+  // Разбиваем строки на страницы
+  const pages: typeof rows[] = [];
+  for (let i = 0; i < rows.length; i += MAX_ROWS_PER_PAGE) {
+    pages.push(rows.slice(i, i + MAX_ROWS_PER_PAGE));
+  }
+  
+  // Создаем PDF
+  const pdf = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4'
   });
   
-  if (currentRow.length > 0) {
-    rows.push(currentRow);
-  }
-  
-  const ROW_WIDTH = 900;
-  
-  rows.forEach((row) => {
-    const totalPositionsInRow = row.reduce((sum, measure) => sum + getNotesPerMeasure(measure), 0);
-    const positionWidth = ROW_WIDTH / totalPositionsInRow;
+  // Обрабатываем каждую страницу отдельно
+  for (let pageIdx = 0; pageIdx < pages.length; pageIdx++) {
+    const pageRows = pages[pageIdx];
+    const pageNumber = pageIdx + 1;
+    const totalPages = pages.length;
     
-    html += `<div style="margin-bottom:30px;page-break-inside:avoid">
-      <div style="display:flex;align-items:stretch;gap:0;border:1px solid #ccc;background:#fff;">`;
+    // Создаем временный контейнер для страницы
+    const pageContainer = document.createElement('div');
+    pageContainer.style.cssText = `
+      width: 1300px;
+      background: white;
+      padding: 20px;
+      font-family: monospace;
+      position: absolute;
+      left: -9999px;
+      top: -9999px;
+    `;
     
-    // Левая колонка с названиями струн
-    html += `<div style="flex-shrink:0;width:60px;background:#f9f9f9;border-right:2px solid #000;">`;
-    for (let s = 0; s < tabData.tuning.length; s++) {
-      html += `<div style="height:30px;padding:4px 8px;font-weight:bold;border-bottom:1px solid #ddd;text-align:right">${escapeHtml(tabData.tuning[s])}</div>`;
+    let pageHtml = `
+      <div style="font-family:monospace;background:#ffffff;">
+        <div style="text-align:center;margin-bottom:30px;">
+          <h1 style="color:#000000;margin:0 0 15px 0;font-size:35px;font-weight:bold;">${escapeHtml(tabData.title)}</h1>`;
+    
+    if (tabData.artist) {
+      pageHtml += `<h3 style="color:#000000;margin:0 0 22px 0;font-size:26px;">${escapeHtml(tabData.artist)}</h3>`;
     }
-    html += `</div>`;
     
-    // Такты в строке
-    html += `<div style="display:flex;flex:1;gap:0;">`;
+    pageHtml += `
+          <div style="text-align:center;margin-bottom:35px;color:#000000;font-size:17px;">
+            <p style="margin:5px 0;"><strong>Строй:</strong> ${tabData.tuning.join(' ')} &nbsp;|&nbsp; 
+               <strong>Размер такта:</strong> ${displayTimeSignature} &nbsp;|&nbsp;
+               <strong>Количество тактов:</strong> ${tabData.measures.length}</p>
+          </div>
+          <hr style="border-color:#000000;margin-bottom:30px;width:100%;"/>
+        </div>`;
     
-    row.forEach((measure, idx) => {
-      const notesPerMeasure = getNotesPerMeasure(measure);
-      const measureWidth = notesPerMeasure * positionWidth;
-      const isLastInRow = idx === row.length - 1;
+    // Рисуем строки табулатуры для этой страницы
+    pageRows.forEach((row, rowIndex) => {
+      const actualWidth = row.reduce((sum, measure) => sum + (getNotesPerMeasure(measure) * POSITION_WIDTH), 0);
       
-      html += `<div style="flex-shrink:0;width:${measureWidth}px;border-right:${isLastInRow ? '2px solid #000' : '1px solid #ccc'};">`;
+      // Сдвигаем все строки левее (уменьшаем margin-left)
+      pageHtml += `<div style="margin-bottom:22px;margin-left:-50px;">
+        <div style="position:relative;">`;
       
-      const globalMeasureIndex = tabData.measures.findIndex(m => m.id === measure.id);
-      html += `<div style="text-align:center;padding:4px;font-size:12px;font-weight:bold;border-bottom:1px solid #ccc;background:#f0f0f0">
-        ${globalMeasureIndex + 1}
-      </div>`;
+      // Номера тактов (тоже сдвигаем левее)
+      pageHtml += `<div style="display:flex;margin-left:115px;margin-bottom:12px;">`;
+      row.forEach((measure) => {
+        const notesPerMeasure = getNotesPerMeasure(measure);
+        const measureWidth = notesPerMeasure * POSITION_WIDTH;
+        const globalMeasureIndex = tabData.measures.findIndex(m => m.id === measure.id);
+        pageHtml += `<div style="width:${measureWidth}px;text-align:center;font-size:19px;font-weight:bold;color:#000000;">
+          ${globalMeasureIndex + 1}
+        </div>`;
+      });
+      pageHtml += `</div>`;
       
-      for (let s = 0; s < tabData.tuning.length; s++) {
-        const stringNotes = measure.strings[s]?.notes || [];
-        html += `<div style="display:flex;height:30px;border-bottom:1px solid #ddd;">`;
-        
-        stringNotes.forEach((note: Note) => {
-          const cellWidth = positionWidth;
-          if (note.fret === null) {
-            html += `<div style="width:${cellWidth}px;text-align:center;padding:4px;font-family:monospace;font-size:12px">--</div>`;
-          } else {
-            let symbol = note.fret.toString();
-            if (note.bend) {
-              symbol = `(${symbol})`;
-            } else if (note.slide === 'up') {
-              symbol = `${symbol}/`;
-            } else if (note.slide === 'down') {
-              symbol = `\\${symbol}`;
-            } else if (getHammerTarget(note) !== null) {
-              const target = getHammerTarget(note);
-              symbol = `${symbol}h${target}`;
-            } else if (getPullTarget(note) !== null) {
-              const target = getPullTarget(note);
-              symbol = `${symbol}p${target}`;
-            } else if (note.vibrato) {
-              symbol = `${symbol}~`;
-            }
-            html += `<div style="width:${cellWidth}px;text-align:center;padding:4px;font-family:monospace;font-size:12px;font-weight:bold">${escapeHtml(symbol)}</div>`;
-          }
-        });
-        
-        html += `</div>`;
+      // Нотный стан
+      pageHtml += `<div style="position:relative;margin-left:115px;width:${actualWidth}px;">`;
+      
+      // Линии струн
+      for (let s = 0; s < numStrings; s++) {
+        const lineTop = s * STRING_SPACING + STAFF_TOP_OFFSET;
+        pageHtml += `<div style="position:absolute;left:0;right:0;top:${lineTop}px;height:2.5px;background:#000000;"></div>`;
       }
       
-      html += `</div>`;
+      // Вертикальная черта в начале строки (левая граница)
+      const startLineTop = STAFF_TOP_OFFSET - 8;
+      const lineHeight = STAFF_HEIGHT + 16;
+      pageHtml += `<div style="position:absolute;left:-8px;top:${startLineTop}px;width:3px;height:${lineHeight}px;background:#000000;"></div>`;
+      
+      // Названия струн слева (сдвигаем еще левее)
+      pageHtml += `<div style="position:absolute;left:-115px;top:0;width:105px;">`;
+      for (let s = 0; s < numStrings; s++) {
+        const lineY = s * STRING_SPACING + STAFF_TOP_OFFSET - 15;
+        pageHtml += `<div style="position:absolute;left:0;top:${lineY}px;width:105px;text-align:right;font-family:monospace;font-size:20px;font-weight:bold;padding-right:12px;color:#000000;">
+          ${escapeHtml(tabData.tuning[numStrings - 1 - s])}
+        </div>`;
+      }
+      pageHtml += `</div>`;
+      
+      // Ноты
+      let measureStartPosition = 0;
+      
+      row.forEach((measure, measureIdx) => {
+        const notesPerMeasure = getNotesPerMeasure(measure);
+        const measureStartX = measureStartPosition * POSITION_WIDTH;
+        
+        // Вертикальная линия такта (между тактами)
+        if (measureIdx > 0) {
+          const lineTop = STAFF_TOP_OFFSET - 8;
+          const lineHeight = STAFF_HEIGHT + 16;
+          pageHtml += `<div style="position:absolute;left:${measureStartX}px;top:${lineTop}px;width:2.5px;height:${lineHeight}px;background:#000000;"></div>`;
+        }
+        
+        // Позиции
+        for (let pos = 0; pos < notesPerMeasure; pos++) {
+          const cellLeft = (measureStartPosition + pos) * POSITION_WIDTH;
+          
+          for (let s = 0; s < numStrings; s++) {
+            const stringNotes = measure.strings[s]?.notes || [];
+            if (pos < stringNotes.length) {
+              const note = stringNotes[pos];
+              
+              // Проверяем, является ли эта нота целью слайда с предыдущей позиции
+              let isSlideTarget = false;
+              let slideFromFret: number | null = null;
+              let slideDirection: string | null = null;
+              
+              if (pos > 0) {
+                const prevNotes = measure.strings[s]?.notes;
+                if (prevNotes && prevNotes[pos - 1]) {
+                  const prevNote = prevNotes[pos - 1];
+                  if (prevNote.slide === 'up' || prevNote.slide === 'down') {
+                    isSlideTarget = true;
+                    slideFromFret = prevNote.fret;
+                    slideDirection = prevNote.slide;
+                  }
+                }
+              }
+              
+              // Если нота является целью слайда, пропускаем её отрисовку
+              if (isSlideTarget) {
+                continue;
+              }
+              
+              if (note && note.fret !== null && note.fret >= 0) {
+                const lineY = s * STRING_SPACING + STAFF_TOP_OFFSET - 15;
+                
+                let symbol = note.fret.toString();
+                let effectHtml = '';
+                
+                // Обработка разных типов эффектов
+                if (note.bend) {
+                  effectHtml = `<span style="font-size:32px;font-weight:bold;margin-left:4px;">⤴</span>`;
+                } else if (note.slide === 'up') {
+                  // Для слайда вверх: проверяем следующую ноту на этой же струне
+                  let nextFret: number | null = null;
+                  
+                  if (pos + 1 < notesPerMeasure) {
+                    const nextNotes = measure.strings[s]?.notes;
+                    if (nextNotes && nextNotes[pos + 1] && nextNotes[pos + 1].fret !== null) {
+                      nextFret = nextNotes[pos + 1].fret;
+                    }
+                  }
+                  
+                  if (nextFret !== null) {
+                    // Формат: текущий лад / следующий лад
+                    effectHtml = `<span style="font-size:28px;font-weight:bold;margin-left:4px;margin-right:4px;">/</span><span style="font-size:32px;font-weight:bold;">${nextFret}</span>`;
+                  } else {
+                    effectHtml = `<span style="font-size:32px;font-weight:bold;margin-left:4px;">/</span>`;
+                  }
+                } else if (note.slide === 'down') {
+                  // Для слайда вниз: проверяем следующую ноту на этой же струне
+                  let nextFret: number | null = null;
+                  
+                  if (pos + 1 < notesPerMeasure) {
+                    const nextNotes = measure.strings[s]?.notes;
+                    if (nextNotes && nextNotes[pos + 1] && nextNotes[pos + 1].fret !== null) {
+                      nextFret = nextNotes[pos + 1].fret;
+                    }
+                  }
+                  
+                  if (nextFret !== null) {
+                    // Формат: текущий лад \ следующий лад
+                    effectHtml = `<span style="font-size:28px;font-weight:bold;margin-left:4px;margin-right:4px;">\\</span><span style="font-size:32px;font-weight:bold;">${nextFret}</span>`;
+                  } else {
+                    effectHtml = `<span style="font-size:32px;font-weight:bold;margin-left:4px;">\\</span>`;
+                  }
+                } else if (getHammerTarget(note) !== null) {
+                  const target = getHammerTarget(note);
+                  effectHtml = `<span style="font-size:28px;font-weight:bold;margin-left:4px;">h${target}</span>`;
+                } else if (getPullTarget(note) !== null) {
+                  const target = getPullTarget(note);
+                  effectHtml = `<span style="font-size:28px;font-weight:bold;margin-left:4px;">p${target}</span>`;
+                } else if (note.vibrato) {
+                  effectHtml = `<span style="font-size:32px;font-weight:bold;margin-left:4px;">~</span>`;
+                }
+                
+                const textX = cellLeft + (POSITION_WIDTH / 2);
+                
+                // Основной номер лада
+                pageHtml += `<div style="position:absolute;left:${textX}px;top:${lineY}px;transform:translateX(-50%);text-align:center;font-family:monospace;font-size:32px;font-weight:bold;background:#ffffff;color:#000000;z-index:10;white-space:nowrap;">
+                  ${escapeHtml(symbol)}${effectHtml}
+                </div>`;
+              }
+            }
+          }
+        }
+        
+        // ВЕРТИКАЛЬНАЯ ЧЕРТА В КОНЦЕ КАЖДОГО ТАКТА (в том числе последнего в строке)
+        const measureEndX = (measureStartPosition + notesPerMeasure) * POSITION_WIDTH;
+        const lineTop = STAFF_TOP_OFFSET - 8;
+        const lineHeightTotal = STAFF_HEIGHT + 16;
+        pageHtml += `<div style="position:absolute;left:${measureEndX}px;top:${lineTop}px;width:2.5px;height:${lineHeightTotal}px;background:#000000;"></div>`;
+        
+        measureStartPosition += notesPerMeasure;
+      });
+      
+      pageHtml += `<div style="height:${STAFF_HEIGHT + STAFF_TOP_OFFSET + 30}px;"></div>`;
+      pageHtml += `</div>`;
+      pageHtml += `</div></div>`;
     });
     
-    html += `</div></div></div>`;
-  });
-  
-  html += `
-    <hr/>
-    <p style="font-size:10px;color:#666;text-align:center;margin-top:20px">
-      Экспортировано из Tab Editor • ${new Date().toLocaleString()}
-    </p>
-  </div>`;
-  
-  container.innerHTML = html;
-  document.body.appendChild(container);
-  
-  try {
-    const canvas = await html2canvas(container, { 
-      logging: false, 
+    // Нижний колонтитул - теперь полоса на всю ширину (100%)
+    pageHtml += `
+      <div style="text-align:center;margin-top:30px;">
+        <hr style="border-color:#000000;width:100%;margin:10px auto;"/>
+        <p style="font-size:15px;color:#666666;margin:5px 0;">
+          ${escapeHtml(tabData.title)}${tabData.artist ? ` - ${escapeHtml(tabData.artist)}` : ''} • Страница ${pageNumber} из ${totalPages} • ${new Date().toLocaleString()}
+        </p>
+      </div>
+    </div>`;
+    
+    pageContainer.innerHTML = pageHtml;
+    document.body.appendChild(pageContainer);
+    
+    // Конвертируем страницу в изображение
+    const canvas = await html2canvas(pageContainer, {
+      logging: false,
       useCORS: false,
       scale: 2,
       backgroundColor: '#ffffff'
     });
     
-    const pdf = new jsPDF({ 
-      orientation: 'portrait', 
-      unit: 'mm', 
-      format: 'a4' 
-    });
+    // Добавляем страницу в PDF
+    if (pageIdx > 0) {
+      pdf.addPage();
+    }
     
     const imgData = canvas.toDataURL('image/png');
     const imgWidth = 190;
-    const pageHeight = 277;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    let heightLeft = imgHeight;
-    let position = 0;
+    const xOffset = (210 - imgWidth) / 2;
     
-    pdf.addImage(imgData, 'PNG', 10, position + 10, imgWidth, imgHeight);
-    heightLeft -= pageHeight;
+    pdf.addImage(imgData, 'PNG', xOffset, 10, imgWidth, imgHeight);
     
-    while (heightLeft > 0) {
-      position = heightLeft - imgHeight;
-      pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 10, position + 10, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-    }
-    
-    return pdf.output('blob');
-  } finally {
-    document.body.removeChild(container);
+    // Удаляем временный контейнер
+    document.body.removeChild(pageContainer);
   }
+  
+  return pdf.output('blob');
 };
-
 /**
  * Экспорт табулатуры в текстовый формат
  * 

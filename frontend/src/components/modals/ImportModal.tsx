@@ -6,6 +6,7 @@
  */
 
 import React, { useState, useCallback, memo } from 'react';
+import { Upload, FileJson, Music, FileCode, AlertCircle, CheckCircle } from 'lucide-react';
 import { TabData } from '../../types/tab';
 import { importTabFromFile, canImportFile } from '../../utils/import/importUtils';
 import { saveToLibrary } from '../../services/libraryService';
@@ -142,7 +143,10 @@ const ImportModal: React.FC<ImportModalProps> = memo(({ isOpen, onClose, onImpor
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
         {/* Заголовок */}
         <div className="modal-header">
-          <h3>📁 Импорт табулатуры</h3>
+          <h3>
+            <Upload size={20} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'middle' }} />
+            Импорт табулатуры
+          </h3>
           <button className="modal-close" onClick={onClose} aria-label="Закрыть">×</button>
         </div>
 
@@ -154,7 +158,9 @@ const ImportModal: React.FC<ImportModalProps> = memo(({ isOpen, onClose, onImpor
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
           >
-            <div className="import-icon" aria-hidden="true">📂</div>
+            <div className="import-icon">
+              <Upload size={48} />
+            </div>
             <p className="import-title">
               {isDragging ? 'Отпустите файл для импорта' : 'Перетащите файл сюда'}
             </p>
@@ -180,11 +186,6 @@ const ImportModal: React.FC<ImportModalProps> = memo(({ isOpen, onClose, onImpor
                 <small>Содержит полную структуру табулатуры</small>
               </li>
               <li>
-                <strong>Guitar Pro JSON (.gp.json)</strong> — экспорт из Guitar Pro
-                <br />
-                <small>Совместимый формат с Guitar Pro (бета)</small>
-              </li>
-              <li>
                 <strong>MusicXML (.musicxml, .xml)</strong> — стандартный нотный формат
                 <br />
                 <small>Поддерживается многими нотными редакторами</small>
@@ -195,7 +196,7 @@ const ImportModal: React.FC<ImportModalProps> = memo(({ isOpen, onClose, onImpor
           {/* Сообщение об ошибке */}
           {error && (
             <div className="import-error" role="alert">
-              <span className="error-icon" aria-hidden="true">⚠️</span>
+              <AlertCircle size={18} className="error-icon" />
               <span>{error}</span>
             </div>
           )}
@@ -203,7 +204,7 @@ const ImportModal: React.FC<ImportModalProps> = memo(({ isOpen, onClose, onImpor
           {/* Сообщение об успехе */}
           {successMessage && (
             <div className="import-success" role="status">
-              <span className="success-icon" aria-hidden="true">✅</span>
+              <CheckCircle size={18} className="success-icon" />
               <span>{successMessage}</span>
             </div>
           )}

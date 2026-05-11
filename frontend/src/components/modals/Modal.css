@@ -31,7 +31,7 @@
   border-radius: 20px;
   width: 90%;
   max-width: 600px;
-  max-height: 90vh;
+  max-height: 100vh;
   overflow: auto;
   outline: 7px outset rgba(245, 70, 57, 0.47);
   box-shadow: 0 0 10px 10px #74281b;
@@ -99,9 +99,10 @@
 .form-group label {
   display: block;
   margin-bottom: 8px;
-  color: #2d3748;
   font-weight: 600;
   font-size: 14px;
+  color: #2d3748 !important;
+  background: transparent;
 }
 
 .filename-input {
@@ -112,12 +113,18 @@
   font-size: 14px;
   font-family: "Courier New", monospace;
   transition: all 0.3s ease;
+  background: white;
+  color: #1a202c;
 }
 
 .filename-input:focus {
   outline: none;
   border-color: #f54639;
   box-shadow: 0 0 5px rgba(245, 70, 57, 0.3);
+}
+
+.filename-input::placeholder {
+  color: #a0aec0;
 }
 
 /* Опции формата */
@@ -136,6 +143,7 @@
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.3s ease;
+  background: white;
 }
 
 .format-option:hover {
@@ -152,6 +160,7 @@
   accent-color: #f54639;
   width: 18px;
   height: 18px;
+  flex-shrink: 0;
 }
 
 .format-info {
@@ -161,13 +170,14 @@
 .format-label {
   display: block;
   font-weight: 600;
-  color: #2d3748;
+  color: #2d3748 !important;
   margin-bottom: 4px;
+  font-size: 14px;
 }
 
 .format-description {
   font-size: 12px;
-  color: #4a5568;
+  color: #4a5568 !important;
 }
 
 /* Информация предпросмотра */
@@ -182,11 +192,13 @@
   color: #2d3748;
   margin-bottom: 10px;
   font-size: 14px;
+  font-weight: 600;
 }
 
 .preview-info ul {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
 .preview-info li {
@@ -258,6 +270,7 @@
   font-size: 18px;
   color: #2d3748;
   margin-bottom: 10px;
+  font-weight: 500;
 }
 
 .import-subtitle {
@@ -298,11 +311,13 @@
   color: #2d3748;
   margin-bottom: 10px;
   font-size: 14px;
+  font-weight: 600;
 }
 
 .import-info ul {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 
 .import-info li {
@@ -365,6 +380,12 @@
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto 15px;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Адаптивность */

@@ -29,7 +29,6 @@ interface ExportModalProps {
 const EXPORT_FORMATS: Array<{ value: ExportFormat; label: string; description: string }> = [
   { value: 'pdf', label: 'PDF документ (.pdf)', description: 'Профессиональный формат для печати и обмена' },
   { value: 'json', label: 'JSON (.json)', description: 'Внутренний формат для повторной загрузки' },
-  { value: 'gp', label: 'Guitar Pro (.gp.json)', description: 'Совместимый с Guitar Pro формат (бета)' },
   { value: 'xml', label: 'MusicXML (.musicxml)', description: 'Стандартный нотный формат' },
 ];
 

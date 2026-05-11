@@ -189,25 +189,24 @@ const Library: React.FC<LibraryProps> = memo(({
 
   return (
     <div className="library-container">
-      {/* Заголовок */}
+      {/* Заголовок с кнопкой импорта */}
       <div className="library-header">
-        <h2 className="library-title">МОЯ БИБЛИОТЕКА</h2>
-        <p className="library-subtitle">Управляйте своими табулатурами и избранным</p>
-      </div>
-
-      {/* Поиск */}
-      <div className="library-search">
-        <SearchBar 
-          value={searchQuery}
-          onChange={setSearchQuery}
-          onClear={() => setSearchQuery('')}
-          placeholder={`Поиск в ${activeSection === 'my' ? 'моих табулатурах' : 'избранном'}...`}
-        />
-        {searchQuery && (
-          <div className="search-results-info">
-            Найдено: {currentTabs.length} результатов по запросу "{searchQuery}"
+        <div className="library-header-content">
+          <div className="library-header-left">
+            <h2 className="library-title">БИБЛИОТЕКА</h2>
+            <p className="library-subtitle">Управляйте своими табулатурами и избранным</p>
           </div>
-        )}
+          
+          {/* Кнопка импорта - справа в заголовке */}
+          <button 
+            className="library-import-btn" 
+            onClick={() => setIsImportModalOpen(true)} 
+            type="button"
+            title="Импортировать табулатуру"
+          >
+            <Import size={22} />
+          </button>
+        </div>
       </div>
 
       {/* Вкладки переключения - только иконки, текст в счетчике справа */}
@@ -232,16 +231,19 @@ const Library: React.FC<LibraryProps> = memo(({
         </button>
       </div>
 
-      {/* Кнопка импорта */}
-      <div className="library-import">
-        <button 
-          className="import-tab-btn" 
-          onClick={() => setIsImportModalOpen(true)} 
-          type="button"
-        >
-          <Import size={18} />
-          <span>Импортировать табулатуру</span>
-        </button>
+      {/* Поиск */}
+      <div className="library-search">
+        <SearchBar 
+          value={searchQuery}
+          onChange={setSearchQuery}
+          onClear={() => setSearchQuery('')}
+          placeholder={`Поиск в ${activeSection === 'my' ? 'моих табулатурах' : 'избранном'}...`}
+        />
+        {searchQuery && (
+          <div className="search-results-info">
+            Найдено: {currentTabs.length} результатов по запросу "{searchQuery}"
+          </div>
+        )}
       </div>
 
       {/* Список табулатур */}

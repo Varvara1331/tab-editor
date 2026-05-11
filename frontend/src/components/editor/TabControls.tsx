@@ -154,9 +154,7 @@ const TabControls: React.FC<TabControlsProps> = ({
         {/* Ряд 1: Эффекты и размер такта */}
         <div className="tools-row">
           <div className="tools-group">
-            <span className="tools-label">
-              <Music size={12} /> Эффекты:
-            </span>
+            <span className="tools-label">Эффекты</span>
             <button 
               className={`tool-btn ${selectedTool === 'note' ? 'active' : ''}`} 
               onClick={() => onToolSelect('note')} 
@@ -164,7 +162,7 @@ const TabControls: React.FC<TabControlsProps> = ({
               disabled={isReadOnly}
               type="button"
             >
-              <Type size={14} />
+              ♩
             </button>
             <button 
               className={`tool-btn ${selectedTool === 'bend' ? 'active' : ''}`} 
@@ -173,7 +171,7 @@ const TabControls: React.FC<TabControlsProps> = ({
               disabled={isReadOnly}
               type="button"
             >
-              <Grip size={14} />
+              ⤴
             </button>
             <button 
               className={`tool-btn ${selectedTool === 'hammer' ? 'active' : ''}`} 
@@ -182,7 +180,7 @@ const TabControls: React.FC<TabControlsProps> = ({
               disabled={isReadOnly}
               type="button"
             >
-              <Hash size={14} />
+              h
             </button>
             <button 
               className={`tool-btn ${selectedTool === 'vibrato' ? 'active' : ''}`} 
@@ -191,7 +189,7 @@ const TabControls: React.FC<TabControlsProps> = ({
               disabled={isReadOnly}
               type="button"
             >
-              <Waves size={14} />
+              ~
             </button>
             <button 
               className={`tool-btn ${selectedTool === 'slide' ? 'active' : ''}`} 
@@ -200,14 +198,14 @@ const TabControls: React.FC<TabControlsProps> = ({
               disabled={isReadOnly}
               type="button"
             >
-              <ArrowUpDown size={14} />
+              /
             </button>
           </div>
 
           {/* Размер такта */}
           {onNotesPerMeasureChange && (
             <div className="tools-group measure-size-group">
-              <span className="tools-label"><Sliders size={12} /> Размер:</span>
+              <span className="tools-label">Размер</span>
               <div className="measure-size-buttons">
                 {MEASURE_SIZES.map(size => (
                   <button
@@ -229,7 +227,7 @@ const TabControls: React.FC<TabControlsProps> = ({
         {/* Ряд 2: Настройка строя */}
         <div className="tools-row">
           <div className="tools-group tuning-group">
-            <span className="tools-label"><Settings size={12} /> Строй гитары:</span>
+            <span className="tools-label">Строй гитары</span>
             <div className="tuning-preset">
               <button 
                 className="preset-btn" 
