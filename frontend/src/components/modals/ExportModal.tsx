@@ -24,7 +24,7 @@ interface ExportModalProps {
 }
 
 /**
- * Доступные форматы экспорта
+ * Доступные форматы экспорта с описанием
  */
 const EXPORT_FORMATS: Array<{ value: ExportFormat; label: string; description: string }> = [
   { value: 'pdf', label: 'PDF документ (.pdf)', description: 'Профессиональный формат для печати и обмена' },
@@ -34,13 +34,20 @@ const EXPORT_FORMATS: Array<{ value: ExportFormat; label: string; description: s
 
 /**
  * Компонент модального окна экспорта табулатуры.
+ * Позволяет пользователю выбрать формат экспорта (PDF, JSON, MusicXML)
+ * и указать имя файла перед скачиванием.
  * 
  * @component
  * @param props - Свойства компонента
- * @returns Отрисованное модальное окно или null
+ * @param props.tabData - Данные табулатуры для экспорта
+ * @param props.isOpen - Флаг открытия модального окна
+ * @param props.onClose - Функция закрытия модального окна
+ * @returns Отрисованное модальное окно или null, если isOpen = false
  * 
  * @example
- * ```typescript
+ * ```tsx
+ * const [isModalOpen, setIsModalOpen] = useState(false);
+ * 
  * <ExportModal
  *   tabData={tabData}
  *   isOpen={isModalOpen}
@@ -49,11 +56,14 @@ const EXPORT_FORMATS: Array<{ value: ExportFormat; label: string; description: s
  * ```
  */
 const ExportModal: React.FC<ExportModalProps> = memo(({ tabData, isOpen, onClose }) => {
+  /** Выбранный формат экспорта */
   const [selectedFormat, setSelectedFormat] = useState<ExportFormat>('pdf');
+  /** Имя файла для экспорта (очищенное от недопустимых символов) */
   const [filename, setFilename] = useState<string>(() => sanitizeFilename(tabData.title || 'tab'));
 
   /**
-   * Обработчик экспорта табулатуры
+   * Обработчик экспорта табулатуры.
+   * Вызывает функцию скачивания и закрывает модальное окно.
    */
   const handleExport = useCallback(async () => {
     await downloadTab(tabData, selectedFormat, filename);
@@ -61,28 +71,36 @@ const ExportModal: React.FC<ExportModalProps> = memo(({ tabData, isOpen, onClose
   }, [tabData, selectedFormat, filename, onClose]);
 
   /**
-   * Обработчик изменения формата
+   * Обработчик изменения формата экспорта
+   * 
+   * @param format - Новый формат экспорта
    */
   const handleFormatChange = useCallback((format: ExportFormat) => {
     setSelectedFormat(format);
   }, []);
 
   /**
-   * Обработчик изменения имени файла
+   * Обработчик изменения имени файла.
+   * Автоматически очищает имя от недопустимых символов.
+   * 
+   * @param e - Событие изменения поля ввода
    */
   const handleFilenameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     setFilename(sanitizeFilename(e.target.value));
   }, []);
 
   /**
-   * Обработчик клика по оверлею (закрытие при клике вне модального окна)
+   * Обработчик клика по оверлею.
+   * Закрывает модальное окно при клике на фон.
+   * 
+   * @param e - Событие клика
    */
   const handleOverlayClick = useCallback((e: React.MouseEvent) => {
     if (e.target === e.currentTarget) onClose();
   }, [onClose]);
 
   /**
-   * Информация для предпросмотра
+   * Информация о табулатуре для предпросмотра
    */
   const previewInfo = useMemo(() => ({
     title: tabData.title,
@@ -97,14 +115,12 @@ const ExportModal: React.FC<ExportModalProps> = memo(({ tabData, isOpen, onClose
   return (
     <div className="modal-overlay" onClick={handleOverlayClick}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        {/* Заголовок */}
         <div className="modal-header">
           <h3>Экспорт табулатуры</h3>
           <button className="modal-close" onClick={onClose} aria-label="Закрыть">×</button>
         </div>
 
         <div className="modal-body">
-          {/* Поле ввода имени файла */}
           <div className="form-group">
             <label htmlFor="filename">Имя файла:</label>
             <input
@@ -118,7 +134,6 @@ const ExportModal: React.FC<ExportModalProps> = memo(({ tabData, isOpen, onClose
             />
           </div>
 
-          {/* Выбор формата */}
           <div className="form-group">
             <label>Формат файла:</label>
             <div className="format-options">
@@ -143,7 +158,6 @@ const ExportModal: React.FC<ExportModalProps> = memo(({ tabData, isOpen, onClose
             </div>
           </div>
 
-          {/* Информация о файле */}
           <div className="preview-info">
             <h4>Информация о файле:</h4>
             <ul>
@@ -156,7 +170,6 @@ const ExportModal: React.FC<ExportModalProps> = memo(({ tabData, isOpen, onClose
           </div>
         </div>
 
-        {/* Кнопки действий */}
         <div className="modal-footer">
           <button className="btn btn-secondary" onClick={onClose} type="button">
             Отмена

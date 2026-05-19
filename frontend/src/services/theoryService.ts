@@ -66,12 +66,10 @@ export const getTheoryProgress = async (): Promise<TheoryProgress> => {
     const response = await api.get<ApiResponse<TheoryProgress>>('/theory/progress');
     
     if (response.data.success && response.data.data) {
-      // Сохраняем локальную копию для оффлайн доступа
       localStorage.setItem(STORAGE_KEY, JSON.stringify(response.data.data));
       return response.data.data;
     }
     
-    // Возвращаем дефолтные значения если данных нет
     return {
       completedArticles: [],
       lastRead: null,
@@ -81,7 +79,6 @@ export const getTheoryProgress = async (): Promise<TheoryProgress> => {
   } catch (error) {
     console.error('Error loading theory progress from server:', error);
     
-    // Fallback на локальное хранилище
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       return JSON.parse(saved);
@@ -108,7 +105,6 @@ export const updateTheoryProgress = async (data: UpdateProgressData): Promise<Th
     const response = await api.put<ApiResponse<TheoryProgress>>('/theory/progress', data);
     
     if (response.data.success && response.data.data) {
-      // Обновляем локальную копию
       localStorage.setItem(STORAGE_KEY, JSON.stringify(response.data.data));
       return response.data.data;
     }
@@ -117,7 +113,6 @@ export const updateTheoryProgress = async (data: UpdateProgressData): Promise<Th
   } catch (error) {
     console.error('Error updating theory progress:', error);
     
-    // Обновляем локальную копию даже при ошибке сервера
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const currentProgress = JSON.parse(saved);
@@ -144,10 +139,7 @@ export const updateTheoryProgress = async (data: UpdateProgressData): Promise<Th
  * 
  * @example
  * ```typescript
- * // Отметить статью без оценки
  * await completeArticle('basic-chords');
- * 
- * // Отметить статью с оценкой
  * await completeArticle('advanced-scales', 95);
  * ```
  */
@@ -159,7 +151,6 @@ export const completeArticle = async (articleId: string, quizScore?: number): Pr
     });
     
     if (response.data.success && response.data.data) {
-      // Обновляем локальную копию
       localStorage.setItem(STORAGE_KEY, JSON.stringify(response.data.data));
       return response.data.data;
     }
@@ -168,7 +159,6 @@ export const completeArticle = async (articleId: string, quizScore?: number): Pr
   } catch (error) {
     console.error('Error completing article:', error);
     
-    // Локальное обновление при ошибке сервера
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const currentProgress = JSON.parse(saved);
@@ -212,7 +202,6 @@ export const getTheoryStatistics = async (): Promise<TheoryStatistics> => {
       return response.data.data;
     }
     
-    // Возвращаем дефолтную статистику
     return {
       totalArticlesCompleted: 0,
       totalPoints: 0,
@@ -222,7 +211,6 @@ export const getTheoryStatistics = async (): Promise<TheoryStatistics> => {
   } catch (error) {
     console.error('Error getting theory statistics:', error);
     
-    // Вычисляем статистику из локальных данных
     const saved = localStorage.getItem(STORAGE_KEY);
     if (saved) {
       const progress = JSON.parse(saved);
@@ -281,14 +269,12 @@ export const syncTheoryProgress = async (): Promise<void> => {
  */
 export const clearTheoryProgress = async (): Promise<void> => {
   try {
-    // Очищаем на сервере
     await updateTheoryProgress({
       completedArticles: [],
       quizScores: {},
       lastRead: new Date().toISOString()
     });
     
-    // Очищаем локально
     localStorage.removeItem(STORAGE_KEY);
   } catch (error) {
     console.error('Error clearing theory progress:', error);

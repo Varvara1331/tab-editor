@@ -8,6 +8,9 @@
 import React, { useState, useEffect, useRef, useCallback, memo } from 'react';
 import './TabEditor.css';
 
+/**
+ * Свойства компонента FretInput
+ */
 interface FretInputProps {
   /** Функция обратного вызова при отправке лада */
   onFretSubmit: (fret: number) => void;
@@ -20,15 +23,28 @@ interface FretInputProps {
 /**
  * Компонент ввода лада.
  * Появляется при нажатии цифровых клавиш и позволяет ввести двузначный лад.
+ * Поддерживает ввод через клавиатуру (цифры, Enter, Escape) и кнопки мыши.
  * 
  * @component
+ * @param props - Свойства компонента
+ * @returns Отрисованный компонент или null, если не активен
+ * 
+ * @example
+ * ```tsx
+ * <FretInput 
+ *   onFretSubmit={(fret) => addNoteAtCursor(fret)}
+ *   maxFret={24}
+ *   enabled={!isReadOnly}
+ * />
+ * ```
  */
 const FretInput: React.FC<FretInputProps> = memo(({ onFretSubmit, maxFret = 24, enabled = true }) => {
+  /** Текущее введённое значение лада */
   const [fretValue, setFretValue] = useState<string>('');
+  /** Флаг активности компонента (отображения) */
   const [isActive, setIsActive] = useState<boolean>(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Глобальный обработчик клавиш для активации ввода
   useEffect(() => {
     if (!enabled) return;
 
@@ -48,9 +64,7 @@ const FretInput: React.FC<FretInputProps> = memo(({ onFretSubmit, maxFret = 24, 
     return () => window.removeEventListener('keydown', handleGlobalKeyDown);
   }, [isActive, enabled]);
 
-  /**
-   * Отправка введённого лада
-   */
+  /** Отправка введённого лада и закрытие компонента */
   const handleSubmit = useCallback(() => {
     if (fretValue) {
       const fret = parseInt(fretValue, 10);
@@ -64,6 +78,8 @@ const FretInput: React.FC<FretInputProps> = memo(({ onFretSubmit, maxFret = 24, 
 
   /**
    * Обработчик клавиш в поле ввода
+   * 
+   * @param e - Событие клавиатуры
    */
   const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
@@ -75,9 +91,7 @@ const FretInput: React.FC<FretInputProps> = memo(({ onFretSubmit, maxFret = 24, 
     }
   }, [handleSubmit]);
 
-  /**
-   * Обработчик потери фокуса
-   */
+  /** Обработчик потери фокуса - отправляет значение или закрывает */
   const handleBlur = useCallback(() => {
     setTimeout(() => {
       if (fretValue) handleSubmit();

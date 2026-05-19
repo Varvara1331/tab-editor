@@ -39,37 +39,63 @@ import {
   TheoryStatistics 
 } from '../../services/theoryService';
 
-// ==================== ИНТЕРФЕЙСЫ ====================
-
+/**
+ * Структура образовательной статьи
+ */
 interface Article {
+  /** Уникальный идентификатор статьи */
   id: string;
+  /** Заголовок статьи */
   title: string;
+  /** Краткое описание статьи */
   description: string;
+  /** HTML-содержимое статьи */
   content: string;
+  /** Примерное время чтения */
   duration: string;
+  /** Уровень сложности материала */
   difficulty: 'easy' | 'medium' | 'hard';
+  /** Порядок сортировки (номер в списке) */
   order: number;
+  /** Опциональный тест для проверки знаний */
   quiz?: Quiz;
 }
 
+/**
+ * Структура теста (викторины)
+ */
 interface Quiz {
+  /** Список вопросов теста */
   questions: Question[];
+  /** Минимальный процент правильных ответов для прохождения */
   passingScore: number;
 }
 
+/**
+ * Структура вопроса теста
+ */
 interface Question {
+  /** Уникальный идентификатор вопроса */
   id: string;
+  /** Текст вопроса */
   text: string;
+  /** Тип вопроса: множественный выбор, правда/ложь или практический */
   type: 'multiple-choice' | 'true-false' | 'practical';
+  /** Варианты ответов (для multiple-choice и true-false) */
   options?: string[];
+  /** Правильный ответ (строка или массив строк) */
   correctAnswer: string | string[];
+  /** Объяснение правильного ответа */
   explanation: string;
+  /** Пример кода (опционально) */
   codeExample?: string;
+  /** Ожидаемый вывод (опционально) */
   expectedOutput?: string;
 }
 
-// ==================== ДАННЫЕ СТАТЕЙ ====================
-
+/**
+ * Массив образовательных статей с контентом и тестами
+ */
 const articles: Article[] = [
   {
     id: 'intro',
@@ -268,17 +294,33 @@ const articles: Article[] = [
   }
 ];
 
-// ==================== КОМПОНЕНТ ВИКТОРИНЫ ====================
-
+/**
+ * Компонент викторины (теста) для проверки знаний после прочтения статьи.
+ * 
+ * @component
+ * @param props - Свойства компонента
+ * @param props.quiz - Данные теста (вопросы и порог прохождения)
+ * @param props.onComplete - Колбэк при завершении теста (передаёт результат и процент правильных ответов)
+ */
 const QuizSection: React.FC<{ quiz: Quiz; onComplete: (passed: boolean, score: number) => void }> = ({ quiz, onComplete }) => {
+  /** Ответы пользователя на вопросы */
   const [answers, setAnswers] = useState<Record<string, string | string[]>>({});
+  /** Флаг отправки теста на проверку */
   const [submitted, setSubmitted] = useState(false);
+  /** Процент правильных ответов */
   const [score, setScore] = useState(0);
 
+  /**
+   * Обработчик выбора ответа на вопрос
+   * 
+   * @param questionId - ID вопроса
+   * @param answer - Выбранный ответ
+   */
   const handleAnswer = (questionId: string, answer: string | string[]) => {
     setAnswers(prev => ({ ...prev, [questionId]: answer }));
   };
 
+  /** Проверка ответов и расчёт результата */
   const handleSubmit = () => {
     let correctCount = 0;
     quiz.questions.forEach(q => {
@@ -300,6 +342,7 @@ const QuizSection: React.FC<{ quiz: Quiz; onComplete: (passed: boolean, score: n
     setSubmitted(true);
   };
 
+  /** Сброс теста и повторная попытка */
   const handleRetry = () => {
     setAnswers({});
     setSubmitted(false);
@@ -396,22 +439,41 @@ const QuizSection: React.FC<{ quiz: Quiz; onComplete: (passed: boolean, score: n
   );
 };
 
-// ==================== ОСНОВНОЙ КОМПОНЕНТ ====================
-
+/**
+ * Компонент раздела теории.
+ * Предоставляет образовательные статьи о табулатурах, музыке и работе с редактором.
+ * Включает систему тестов для проверки знаний и отслеживания прогресса пользователя.
+ * 
+ * @component
+ * @returns Отрисованный компонент раздела теории
+ * 
+ * @example
+ * ```tsx
+ * <Theory />
+ * ```
+ */
 const Theory: React.FC = () => {
+  /** Прогресс пользователя по статьям */
   const [progress, setProgress] = useState<TheoryProgress>({ 
     completedArticles: [], 
     lastRead: null, 
     quizScores: {}, 
     totalPoints: 0 
   });
+  /** Статистика по всем пользователям */
   const [statistics, setStatistics] = useState<TheoryStatistics | null>(null);
+  /** Флаг загрузки данных */
   const [isLoading, setIsLoading] = useState(true);
+  /** Выбранная для чтения статья */
   const [selectedArticle, setSelectedArticle] = useState<Article | null>(null);
+  /** Поисковый запрос для фильтрации статей */
   const [searchTerm, setSearchTerm] = useState('');
+  /** Фильтр по уровню сложности */
   const [difficultyFilter, setDifficultyFilter] = useState<'all' | 'easy' | 'medium' | 'hard'>('all');
+  /** Флаг отображения теста */
   const [showQuiz, setShowQuiz] = useState(false);
 
+  /** Загрузка прогресса и статистики при монтировании компонента */
   useEffect(() => {
     const loadData = async () => {
       setIsLoading(true);
@@ -431,6 +493,12 @@ const Theory: React.FC = () => {
     loadData();
   }, []);
 
+  /**
+   * Обработчик завершения теста
+   * 
+   * @param passed - Флаг успешного прохождения теста
+   * @param score - Процент правильных ответов
+   */
   const handleQuizComplete = async (passed: boolean, score: number) => {
     if (passed && selectedArticle && !progress.completedArticles.includes(selectedArticle.id)) {
       try {
@@ -446,11 +514,22 @@ const Theory: React.FC = () => {
     setShowQuiz(false);
   };
 
+  /**
+   * Обработчик выбора статьи
+   * 
+   * @param article - Выбранная статья
+   */
   const handleArticleClick = (article: Article) => {
     setSelectedArticle(article);
     setShowQuiz(false);
   };
 
+  /**
+   * Возвращает CSS-класс для бейджа сложности
+   * 
+   * @param difficulty - Уровень сложности
+   * @returns CSS-класс
+   */
   const getDifficultyColor = (difficulty: string): string => {
     switch (difficulty) {
       case 'easy': return 'easy';
@@ -460,6 +539,12 @@ const Theory: React.FC = () => {
     }
   };
 
+  /**
+   * Возвращает текстовое представление уровня сложности
+   * 
+   * @param difficulty - Уровень сложности
+   * @returns Текст на русском языке
+   */
   const getDifficultyText = (difficulty: string): string => {
     switch (difficulty) {
       case 'easy': return 'Начинающий';
@@ -469,6 +554,12 @@ const Theory: React.FC = () => {
     }
   };
 
+  /**
+   * Возвращает иконку для уровня сложности
+   * 
+   * @param difficulty - Уровень сложности
+   * @returns React-элемент иконки
+   */
   const getDifficultyIcon = (difficulty: string) => {
     switch (difficulty) {
       case 'easy': return <Zap size={12} />;
@@ -478,6 +569,7 @@ const Theory: React.FC = () => {
     }
   };
 
+  /** Отфильтрованный список статей по поиску и сложности */
   const filteredArticles = articles
     .filter(article => 
       article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||

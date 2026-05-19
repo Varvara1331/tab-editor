@@ -9,7 +9,6 @@ import axios, { AxiosInstance, AxiosError, InternalAxiosRequestConfig } from 'ax
 
 /** Базовый URL API */
 const API_URL = 'http://147.78.9.180:15000/api';
-//const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 /**
  * Ключи для хранения данных в localStorage
@@ -24,7 +23,7 @@ export const STORAGE_KEYS = {
 /**
  * Создание настроенного экземпляра Axios
  * 
- * @returns Настроенный AxiosInstance
+ * @returns Настроенный AxiosInstance с интерсепторами для авторизации и обработки 401 ошибок
  * 
  * @example
  * ```typescript
@@ -36,10 +35,9 @@ const createApiClient = (): AxiosInstance => {
   const client = axios.create({
     baseURL: API_URL,
     headers: { 'Content-Type': 'application/json' },
-    timeout: 30000, // 30 секунд таймаут
+    timeout: 30000,
   });
 
-  // Интерсептор запросов: добавление токена авторизации
   client.interceptors.request.use(
     (config: InternalAxiosRequestConfig) => {
       const token = localStorage.getItem(STORAGE_KEYS.TOKEN);
@@ -51,16 +49,13 @@ const createApiClient = (): AxiosInstance => {
     (error: AxiosError) => Promise.reject(error)
   );
 
-  // Интерсептор ответов: обработка ошибок авторизации
   client.interceptors.response.use(
     (response) => response,
     (error: AxiosError) => {
       if (error.response?.status === 401) {
-        // Очистка сессии при неавторизованном доступе
         localStorage.removeItem(STORAGE_KEYS.TOKEN);
         localStorage.removeItem(STORAGE_KEYS.USER);
         
-        // Перенаправление на страницу входа
         if (!window.location.pathname.includes('/login')) {
           window.location.href = '/login';
         }
@@ -73,7 +68,7 @@ const createApiClient = (): AxiosInstance => {
 };
 
 /**
- * Настроенный API клиент для отправки запросов
+ * Настроенный API клиент для отправки HTTP запросов
  */
 export const api = createApiClient();
 

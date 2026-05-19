@@ -6,7 +6,6 @@
  */
 
 import React, { memo } from 'react';
-//import './Common.css';
 
 /**
  * Свойства компонента LoadingSpinner
@@ -21,13 +20,16 @@ interface LoadingSpinnerProps {
 /**
  * Компонент индикатора загрузки.
  * Отображает анимированный спиннер во время выполнения асинхронных операций.
+ * Поддерживает три размера и пользовательское сообщение.
  * 
  * @component
  * @param props - Свойства компонента
+ * @param props.message - Текст сообщения (по умолчанию 'Загрузка...')
+ * @param props.size - Размер спиннера: 'small', 'medium', 'large' (по умолчанию 'medium')
  * @returns Отрисованный компонент загрузки
  * 
  * @example
- * ```typescript
+ * ```tsx
  * // Стандартный спиннер
  * <LoadingSpinner />
  * 

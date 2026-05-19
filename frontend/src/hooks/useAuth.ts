@@ -27,11 +27,12 @@ interface UseAuthReturn {
 /**
  * Хук для управления аутентификацией пользователя.
  * Предоставляет информацию о текущем пользователе и методы управления сессией.
+ * Автоматически проверяет статус аутентификации при монтировании компонента.
  * 
  * @returns Объект с данными о пользователе и методами управления
  * 
  * @example
- * ```typescript
+ * ```tsx
  * function Profile() {
  *   const { currentUser, isAuthenticated, logout } = useAuth();
  *   
@@ -47,11 +48,14 @@ interface UseAuthReturn {
  * ```
  */
 export const useAuth = (): UseAuthReturn => {
+  /** Текущий пользователь */
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  /** Флаг загрузки состояния аутентификации */
   const [isLoading, setIsLoading] = useState(true);
 
   /**
-   * Обновление данных текущего пользователя
+   * Обновление данных текущего пользователя.
+   * Перезагружает информацию о пользователе из сервиса аутентификации.
    */
   const refreshUser = useCallback(() => {
     const user = getCurrentUser();
@@ -60,7 +64,8 @@ export const useAuth = (): UseAuthReturn => {
   }, []);
 
   /**
-   * Выход из системы
+   * Выход из системы.
+   * Очищает сессию пользователя и сбрасывает состояние.
    */
   const logout = useCallback(() => {
     logoutService();
@@ -68,12 +73,9 @@ export const useAuth = (): UseAuthReturn => {
     setIsLoading(false);
   }, []);
 
-  /**
-   * Флаг авторизации (мемоизирован)
-   */
+  /** Флаг авторизации (мемоизирован) */
   const isAuthenticated = useMemo(() => !!currentUser, [currentUser]);
 
-  // Загрузка данных пользователя при монтировании
   useEffect(() => {
     refreshUser();
   }, [refreshUser]);
@@ -86,8 +88,10 @@ export const useAuth = (): UseAuthReturn => {
  * 
  * @deprecated Используйте useAuth вместо этого хука
  * 
+ * @returns Объект с текущим пользователем и функцией isAuthenticated
+ * 
  * @example
- * ```typescript
+ * ```tsx
  * // Старый способ (deprecated)
  * const { isAuthenticated } = useLegacyAuth();
  * if (isAuthenticated()) { ... }

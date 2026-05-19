@@ -9,8 +9,11 @@ import React from 'react';
 import { PRESET_TUNINGS, getTuningName } from '../../utils/tuningUtils';
 import './TabEditor.css';
 
+/**
+ * Свойства компонента TuningSelector
+ */
 interface TuningSelectorProps {
-  /** Текущий строй гитары */
+  /** Текущий строй гитары (массив нот для каждой струны) */
   tuning: string[];
   /** Функция изменения строя */
   onTuningChange: (newTuning: string[]) => void;
@@ -18,10 +21,15 @@ interface TuningSelectorProps {
 
 /**
  * Компонент выбора строя гитары.
+ * Позволяет выбирать предустановленные строи (Standard, Drop D, Open G и др.)
+ * и настраивать каждую струну вручную.
  * 
  * @component
+ * @param props - Свойства компонента
+ * @returns Отрисованный компонент выбора строя
+ * 
  * @example
- * ```typescript
+ * ```tsx
  * <TuningSelector
  *   tuning={['E4', 'B3', 'G3', 'D3', 'A2', 'E2']}
  *   onTuningChange={(newTuning) => setTuning(newTuning)}
@@ -32,7 +40,9 @@ const TuningSelector: React.FC<TuningSelectorProps> = ({ tuning, onTuningChange 
   const currentTuningName = getTuningName(tuning);
 
   /**
-   * Обработчик выбора предустановленного строя
+   * Обработчик выбора предустановленного строя из выпадающего списка
+   * 
+   * @param event - Событие изменения select
    */
   const handlePresetChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const presetName = event.target.value;
@@ -42,7 +52,10 @@ const TuningSelector: React.FC<TuningSelectorProps> = ({ tuning, onTuningChange 
   };
 
   /**
-   * Обработчик изменения отдельной струны
+   * Обработчик изменения настройки отдельной струны
+   * 
+   * @param index - Индекс струны
+   * @param value - Новое значение настройки
    */
   const handleStringTuningChange = (index: number, value: string) => {
     const newTuning = [...tuning];

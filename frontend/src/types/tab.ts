@@ -13,7 +13,8 @@ export interface NoteArticulation {
   bend?: boolean;
   /** Слайд (скольжение): 'up' - вверх, 'down' - вниз, 'both' - в обе стороны */
   slide?: 'up' | 'down';
-   hammer?: {
+  /** Хаммер-он (удар по ладу без перебора струны) - может быть объектом с начальным и конечным ладом или boolean */
+  hammer?: {
     fromFret: number;
     toFret: number;
   } | boolean;
@@ -45,6 +46,7 @@ export interface TabString {
 
 /**
  * Размер такта (числитель/знаменатель)
+ * 
  * @example [4, 4] - размер 4/4
  * @example [3, 4] - размер 3/4
  */
@@ -209,8 +211,8 @@ export const createEmptyMeasure = (stringsCount: number = 6): TabMeasure => ({
 export const DEFAULT_TUNING_6_STRING = ['E', 'A', 'D', 'G', 'B', 'E'];
 
 /**
- * Данные табулатуры по умолчанию
- * Используются для создания новой пустой табулатуры
+ * Данные табулатуры по умолчанию.
+ * Используются для создания новой пустой табулатуры.
  */
 export const DEFAULT_TAB_DATA: Pick<TabData, 'title' | 'tuning' | 'measures' | 'isPublic'> = {
   title: 'Новая табулатура',

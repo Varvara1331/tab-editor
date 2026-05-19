@@ -73,30 +73,48 @@ interface UseNavigationReturn {
 }
 
 /**
- * Хук для управления навигацией и состоянием редактора
+ * Хук для управления навигацией и состоянием редактора.
+ * Управляет переключением между вкладками (редактор, библиотека, публикации, теория),
+ * сохраняет и восстанавливает состояние редактора, синхронизирует данные между компонентами.
  * 
  * @returns Объект с состоянием навигации и методами управления
  * 
  * @example
- * ```typescript
+ * ```tsx
  * const {
  *   activeTab,
  *   setActiveTab,
+ *   selectedTabData,
  *   handleSelectFromPublic,
  *   handleNewTabRequest,
+ *   handleEditorStateChange,
  *   // ... другие поля
  * } = useNavigation();
+ * 
+ * return (
+ *   <div>
+ *     <TabBar activeTab={activeTab} onTabChange={setActiveTab} />
+ *     {activeTab === 'editor' && <TabEditor initialTabData={selectedTabData} />}
+ *     {activeTab === 'library' && <Library onSelectTab={handleSelectFromLibrary} />}
+ *   </div>
+ * );
  * ```
  */
 export const useNavigation = (): UseNavigationReturn => {
+  /** Активная вкладка приложения */
   const [activeTab, setActiveTab] = useState<TabType>('editor');
+  /** Данные выбранной для редактирования табулатуры */
   const [selectedTabData, setSelectedTabData] = useState<TabData | undefined>(undefined);
+  /** Триггер для обновления списка библиотеки */
   const [refreshLibrary, setRefreshLibrary] = useState(false);
+  /** Ключ для принудительного сброса редактора */
   const [editorResetKey, setEditorResetKey] = useState(() => Date.now());
+  /** Сохранённое состояние редактора (для несохранённых табов) */
   const [savedEditorState, setSavedEditorState] = useState<EditorState | null>(null);
+  /** Флаг необходимости восстановления сохранённого состояния */
   const [shouldRestoreState, setShouldRestoreState] = useState(true);
   
-  // ID последнего пользователя для сброса состояния при смене пользователя
+  /** ID последнего пользователя для сброса состояния при смене пользователя */
   const lastUserIdRef = useRef<number | undefined>(undefined);
 
   /**
@@ -114,7 +132,6 @@ export const useNavigation = (): UseNavigationReturn => {
     }
   }, []);
 
-  // Обновление флага восстановления состояния при смене вкладки
   useEffect(() => {
     if (activeTab === 'editor') {
       setShouldRestoreState(!selectedTabData);
@@ -125,7 +142,8 @@ export const useNavigation = (): UseNavigationReturn => {
   }, [activeTab, selectedTabData]);
 
   /**
-   * Обработчик выбора табулатуры из публикаций
+   * Обработчик выбора табулатуры из публикаций.
+   * Открывает выбранную табулатуру в редакторе.
    * 
    * @param tabData - Данные выбранной табулатуры
    */
@@ -138,7 +156,8 @@ export const useNavigation = (): UseNavigationReturn => {
   }, []);
 
   /**
-   * Обработчик выбора табулатуры из библиотеки
+   * Обработчик выбора табулатуры из библиотеки.
+   * Открывает выбранную табулатуру в редакторе.
    * 
    * @param tabData - Данные выбранной табулатуры
    */
@@ -150,23 +169,17 @@ export const useNavigation = (): UseNavigationReturn => {
     setActiveTab('editor');
   }, []);
 
-  /**
-   * Обработчик сохранения табулатуры
-   */
+  /** Обработчик сохранения табулатуры - обновляет список библиотеки */
   const handleTabSaved = useCallback(() => {
     setRefreshLibrary(prev => !prev);
   }, []);
 
-  /**
-   * Обработчик изменения избранного
-   */
+  /** Обработчик изменения избранного - обновляет список библиотеки */
   const handleFavoritesChanged = useCallback(() => {
     setRefreshLibrary(prev => !prev);
   }, []);
 
-  /**
-   * Обработчик создания новой табулатуры
-   */
+  /** Обработчик создания новой табулатуры - сбрасывает редактор */
   const handleNewTabRequest = useCallback(() => {
     setSelectedTabData(undefined);
     setSavedEditorState(null);
@@ -175,7 +188,8 @@ export const useNavigation = (): UseNavigationReturn => {
   }, []);
 
   /**
-   * Обработчик изменения состояния редактора
+   * Обработчик изменения состояния редактора.
+   * Сохраняет состояние для несохранённой табулатуры.
    * 
    * @param state - Новое состояние редактора
    */
@@ -185,16 +199,12 @@ export const useNavigation = (): UseNavigationReturn => {
     }
   }, [activeTab, selectedTabData]);
 
-  /**
-   * Обработчик изменения данных табулатуры
-   */
+  /** Обработчик изменения данных табулатуры */
   const handleTabDataChange = useCallback(() => {
     setSelectedTabData(undefined);
   }, []);
 
-  /**
-   * Обработчик удаления табулатуры
-   */
+  /** Обработчик удаления табулатуры - сбрасывает редактор */
   const handleTabDeleted = useCallback(() => {
     setEditorResetKey(Date.now());
     setSelectedTabData(undefined);

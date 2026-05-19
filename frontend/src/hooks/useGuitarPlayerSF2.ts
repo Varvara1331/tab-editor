@@ -116,16 +116,13 @@ const applySlide = (
   time: number,
   direction: 'up' | 'down' = 'up'
 ) => {
-  // Разбиваем слайд на много маленьких шагов для плавности
-  const steps = 30; // Количество шагов для интерполяции
+  const steps = 30;
   const stepDuration = duration / steps;
   
-  // Получаем MIDI номера начальной и конечной ноты
   const fromMidi = getMidiFromNoteName(fromNote);
   const toMidi = getMidiFromNoteName(toNote);
   const midiDiff = toMidi - fromMidi;
   
-  // Создаём массив промежуточных MIDI номеров
   const midiSteps: number[] = [];
   for (let i = 0; i <= steps; i++) {
     const progress = i / steps;
@@ -133,7 +130,6 @@ const applySlide = (
     midiSteps.push(Math.round(midi));
   }
   
-  // Уникальные ноты для воспроизведения (без дубликатов подряд)
   const uniqueSteps: number[] = [];
   for (let i = 0; i < midiSteps.length; i++) {
     if (i === 0 || midiSteps[i] !== midiSteps[i - 1]) {
@@ -141,13 +137,10 @@ const applySlide = (
     }
   }
   
-  // Воспроизводим каждый шаг с плавным изменением громкости
   for (let i = 0; i < uniqueSteps.length; i++) {
     const stepMidi = uniqueSteps[i];
     const stepNoteName = getNoteNameFromMidi(stepMidi);
     const stepTime = time + (i * stepDuration);
-    
-    // Громкость: плавное затухание к концу слайда
     const progress = i / (uniqueSteps.length - 1);
     const gain = 0.8 * (1 - progress * 0.3);
     
@@ -173,7 +166,7 @@ const applySlide = (
  */
 const getMidiFromNoteName = (noteName: string): number => {
   const match = noteName.match(/^([A-Ga-g][#b]?)(\d+)$/);
-  if (!match) return 64; // E4 по умолчанию
+  if (!match) return 64;
   
   const note = match[1].toUpperCase();
   const octave = parseInt(match[2]);
@@ -210,7 +203,7 @@ const applyVibrato = (
             gain: gain
           });
         } catch (err) {
-          // Игнорируем ошибки воспроизведения
+          // Игнорируем ошибки
         }
       }, (pulseTime - time) * 1000);
     }
@@ -271,15 +264,46 @@ interface UseGuitarPlayerSF2Return {
 
 /**
  * Хук для воспроизведения табулатур с использованием SoundFont.
- * Поддерживает MIDI ноты, различные эффекты и управление воспроизведением.
+ * Поддерживает MIDI ноты, различные эффекты (бенд, слайд, вибрато, хаммер, пулл)
+ * и управление воспроизведением (play/pause/stop/seek).
+ * Использует библиотеки Tone.js и soundfont-player для качественного звучания гитары.
  * 
  * @returns Объект с состоянием плеера и методами управления
+ * 
+ * @example
+ * ```tsx
+ * const Player = () => {
+ *   const { 
+ *     isPlaying, play, pause, stop, 
+ *     setTempo, isReady, error, loadTab 
+ *   } = useGuitarPlayerSF2();
+ * 
+ *   useEffect(() => {
+ *     if (tabData) loadTab(tabData);
+ *   }, [tabData]);
+ * 
+ *   return (
+ *     <div>
+ *       <button onClick={play} disabled={!isReady}>Play</button>
+ *       <button onClick={pause}>Pause</button>
+ *       <button onClick={stop}>Stop</button>
+ *       <input type="range" onChange={(e) => setTempo(Number(e.target.value))} />
+ *       {error && <div className="error">{error}</div>}
+ *     </div>
+ *   );
+ * };
+ * ```
  */
 export const useGuitarPlayerSF2 = (): UseGuitarPlayerSF2Return => {
+  /** Флаг воспроизведения */
   const [isPlaying, setIsPlaying] = useState(false);
+  /** Текущая позиция воспроизведения */
   const [currentPosition, setCurrentPosition] = useState<CursorPosition | null>(null);
+  /** Готов ли плеер к воспроизведению */
   const [isReady, setIsReady] = useState(false);
+  /** Флаг загрузки инструмента */
   const [isLoading, setIsLoading] = useState(false);
+  /** Текст ошибки */
   const [error, setError] = useState<string | null>(null);
 
   const instrumentRef = useRef<any>(null);
@@ -295,6 +319,10 @@ export const useGuitarPlayerSF2 = (): UseGuitarPlayerSF2Return => {
 
   /**
    * Получение названия ноты для струны и лада
+   * 
+   * @param stringIndex - Индекс струны
+   * @param fret - Номер лада
+   * @returns Название ноты
    */
   const getNoteName = useCallback((stringIndex: number, fret: number): string => {
     const tuningNote = currentTuningRef.current[stringIndex];
@@ -304,15 +332,17 @@ export const useGuitarPlayerSF2 = (): UseGuitarPlayerSF2Return => {
 
   /**
    * Получение MIDI номера для струны и лада
+   * 
+   * @param stringIndex - Индекс струны
+   * @param fret - Номер лада
+   * @returns MIDI номер
    */
   const getMidiNumber = useCallback((stringIndex: number, fret: number): number => {
     const tuningNote = currentTuningRef.current[stringIndex];
     return getMidiFromTuning(tuningNote, fret);
   }, []);
 
-  /**
-   * Очистка всех запланированных таймеров
-   */
+  /** Очистка всех запланированных таймеров */
   const clearScheduledNotes = useCallback(() => {
     scheduledNotesRef.current.forEach(timeout => clearTimeout(timeout));
     scheduledNotesRef.current = [];
@@ -321,11 +351,8 @@ export const useGuitarPlayerSF2 = (): UseGuitarPlayerSF2Return => {
   /**
    * Извлечение нот из табулатуры в виде событий
    * 
-   * ВАЖНО: При темпе 120 BPM:
-   * - Длительность такта = 2 секунды (4 четверти по 0.5 секунды)
-   * - При размере 4/4: 4 позиции, каждая длится 0.5 секунды
-   * - При размере 8/8: 8 позиций, каждая длится 0.25 секунды
-   * - При размере 16/16: 16 позиций, каждая длится 0.125 секунды
+   * @param tabData - Данные табулатуры
+   * @returns Массив событий нот
    */
   const extractNotesFromTab = useCallback((tabData: TabData): NoteEvent[] => {
     const events: NoteEvent[] = [];
@@ -336,18 +363,11 @@ export const useGuitarPlayerSF2 = (): UseGuitarPlayerSF2Return => {
       const measure = tabData.measures[measureIndex];
       const measureTempo = measure.tempo || tempoRef.current;
       
-      // Длительность одной четвертной ноты в миллисекундах
       const quarterNoteDuration = 60000 / measureTempo;
-      
-      // Длительность такта = 4 четверти (всегда 2 секунды при 120 BPM)
       const measureDuration = quarterNoteDuration * 4;
-      
-      // Количество позиций в такте (4, 8 или 16)
       const notesInMeasure = tabData.notesPerMeasure || 
                             measure.strings[0]?.notes.length || 
                             16;
-      
-      // Длительность одной позиции = длительность такта / количество позиций
       const noteDuration = measureDuration / notesInMeasure;
 
       for (let noteIndex = 0; noteIndex < notesInMeasure; noteIndex++) {
@@ -364,7 +384,6 @@ export const useGuitarPlayerSF2 = (): UseGuitarPlayerSF2Return => {
             midiNumbersAtTime.push(getMidiNumber(stringIndex, note.fret));
             effectsAtTime.push(note);
             
-            // Проверяем слайд к следующей ноте
             const nextNote = tabString.notes[noteIndex + 1];
             if (note.slide && nextNote?.fret !== null && nextNote?.fret !== undefined) {
               nextNoteNamesAtTime.push(getNoteName(stringIndex, nextNote.fret));
@@ -393,7 +412,13 @@ export const useGuitarPlayerSF2 = (): UseGuitarPlayerSF2Return => {
   }, [getNoteName, getMidiNumber]);
 
   /**
-   * Воспроизведение одной ноты с эффектами
+   * Воспроизведение одной ноты с учётом эффектов
+   * 
+   * @param noteName - Название ноты
+   * @param duration - Длительность
+   * @param effect - Эффекты ноты
+   * @param time - Время начала
+   * @param nextNoteName - Следующая нота (для слайда)
    */
   const playNoteWithEffects = useCallback((
     noteName: string,
@@ -417,7 +442,6 @@ export const useGuitarPlayerSF2 = (): UseGuitarPlayerSF2Return => {
         finalDuration = duration * 0.85;
       }
       
-      // Обработка слайда
       if (effect.slide && nextNoteName) {
         const direction = effect.slide === 'up' ? 'up' : 
                          effect.slide === 'down' ? 'down' : 'up';
@@ -442,6 +466,12 @@ export const useGuitarPlayerSF2 = (): UseGuitarPlayerSF2Return => {
 
   /**
    * Воспроизведение аккорда (нескольких нот одновременно)
+   * 
+   * @param noteNames - Массив названий нот
+   * @param duration - Длительность
+   * @param effects - Массив эффектов для каждой ноты
+   * @param time - Время начала
+   * @param nextNoteNames - Массив следующих нот (для слайда)
    */
   const playChordWithEffects = useCallback((
     noteNames: string[],
@@ -459,9 +489,7 @@ export const useGuitarPlayerSF2 = (): UseGuitarPlayerSF2Return => {
     });
   }, [playNoteWithEffects]);
 
-  /**
-   * Инициализация плеера и загрузка инструмента
-   */
+  /** Инициализация плеера и загрузка звукового инструмента */
   const initializePlayer = useCallback(async () => {
     setIsLoading(true);
     setError(null);
@@ -469,7 +497,6 @@ export const useGuitarPlayerSF2 = (): UseGuitarPlayerSF2Return => {
     try {
       isClosedRef.current = false;
       
-      // Закрываем старый AudioContext если есть
       if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
         try {
           await audioContextRef.current.close();
@@ -481,10 +508,8 @@ export const useGuitarPlayerSF2 = (): UseGuitarPlayerSF2Return => {
       audioContextRef.current = null;
       instrumentRef.current = null;
       
-      // Создаём новый AudioContext
       audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
       
-      // Загружаем инструмент
       const instrument = await Soundfont.instrument(audioContextRef.current, 'acoustic_guitar_steel', {
         gain: MAX_VOLUME,
         destination: audioContextRef.current.destination
@@ -502,11 +527,8 @@ export const useGuitarPlayerSF2 = (): UseGuitarPlayerSF2Return => {
     }
   }, []);
 
-  /**
-   * Начать воспроизведение
-   */
+  /** Начать воспроизведение текущей загруженной табулатуры */
   const play = useCallback(async () => {
-    // Переинициализация при необходимости
     if (isClosedRef.current) {
       await initializePlayer();
     }
@@ -521,13 +543,11 @@ export const useGuitarPlayerSF2 = (): UseGuitarPlayerSF2Return => {
       return;
     }
     
-    // Возобновляем AudioContext если он закрыт
     if (audioContextRef.current.state === 'closed') {
       await initializePlayer();
       if (!audioContextRef.current) return;
     }
     
-    // Возобновляем если приостановлен
     if (audioContextRef.current.state === 'suspended') {
       await audioContextRef.current.resume();
     }
@@ -546,7 +566,6 @@ export const useGuitarPlayerSF2 = (): UseGuitarPlayerSF2Return => {
     clearScheduledNotes();
     let startOffset = 0, startIndex = 0;
     
-    // Восстановление с позиции паузы
     if (isPausedRef.current && currentPosition) {
       const foundIndex = allEvents.findIndex(event =>
         event.position.measureIndex === currentPosition?.measureIndex &&
@@ -558,7 +577,6 @@ export const useGuitarPlayerSF2 = (): UseGuitarPlayerSF2Return => {
       }
     }
 
-    // Планирование событий
     for (let i = startIndex; i < allEvents.length; i++) {
       const event = allEvents[i];
       const timeout = setTimeout(() => {
@@ -579,7 +597,6 @@ export const useGuitarPlayerSF2 = (): UseGuitarPlayerSF2Return => {
       scheduledNotesRef.current.push(timeout);
     }
 
-    // Автоматическая остановка в конце
     const totalDuration = (allEvents[allEvents.length - 1].startTime - startOffset) + 
                           allEvents[allEvents.length - 1].duration;
     scheduledNotesRef.current.push(setTimeout(() => stop(), totalDuration * 1000));
@@ -588,9 +605,7 @@ export const useGuitarPlayerSF2 = (): UseGuitarPlayerSF2Return => {
     isPausedRef.current = false;
   }, [initializePlayer, isReady, extractNotesFromTab, playChordWithEffects, clearScheduledNotes, currentPosition]);
 
-  /**
-   * Остановка воспроизведения
-   */
+  /** Остановка воспроизведения и сброс позиции */
   const stop = useCallback(() => { 
     clearScheduledNotes(); 
     setIsPlaying(false); 
@@ -598,9 +613,7 @@ export const useGuitarPlayerSF2 = (): UseGuitarPlayerSF2Return => {
     isPausedRef.current = false; 
   }, [clearScheduledNotes]);
 
-  /**
-   * Пауза воспроизведения
-   */
+  /** Приостановка воспроизведения (сохраняет позицию) */
   const pause = useCallback(() => { 
     if (isPlaying) { 
       clearScheduledNotes(); 
@@ -610,7 +623,9 @@ export const useGuitarPlayerSF2 = (): UseGuitarPlayerSF2Return => {
   }, [isPlaying, clearScheduledNotes]);
 
   /**
-   * Установка темпа (BPM)
+   * Установка темпа воспроизведения
+   * 
+   * @param bpm - Темп в ударах в минуту
    */
   const setTempo = useCallback((bpm: number) => { 
     tempoRef.current = bpm; 
@@ -618,6 +633,8 @@ export const useGuitarPlayerSF2 = (): UseGuitarPlayerSF2Return => {
 
   /**
    * Загрузка табулатуры в плеер
+   * 
+   * @param tabData - Данные табулатуры
    */
   const loadTab = useCallback((tabData: TabData) => {
     if (tabData.tuning?.length) currentTuningRef.current = tabData.tuning;
@@ -628,7 +645,9 @@ export const useGuitarPlayerSF2 = (): UseGuitarPlayerSF2Return => {
   }, [stop]);
 
   /**
-   * Переход к указанной позиции
+   * Переход к указанной позиции в табулатуре
+   * 
+   * @param position - Позиция курсора или процент (0-100)
    */
   const seekToPosition = useCallback((position: CursorPosition | number) => {
     if (!currentTabRef.current) return;
@@ -637,7 +656,6 @@ export const useGuitarPlayerSF2 = (): UseGuitarPlayerSF2Return => {
     let targetPosition: CursorPosition | undefined;
     
     if (typeof position === 'number') {
-      // Процентная навигация (0-100)
       const totalNotes = currentTabRef.current.measures.reduce((total, measure) => {
         const maxNotes = Math.max(...measure.strings.map(s => s.notes.length), 0);
         return total + maxNotes;
@@ -669,7 +687,6 @@ export const useGuitarPlayerSF2 = (): UseGuitarPlayerSF2Return => {
     }
   }, [isPlaying, pause]);
 
-  // Очистка ресурсов при размонтировании
   useEffect(() => {
     return () => {
       isClosedRef.current = true;

@@ -9,8 +9,11 @@ import React from 'react';
 import { Note, CursorPosition } from '../../types/tab';
 import './TabEditor.css';
 
+/**
+ * Свойства компонента TabString
+ */
 interface TabStringProps {
-  /** Нота открытой струны */
+  /** Нота открытой струны (настройка) */
   stringNote: string;
   /** Номер струны (1-6) */
   stringNumber: number;
@@ -28,20 +31,24 @@ interface TabStringProps {
   measureIndex?: number;
   /** Режим только для чтения */
   isReadOnly?: boolean;
-  /** Функция обратного вызова при перетаскивании позиции */
+  /** Функция обратного вызова при перетаскивании позиции воспроизведения */
   onPositionDrag?: (measureIndex: number, noteIndex: number) => void;
-  /** Начальная ячейка слайда */
+  /** Индекс начальной ячейки слайда */
   slideStartCell?: number;
-  /** Конечная ячейка слайда */
+  /** Индекс конечной ячейки слайда */
   slideEndCell?: number;
-   /** Показывать ли название струны/строя (только для первого такта) */
+  /** Показывать ли название струны/строя (только для первого такта) */
   showStringLabel?: boolean;
 }
 
 /**
  * Компонент отдельной струны табулатуры.
+ * Отображает последовательность нот на одной струне, поддерживает подсветку
+ * текущей позиции курсора, позиции воспроизведения и эффекты (бенд, хаммер, слайд, вибрато).
  * 
  * @component
+ * @param props - Свойства компонента
+ * @returns Отрисованная строка табулатуры с нотами
  */
 const TabString: React.FC<TabStringProps> = ({
   stringNote, 
@@ -59,16 +66,16 @@ const TabString: React.FC<TabStringProps> = ({
 }) => {
   /**
    * Получение символа для отображения ноты с учётом эффектов
-   * Слайд НЕ отображается в ноте, только в разделителе
+   * 
+   * @param note - Объект ноты
+   * @returns Строковое представление ноты с эффектами
    */
   const getNoteSymbol = (note: Note): string => {
     if (note.fret === null) return '-';
     let symbol = note.fret.toString();
     
-    // Эффекты (кроме слайда)
     if (note.bend) symbol = `(${symbol})`;
     
-    // Хаммер отображается как "5h7" в одной ноте
     if (note.hammer && typeof note.hammer === 'object') {
       return `${note.hammer.fromFret}h${note.hammer.toFret}`;
     }
@@ -79,16 +86,17 @@ const TabString: React.FC<TabStringProps> = ({
     if (note.pull) symbol = `p${symbol}`;
     if (note.vibrato) symbol = `${symbol}~`;
     
-    // Слайд - не добавляем ничего к символу ноты
-    
     return symbol;
   };
 
   /**
    * Получение символа разделителя между нотами с учётом слайда
+   * 
+   * @param currentNote - Текущая нота
+   * @param nextNote - Следующая нота
+   * @returns Символ разделителя ('/', '\\', '↕' или '-')
    */
   const getSeparatorSymbol = (currentNote: Note, nextNote: Note | undefined): string => {
-    // Слайд от текущей ноты к следующей
     if (currentNote.slide === 'up') return '/';
     if (currentNote.slide === 'down') return '\\';
     if (currentNote.slide === 'both') return '↕';
@@ -96,36 +104,27 @@ const TabString: React.FC<TabStringProps> = ({
     return '-';
   };
 
-  /**
-   * Проверка, является ли разделитель слайд-коннектором
-   */
   const isSlideConnector = (separatorSymbol: string): boolean => {
     return separatorSymbol === '/' || separatorSymbol === '\\' || separatorSymbol === '↕';
   };
 
   /**
    * Проверка, играет ли нота в данный момент
+   * 
+   * @param noteIndex - Индекс ноты
+   * @returns true, если нота воспроизводится
    */
   const isPlayingNote = (noteIndex: number): boolean => {
     if (!playingPosition || playingPosition.measureIndex !== measureIndex) return false;
     return playingPosition.noteIndex === noteIndex;
   };
 
-  /**
-   * Проверка, является ли ячейка началом слайда
-   */
   const isSlideStart = (noteIndex: number): boolean => 
     slideStartCell !== undefined && slideStartCell === noteIndex;
 
-  /**
-   * Проверка, является ли ячейка концом слайда
-   */
   const isSlideEnd = (noteIndex: number): boolean => 
     slideEndCell !== undefined && slideEndCell === noteIndex;
 
-  /**
-   * Проверка, находится ли ячейка между началом и концом слайда
-   */
   const isBetweenSlideCells = (noteIndex: number): boolean => {
     if (slideStartCell === undefined || slideEndCell === undefined) return false;
     const start = Math.min(slideStartCell, slideEndCell);
@@ -134,7 +133,10 @@ const TabString: React.FC<TabStringProps> = ({
   };
 
   /**
-   * Обработчик начала перетаскивания позиции
+   * Обработчик начала перетаскивания позиции воспроизведения
+   * 
+   * @param e - Событие мыши
+   * @param noteIndex - Индекс ноты
    */
   const handleNoteMouseDown = (e: React.MouseEvent, noteIndex: number) => {
     e.stopPropagation();
@@ -145,7 +147,7 @@ const TabString: React.FC<TabStringProps> = ({
 
   return (
     <div className={`tab-string ${isActive ? 'active' : ''}`}>
-       {showStringLabel && (
+      {showStringLabel && (
         <span className="string-label">{stringNote}│{stringNumber}</span>
       )}
       {!showStringLabel && (
@@ -163,7 +165,6 @@ const TabString: React.FC<TabStringProps> = ({
           else if (isSlideEnd(index)) slideHighlightClass = 'slide-end';
           else if (isBetweenSlideCells(index)) slideHighlightClass = 'slide-between';
 
-          // Получаем символ ноты (без слайда)
           const noteSymbol = getNoteSymbol(note);
           
           return (
@@ -185,7 +186,6 @@ const TabString: React.FC<TabStringProps> = ({
                   </div>
                 )}
               </div>
-              {/* Разделитель - здесь отображается символ слайда */}
               {index < notes.length - 1 && (
                 <span className={`separator ${isSlideConn ? 'slide-connector' : ''}`}>
                   {separatorSymbol}

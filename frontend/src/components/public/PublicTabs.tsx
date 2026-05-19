@@ -34,15 +34,32 @@ interface PublicTabsProps {
 }
 
 /**
- * Компонент списка публичных табулатур
+ * Компонент списка публичных табулатур.
+ * Отображает табулатуры, опубликованные другими пользователями.
+ * Предоставляет поиск, добавление в избранное, предпросмотр с проигрывателем и экспорт.
+ * 
+ * @component
+ * @param props - Свойства компонента
+ * @param props.onSelectTab - Функция выбора табулатуры для редактирования
+ * @param props.onFavoritesChanged - Колбэк при изменении избранного
+ * @returns Отрисованный компонент списка публичных табулатур
+ * 
+ * @example
+ * ```tsx
+ * <PublicTabs 
+ *   onSelectTab={(tabData) => openEditor(tabData)}
+ *   onFavoritesChanged={() => updateFavoritesCount()}
+ * />
+ * ```
  */
 const PublicTabs: React.FC<PublicTabsProps> = memo(({ onSelectTab, onFavoritesChanged }) => {
-  // Состояния компонента
+  /** Выбранная табулатура для предпросмотра */
   const [selectedTab, setSelectedTab] = useState<PublicTab | null>(null);
+  /** Флаг открытия модального окна экспорта */
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  /** Данные табулатуры для экспорта */
   const [exportTabData, setExportTabData] = useState<TabData | null>(null);
 
-  // Хуки
   const { currentUser, isLoading: authLoading } = useAuth();
   const { 
     tabs, 
@@ -55,7 +72,10 @@ const PublicTabs: React.FC<PublicTabsProps> = memo(({ onSelectTab, onFavoritesCh
   } = usePublicTabs();
 
   /**
-   * Преобразование публичной табулатуры в формат TabData
+   * Преобразует публичную табулатуру в формат TabData для редактора
+   * 
+   * @param tab - Публичная табулатура
+   * @returns Табулатура в формате TabData
    */
   const transformTab = useCallback((tab: PublicTab) => {
     return transformPublicTabToTabData(tab, currentUser?.id);
@@ -63,6 +83,8 @@ const PublicTabs: React.FC<PublicTabsProps> = memo(({ onSelectTab, onFavoritesCh
 
   /**
    * Обработчик просмотра табулатуры в редакторе
+   * 
+   * @param tab - Выбранная публичная табулатура
    */
   const handleViewInEditor = useCallback((tab: PublicTab) => { 
     onSelectTab(transformTab(tab)); 
@@ -70,7 +92,9 @@ const PublicTabs: React.FC<PublicTabsProps> = memo(({ onSelectTab, onFavoritesCh
   }, [transformTab, onSelectTab]);
 
   /**
-   * Обработчик экспорта табулатуры (только для модального окна предпросмотра)
+   * Обработчик экспорта табулатуры (через модальное окно предпросмотра)
+   * 
+   * @param tab - Табулатура для экспорта
    */
   const handleExport = useCallback((tab: PublicTab) => { 
     setExportTabData(transformTab(tab)); 
@@ -78,7 +102,9 @@ const PublicTabs: React.FC<PublicTabsProps> = memo(({ onSelectTab, onFavoritesCh
   }, [transformTab]);
 
   /**
-   * Обработчик переключения статуса избранного
+   * Обработчик переключения статуса избранного (добавить/удалить)
+   * 
+   * @param tab - Табулатура для добавления/удаления из избранного
    */
   const handleToggleFavorite = useCallback(async (tab: PublicTab) => {
     const success = await toggleFavorite(tab);
@@ -96,12 +122,12 @@ const PublicTabs: React.FC<PublicTabsProps> = memo(({ onSelectTab, onFavoritesCh
   const handleClearSearch = useCallback(() => filterTabs(''), [filterTabs]);
 
   /**
-   * Закрытие панели предпросмотра
+   * Закрытие панели предпросмотра табулатуры
    */
   const handleClosePreview = useCallback(() => setSelectedTab(null), []);
 
   /**
-   * Закрытие модального окна экспорта
+   * Закрытие модального окна экспорта и очистка данных
    */
   const handleCloseExportModal = useCallback(() => { 
     setIsExportModalOpen(false); 
@@ -109,13 +135,12 @@ const PublicTabs: React.FC<PublicTabsProps> = memo(({ onSelectTab, onFavoritesCh
   }, []);
 
   /**
-   * Данные табулатуры для предпросмотра
+   * Данные табулатуры для отображения в панели предпросмотра
    */
   const previewTabData = useMemo(() => {
     return selectedTab ? transformTab(selectedTab) : null;
   }, [selectedTab, transformTab]);
 
-  // Условные возвраты
   if (authLoading) {
     return <LoadingSpinner message="Проверка авторизации..." />;
   }
@@ -126,13 +151,11 @@ const PublicTabs: React.FC<PublicTabsProps> = memo(({ onSelectTab, onFavoritesCh
 
   return (
     <div className="public-tabs-container">
-      {/* Заголовок */}
       <div className="public-tabs-header">
         <h2 className="public-tabs-title">ПУБЛИКАЦИИ</h2>
         <p className="public-tabs-subtitle">Табулатуры, опубликованные другими пользователями</p>
       </div>
 
-      {/* Поиск */}
       <div className="public-tabs-search">
         <SearchBar 
           value={searchQuery}
@@ -148,7 +171,6 @@ const PublicTabs: React.FC<PublicTabsProps> = memo(({ onSelectTab, onFavoritesCh
         )}
       </div>
 
-      {/* Панель предпросмотра */}
       {selectedTab && previewTabData && (
         <div className="public-tab-preview">
           <div className="preview-header">
@@ -168,7 +190,6 @@ const PublicTabs: React.FC<PublicTabsProps> = memo(({ onSelectTab, onFavoritesCh
         </div>
       )}
 
-      {/* Список публикаций */}
       {tabs.length === 0 && !isLoading ? (
         <EmptyState
           icon=<Globe size={24} />
@@ -204,7 +225,6 @@ const PublicTabs: React.FC<PublicTabsProps> = memo(({ onSelectTab, onFavoritesCh
         </div>
       )}
 
-      {/* Модальное окно экспорта */}
       {exportTabData && (
         <ExportModal
           tabData={exportTabData}

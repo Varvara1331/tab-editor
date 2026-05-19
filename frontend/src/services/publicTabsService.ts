@@ -30,7 +30,8 @@ export interface GetPublicTabsParams {
 }
 
 /**
- * Сервис для работы с публичными табулатурами
+ * Сервис для работы с публичными табулатурами.
+ * Расширяет BaseService и добавляет методы для работы с избранным.
  */
 class PublicTabsService extends BaseService<PublicTab> {
   constructor() {
@@ -79,7 +80,6 @@ class PublicTabsService extends BaseService<PublicTab> {
       const response = await api.post(`${this.basePath}/${tabId}/library`);
       return response.data.success === true;
     } catch (error: any) {
-      // Если табулатура уже добавлена, считаем успехом
       if (error.response?.data?.error === 'Табулатура уже добавлена в библиотеку') {
         return true;
       }

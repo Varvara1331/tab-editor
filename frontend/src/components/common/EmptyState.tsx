@@ -6,7 +6,6 @@
  */
 
 import React, { memo } from 'react';
-//import './Common.css';
 
 /**
  * Свойства компонента EmptyState
@@ -25,13 +24,18 @@ interface EmptyStateProps {
 /**
  * Компонент пустого состояния.
  * Используется для отображения информационного сообщения, когда данные отсутствуют.
+ * Поддерживает опциональную кнопку действия.
  * 
  * @component
  * @param props - Свойства компонента
+ * @param props.icon - Иконка для отображения
+ * @param props.title - Заголовок сообщения
+ * @param props.message - Текст сообщения
+ * @param props.action - Опциональное действие (кнопка)
  * @returns Отрисованный компонент пустого состояния
  * 
  * @example
- * ```typescript
+ * ```tsx
  * import { FolderOpen } from 'lucide-react';
  * 
  * <EmptyState

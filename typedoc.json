@@ -1,0 +1,71 @@
+{
+  "entryPoints": [
+    "frontend/src/index.tsx",
+    "frontend/src/components",
+    "frontend/src/hooks",
+    "frontend/src/services",
+    "frontend/src/types",
+    "frontend/src/App.tsx",
+    "frontend/src/utils",
+    "server/src/server.ts",
+    "server/src/services",
+    "server/src/models",
+    "server/src/middleware",
+    "server/src/routes",
+    "server/src/types",
+    "server/src/config",
+    "server/src/database",
+    "server/src/swagger.ts"
+  ],
+  "entryPointStrategy": "expand",
+  "out": "docs",
+  "name": "TabEditor - Полная документация",
+  "includeVersion": true,
+  "excludePrivate": false,
+  "excludeProtected": false,
+  "excludeExternals": true,
+  "excludeNotDocumented": false,
+  "skipErrorChecking": true,
+  "categorizeByGroup": true,
+  "defaultCategory": "Other",
+  "categoryOrder": [
+    "Frontend",
+    "Server",
+    "Components",
+    "Hooks",
+    "Services",
+    "Types",
+    "Utils",
+    "Middleware",
+    "Models",
+    "Routes",
+    "Config",
+    "Database",
+    "Swagger",
+    "Other"
+  ],
+  "sort": ["source-order", "kind"],
+  "navigation": {
+    "includeCategories": true,
+    "includeGroups": true
+  },
+  "exclude": [
+    "**/node_modules/**",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "frontend/src/**/*.css",
+    "frontend/src/**/*.scss",
+    "frontend/src/**/*.svg",
+    "frontend/src/**/*.png",
+    "frontend/src/**/*.jpg",
+    "frontend/src/**/*.json"
+  ],
+  "validation": {
+    "notExported": false,
+    "invalidLink": false,
+    "notDocumented": false
+  },
+  "treatWarningsAsErrors": false,
+  "treatValidationWarningsAsErrors": false
+  
+}

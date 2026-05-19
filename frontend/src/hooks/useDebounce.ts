@@ -20,14 +20,16 @@ export interface UseDebounceOptions {
 /**
  * Хук для дебаунсинга значения.
  * Возвращает значение, которое обновляется только после указанной задержки.
+ * Полезно для оптимизации поисковых запросов, валидации форм и других частых операций.
  * 
+ * @typeParam T - Тип дебаунсируемого значения
  * @param value - Значение для дебаунсинга
  * @param delay - Задержка в миллисекундах
  * @param immediate - Выполнить немедленно при первом вызове (по умолчанию false)
  * @returns Дебаунсированное значение
  * 
  * @example
- * ```typescript
+ * ```tsx
  * function SearchInput() {
  *   const [searchTerm, setSearchTerm] = useState('');
  *   const debouncedSearchTerm = useDebounce(searchTerm, 500);
@@ -50,21 +52,19 @@ export interface UseDebounceOptions {
  * ```
  */
 export const useDebounce = <T>(value: T, delay: number, immediate: boolean = false): T => {
+  /** Дебаунсированное значение */
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
   const isFirstRender = useRef(true);
 
   useEffect(() => {
-    // При immediate=true обновляем значение сразу при первом рендере
     if (immediate && isFirstRender.current) {
       isFirstRender.current = false;
       setDebouncedValue(value);
       return;
     }
 
-    // Устанавливаем таймер для обновления значения
     const handler = setTimeout(() => setDebouncedValue(value), delay);
     
-    // Очищаем таймер при изменении value или размонтировании
     return () => clearTimeout(handler);
   }, [value, delay, immediate]);
 
@@ -75,12 +75,13 @@ export const useDebounce = <T>(value: T, delay: number, immediate: boolean = fal
  * Хук для дебаунсинга callback функции.
  * Возвращает функцию, которая вызывает оригинальный callback только после указанной задержки.
  * 
+ * @typeParam T - Тип callback функции
  * @param callback - Функция для дебаунсинга
  * @param delay - Задержка в миллисекундах
  * @returns Дебаунсированная версия callback
  * 
  * @example
- * ```typescript
+ * ```tsx
  * function SearchComponent() {
  *   const handleSearch = useDebouncedCallback((query: string) => {
  *     api.search(query);
@@ -104,18 +105,15 @@ export const useDebouncedCallback = <T extends (...args: unknown[]) => void>(
 
   const debouncedCallback = useCallback(
     (...args: Parameters<T>) => {
-      // Очищаем предыдущий таймер
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
       
-      // Устанавливаем новый таймер
       timeoutRef.current = setTimeout(() => callback(...args), delay);
     },
     [callback, delay]
   ) as T;
 
-  // Очищаем таймер при размонтировании
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {

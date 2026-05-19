@@ -52,12 +52,15 @@ const DEFAULT_CACHE_TIMEOUT = 30000;
 /**
  * Хук для работы с библиотекой табулатур пользователя.
  * Предоставляет методы для загрузки, кэширования и управления табулатурами.
+ * Поддерживает кэширование данных для уменьшения количества запросов к API.
  * 
  * @param options - Опции хука
+ * @param options.autoLoad - Автоматическая загрузка при монтировании (по умолчанию true)
+ * @param options.cacheTimeout - Время кэширования в миллисекундах (по умолчанию 30000)
  * @returns Объект с состоянием и методами управления
  * 
  * @example
- * ```typescript
+ * ```tsx
  * function Library() {
  *   const { myTabs, favorites, deleteMyTab, removeFromFavs, isLoading } = useTabsLibrary();
  *   
@@ -83,17 +86,24 @@ export const useTabsLibrary = (options: UseTabsLibraryOptions = {}): UseTabsLibr
   const { autoLoad = true, cacheTimeout = DEFAULT_CACHE_TIMEOUT } = options;
   const { currentUser, isLoading: authLoading } = useAuth();
 
+  /** Список своих табулатур */
   const [myTabs, setMyTabs] = useState<LibraryItem[]>([]);
+  /** Список избранных табулатур */
   const [favorites, setFavorites] = useState<LibraryItem[]>([]);
+  /** Флаг загрузки */
   const [isLoading, setIsLoading] = useState(true);
+  /** ID табулатуры, над которой выполняется операция */
   const [processingId, setProcessingId] = useState<number | null>(null);
   
+  /** Время последней загрузки для проверки кэша */
   const lastLoadTimeRef = useRef<number>(0);
+  /** Флаг монтирования компонента */
   const isMountedRef = useRef(true);
+  /** Promise текущей операции загрузки (для предотвращения параллельных вызовов) */
   const loadPromiseRef = useRef<Promise<void> | null>(null);
+  /** Флаг выполнения начальной загрузки */
   const initialLoadDoneRef = useRef(false);
 
-  // Отслеживание монтирования компонента
   useEffect(() => {
     isMountedRef.current = true;
     return () => { 
@@ -114,7 +124,6 @@ export const useTabsLibrary = (options: UseTabsLibraryOptions = {}): UseTabsLibr
       return;
     }
 
-    // Проверка кэша
     const now = Date.now();
     const isCached = !force && lastLoadTimeRef.current && (now - lastLoadTimeRef.current) < cacheTimeout;
     if (isCached) {
@@ -124,7 +133,6 @@ export const useTabsLibrary = (options: UseTabsLibraryOptions = {}): UseTabsLibr
       return;
     }
     
-    // Предотвращение параллельных загрузок
     if (loadPromiseRef.current) {
       return loadPromiseRef.current;
     }
@@ -223,19 +231,16 @@ export const useTabsLibrary = (options: UseTabsLibraryOptions = {}): UseTabsLibr
    * Поиск по табулатурам
    * 
    * @param query - Поисковый запрос
-   * @returns Объект с отфильтрованными списками
+   * @returns Объект с отфильтрованными списками своих и избранных табулатур
    */
   const searchTabs = useCallback((query: string) => ({
     myTabsFiltered: filterTabs(myTabs, query),
     favoritesFiltered: filterTabs(favorites, query)
   }), [myTabs, favorites, filterTabs]);
 
-  /**
-   * Принудительное обновление данных
-   */
+  /** Принудительное обновление данных */
   const refresh = useCallback(() => loadTabs(true), [loadTabs]);
 
-  // Автоматическая загрузка при монтировании
   useEffect(() => {
     if (authLoading) {
       return;

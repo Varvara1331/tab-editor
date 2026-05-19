@@ -26,28 +26,44 @@ interface ImportModalProps {
 
 /**
  * Компонент модального окна импорта табулатуры.
+ * Поддерживает drag-and-drop и выбор файла через диалоговое окно.
+ * Обрабатывает файлы форматов JSON, Guitar Pro JSON и MusicXML.
+ * Автоматически сохраняет импортированную табулатуру в библиотеку.
  * 
  * @component
  * @param props - Свойства компонента
- * @returns Отрисованное модальное окно или null
+ * @param props.isOpen - Флаг открытия модального окна
+ * @param props.onClose - Функция закрытия модального окна
+ * @param props.onImportSuccess - Колбэк при успешном импорте (получает импортированные данные)
+ * @returns Отрисованное модальное окно или null, если isOpen = false
  * 
  * @example
- * ```typescript
+ * ```tsx
+ * const [isModalOpen, setIsModalOpen] = useState(false);
+ * 
  * <ImportModal
  *   isOpen={isModalOpen}
  *   onClose={() => setIsModalOpen(false)}
- *   onImportSuccess={(tabData) => openEditor(tabData)}
+ *   onImportSuccess={(tabData) => {
+ *     setCurrentTab(tabData);
+ *     setIsModalOpen(false);
+ *   }}
  * />
  * ```
  */
 const ImportModal: React.FC<ImportModalProps> = memo(({ isOpen, onClose, onImportSuccess }) => {
+  /** Флаг активного перетаскивания файла (для подсветки зоны) */
   const [isDragging, setIsDragging] = useState(false);
+  /** Флаг выполнения операции импорта */
   const [isLoading, setIsLoading] = useState(false);
+  /** Текст сообщения об ошибке */
   const [error, setError] = useState<string | null>(null);
+  /** Текст сообщения об успешном импорте */
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   /**
-   * Обработка импортированного файла
+   * Обработка импортированного файла.
+   * Валидирует, импортирует и сохраняет табулатуру в библиотеку.
    * 
    * @param file - Файл для импорта
    */
@@ -56,7 +72,6 @@ const ImportModal: React.FC<ImportModalProps> = memo(({ isOpen, onClose, onImpor
     setError(null);
     setSuccessMessage(null);
 
-    // Валидация файла
     if (!canImportFile(file)) {
       setError('Поддерживаются только файлы .json, .gp.json и .musicxml');
       setIsLoading(false);
@@ -73,7 +88,6 @@ const ImportModal: React.FC<ImportModalProps> = memo(({ isOpen, onClose, onImpor
           setSuccessMessage(`Файл "${file.name}" успешно импортирован!`);
           onImportSuccess(result.tabData);
           
-          // Автоматическое закрытие через 1.5 секунды после успешного импорта
           setTimeout(() => {
             onClose();
             setSuccessMessage(null);
@@ -92,7 +106,9 @@ const ImportModal: React.FC<ImportModalProps> = memo(({ isOpen, onClose, onImpor
   }, [onImportSuccess, onClose]);
 
   /**
-   * Обработчик drop события (перетаскивание файла)
+   * Обработчик события drop (перетаскивание файла в зону импорта)
+   * 
+   * @param e - Событие перетаскивания
    */
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -104,7 +120,9 @@ const ImportModal: React.FC<ImportModalProps> = memo(({ isOpen, onClose, onImpor
   }, [processFile]);
 
   /**
-   * Обработчик drag over события (подсветка зоны при перетаскивании)
+   * Обработчик события drag over (подсветка зоны при перетаскивании)
+   * 
+   * @param e - Событие перетаскивания
    */
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -112,7 +130,9 @@ const ImportModal: React.FC<ImportModalProps> = memo(({ isOpen, onClose, onImpor
   }, []);
 
   /**
-   * Обработчик drag leave события (снятие подсветки)
+   * Обработчик события drag leave (снятие подсветки зоны)
+   * 
+   * @param e - Событие перетаскивания
    */
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -121,6 +141,8 @@ const ImportModal: React.FC<ImportModalProps> = memo(({ isOpen, onClose, onImpor
 
   /**
    * Обработчик выбора файла через диалоговое окно
+   * 
+   * @param e - Событие изменения поля ввода
    */
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -130,7 +152,10 @@ const ImportModal: React.FC<ImportModalProps> = memo(({ isOpen, onClose, onImpor
   }, [processFile]);
 
   /**
-   * Обработчик клика по оверлею (закрытие при клике вне модального окна)
+   * Обработчик клика по оверлею.
+   * Закрывает модальное окно при клике на фон.
+   * 
+   * @param e - Событие клика
    */
   const handleOverlayClick = useCallback((e: React.MouseEvent) => {
     if (e.target === e.currentTarget) onClose();
@@ -141,7 +166,6 @@ const ImportModal: React.FC<ImportModalProps> = memo(({ isOpen, onClose, onImpor
   return (
     <div className="modal-overlay" onClick={handleOverlayClick}>
       <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-        {/* Заголовок */}
         <div className="modal-header">
           <h3>
             <Upload size={20} style={{ display: 'inline', marginRight: '8px', verticalAlign: 'middle' }} />
@@ -151,7 +175,6 @@ const ImportModal: React.FC<ImportModalProps> = memo(({ isOpen, onClose, onImpor
         </div>
 
         <div className="modal-body">
-          {/* Зона drag-and-drop */}
           <div
             className={`import-dropzone ${isDragging ? 'dragging' : ''}`}
             onDrop={handleDrop}
@@ -176,7 +199,6 @@ const ImportModal: React.FC<ImportModalProps> = memo(({ isOpen, onClose, onImpor
             </label>
           </div>
 
-          {/* Информация о поддерживаемых форматах */}
           <div className="import-info">
             <h4>Поддерживаемые форматы:</h4>
             <ul>
@@ -193,7 +215,6 @@ const ImportModal: React.FC<ImportModalProps> = memo(({ isOpen, onClose, onImpor
             </ul>
           </div>
 
-          {/* Сообщение об ошибке */}
           {error && (
             <div className="import-error" role="alert">
               <AlertCircle size={18} className="error-icon" />
@@ -201,7 +222,6 @@ const ImportModal: React.FC<ImportModalProps> = memo(({ isOpen, onClose, onImpor
             </div>
           )}
 
-          {/* Сообщение об успехе */}
           {successMessage && (
             <div className="import-success" role="status">
               <CheckCircle size={18} className="success-icon" />
@@ -209,7 +229,6 @@ const ImportModal: React.FC<ImportModalProps> = memo(({ isOpen, onClose, onImpor
             </div>
           )}
 
-          {/* Индикатор загрузки */}
           {isLoading && (
             <div className="import-loading">
               <div className="spinner"></div>
@@ -218,7 +237,6 @@ const ImportModal: React.FC<ImportModalProps> = memo(({ isOpen, onClose, onImpor
           )}
         </div>
 
-        {/* Кнопка отмены */}
         <div className="modal-footer">
           <button className="btn btn-secondary" onClick={onClose} disabled={isLoading} type="button">
             Отмена

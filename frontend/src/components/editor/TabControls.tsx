@@ -12,8 +12,11 @@ import {
 import { PRESET_TUNINGS } from '../../utils/tuningConstants';
 import './TabEditor.css';
 
+/**
+ * Свойства компонента TabControls
+ */
 interface TabControlsProps {
-  /** Выбранный инструмент */
+  /** Выбранный инструмент редактирования */
   selectedTool: string;
   /** Функция выбора инструмента */
   onToolSelect: (tool: 'note' | 'bend' | 'hammer' | 'vibrato' | 'slide') => void;
@@ -23,7 +26,7 @@ interface TabControlsProps {
   onNotesPerMeasureChange?: (size: number) => void;
   /** Режим только для чтения */
   isReadOnly?: boolean;
-  /** Плеер для отображения в левой части */
+  /** Плеер для отображения в левой части панели */
   player?: ReactNode;
   /** Текущий строй гитары */
   tuning?: string[];
@@ -31,7 +34,7 @@ interface TabControlsProps {
   onTuningChange?: (newTuning: string[]) => void;
 }
 
-/** Доступные размеры такта */
+/** Доступные размеры такта для переключения */
 const MEASURE_SIZES = [
   { value: 4, label: '4/4' },
   { value: 8, label: '8/8' },
@@ -40,8 +43,12 @@ const MEASURE_SIZES = [
 
 /**
  * Панель управления редактором табулатур.
+ * Включает выбор эффектов (нота, бенд, хаммер, вибрато, слайд),
+ * настройку размера такта и конфигурацию строя гитары с предустановками.
  * 
  * @component
+ * @param props - Свойства компонента
+ * @returns Отрисованная панель управления
  */
 const TabControls: React.FC<TabControlsProps> = ({
   selectedTool, onToolSelect,
@@ -51,19 +58,18 @@ const TabControls: React.FC<TabControlsProps> = ({
   tuning: externalTuning,
   onTuningChange
 }) => {
+  /** Флаг отображения выпадающего списка предустановок строя */
   const [showTuningPresets, setShowTuningPresets] = useState(false);
   
-  // Используем внешний строй или локальный по умолчанию
+  /** Локальное состояние строя гитары */
   const [localTuning, setLocalTuning] = useState<string[]>(externalTuning || ['E4', 'B3', 'G3', 'D3', 'A2', 'E2']);
 
-  // Синхронизация с внешним строем
   useEffect(() => {
     if (externalTuning && JSON.stringify(externalTuning) !== JSON.stringify(localTuning)) {
       setLocalTuning(externalTuning);
     }
   }, [externalTuning]);
 
-  // Обработчик клавиш для переключения инструментов
   useEffect(() => {
     if (isReadOnly) return;
 
@@ -95,6 +101,9 @@ const TabControls: React.FC<TabControlsProps> = ({
 
   /**
    * Изменение настройки отдельной струны
+   * 
+   * @param index - Индекс струны
+   * @param value - Новое значение настройки
    */
   const handleTuningChange = (index: number, value: string) => {
     if (isReadOnly) return;
@@ -106,6 +115,8 @@ const TabControls: React.FC<TabControlsProps> = ({
 
   /**
    * Применение предустановленного строя
+   * 
+   * @param presetName - Название предустановки
    */
   const applyPresetTuning = (presetName: string) => {
     if (isReadOnly) return;
@@ -119,6 +130,8 @@ const TabControls: React.FC<TabControlsProps> = ({
 
   /**
    * Получение названия текущего предустановленного строя
+   * 
+   * @returns Название предустановки или null, если строй кастомный
    */
   const getCurrentPresetName = () => {
     for (const [name, preset] of Object.entries(PRESET_TUNINGS)) {
@@ -131,6 +144,8 @@ const TabControls: React.FC<TabControlsProps> = ({
 
   /**
    * Изменение размера такта
+   * 
+   * @param size - Новый размер такта (4, 8 или 16)
    */
   const handleSizeChange = (size: number) => {
     if (!isReadOnly && size !== notesPerMeasure && onNotesPerMeasureChange) {
@@ -142,16 +157,13 @@ const TabControls: React.FC<TabControlsProps> = ({
 
   return (
     <div className="tools-panel">
-      {/* Левая часть - плеер */}
       {player && (
         <div className="tools-left">
           {player}
         </div>
       )}
 
-      {/* Правая часть - эффекты и строй */}
       <div className="tools-right">
-        {/* Ряд 1: Эффекты и размер такта */}
         <div className="tools-row">
           <div className="tools-group">
             <span className="tools-label">Эффекты</span>
@@ -202,7 +214,6 @@ const TabControls: React.FC<TabControlsProps> = ({
             </button>
           </div>
 
-          {/* Размер такта */}
           {onNotesPerMeasureChange && (
             <div className="tools-group measure-size-group">
               <span className="tools-label">Размер</span>
@@ -224,7 +235,6 @@ const TabControls: React.FC<TabControlsProps> = ({
           )}
         </div>
 
-        {/* Ряд 2: Настройка строя */}
         <div className="tools-row">
           <div className="tools-group tuning-group">
             <span className="tools-label">Строй гитары</span>
@@ -247,7 +257,6 @@ const TabControls: React.FC<TabControlsProps> = ({
                       className={`preset-option ${currentPreset === presetName ? 'active' : ''}`} 
                       onClick={() => applyPresetTuning(presetName)}
                       type="button"
-                      
                     >
                       {presetName}{currentPreset === presetName && ' ✓'}
                     </button>

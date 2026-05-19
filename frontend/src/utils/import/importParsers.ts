@@ -23,22 +23,20 @@ const getNotesPerMeasureFromData = (data: any): number => {
 };
 
 /**
- * Создание ноты из импортированных данных с эффектами
+ * Создание ноты из импортированных данных с учётом эффектов
  * 
  * @param importedNote - Импортированные данные ноты
- * @returns Объект Note
+ * @returns Объект Note с заполненными полями эффектов
  */
 export const createNoteFromImport = (importedNote: any): Note => {
   if (importedNote.fret === undefined || importedNote.fret === null) return { fret: null };
   
   const note: Note = { fret: importedNote.fret };
   
-  // Обработка bend
   if (importedNote.bend === true || importedNote.bend === 'true' || importedNote.bend === 1) {
     note.bend = true;
   }
   
-  // Обработка slide
   if (importedNote.slide) {
     if (importedNote.slide === 'up') {
       note.slide = 'up';
@@ -47,29 +45,23 @@ export const createNoteFromImport = (importedNote: any): Note => {
     }
   }
   
-  // Обработка hammer (формат hammer может быть: boolean, число, или объект {fromFret, toFret})
   if (importedNote.hammer !== undefined && importedNote.hammer !== null) {
     if (typeof importedNote.hammer === 'object' && 'fromFret' in importedNote.hammer && 'toFret' in importedNote.hammer) {
-      // Полный объект хаммера
       note.hammer = importedNote.hammer;
     } else if (typeof importedNote.hammer === 'number') {
-      // Числовой формат (только целевой лад)
       note.hammer = {
         fromFret: importedNote.fret,
         toFret: importedNote.hammer
       };
     } else if (importedNote.hammer === true) {
-      // Булевый формат (без указания целевого лада)
       note.hammer = true;
     }
   }
   
-  // Обработка vibrato
   if (importedNote.vibrato === true || importedNote.vibrato === 'true' || importedNote.vibrato === 1) {
     note.vibrato = true;
   }
   
-  // Обработка effect (из Guitar Pro формата)
   if (importedNote.effect) {
     switch (importedNote.effect) {
       case 'bend':
@@ -99,7 +91,6 @@ export const createNoteFromImport = (importedNote: any): Note => {
     }
   }
   
-  // Обработка hammerTarget (из GP формата)
   if (importedNote.hammerTarget !== undefined) {
     note.hammer = {
       fromFret: importedNote.fret,
@@ -111,12 +102,13 @@ export const createNoteFromImport = (importedNote: any): Note => {
 };
 
 /**
- * Импорт табулатуры из JSON файла
+ * Импорт табулатуры из JSON файла.
+ * Ожидает структуру с полями title, measures и опционально tuning, artist.
  * 
  * @param content - Содержимое JSON файла
  * @param tuningLength - Количество струн (по умолчанию 6)
  * @returns Объект TabData
- * @throws {Error} При неверном формате JSON
+ * @throws {Error} При неверном формате JSON (отсутствуют обязательные поля)
  */
 export const importFromJson = (content: string, tuningLength: number = 6): TabData => {
   const data = JSON.parse(content);
@@ -144,7 +136,6 @@ export const importFromJson = (content: string, tuningLength: number = 6): TabDa
       });
     }
     
-    // Добавляем недостающие струны
     while (strings.length < tuningLength) {
       strings.push({ 
         stringNumber: strings.length, 
@@ -180,7 +171,8 @@ export const importFromJson = (content: string, tuningLength: number = 6): TabDa
 };
 
 /**
- * Импорт табулатуры из Guitar Pro JSON формата
+ * Импорт табулатуры из Guitar Pro JSON формата.
+ * Обрабатывает структуру, экспортированную из Guitar Pro.
  * 
  * @param content - Содержимое GP JSON файла
  * @returns Объект TabData
@@ -198,7 +190,6 @@ export const importFromGpJson = (content: string): TabData => {
       const measureNotesCount = gpMeasure.notesPerMeasure || globalNotesPerMeasure;
       const strings: any[] = [];
       
-      // Инициализируем пустые струны
       for (let i = 0; i < tuningLength; i++) {
         strings.push({ 
           stringNumber: i, 
@@ -206,7 +197,6 @@ export const importFromGpJson = (content: string): TabData => {
         });
       }
       
-      // Собираем все ноты из разных мест
       const allNotes: any[] = [];
       if (gpMeasure.notes) allNotes.push(...gpMeasure.notes);
       if (gpMeasure.voices) {
@@ -215,7 +205,6 @@ export const importFromGpJson = (content: string): TabData => {
         });
       }
       
-      // Распределяем ноты по позициям
       allNotes.forEach((note: any) => {
         const stringIndex = note.string !== undefined ? note.string - 1 : (note.stringNumber || 0);
         const fret = note.fret !== undefined ? note.fret : note.value;
@@ -261,7 +250,7 @@ export const importFromGpJson = (content: string): TabData => {
  * Извлечение эффектов из MusicXML ноты
  * 
  * @param noteElement - XML элемент ноты
- * @returns Объект с эффектами
+ * @returns Объект с эффектами (bend, vibrato, slide, hammer, hammerTarget)
  * @private
  */
 function extractEffectsFromMusicXMLNote(noteElement: Element): {
@@ -285,7 +274,6 @@ function extractEffectsFromMusicXMLNote(noteElement: Element): {
   const technical = notations.querySelector('technical');
   const ornaments = notations.querySelector('ornaments');
   
-  // Обработка бенда - ищем в technical (основное место)
   if (technical) {
     const bend = technical.querySelector('bend');
     if (bend) {
@@ -293,7 +281,6 @@ function extractEffectsFromMusicXMLNote(noteElement: Element): {
     }
   }
   
-  // Также проверяем ornaments на случай других форматов
   if (ornaments) {
     const bend = ornaments.querySelector('bend');
     if (bend) {
@@ -307,7 +294,6 @@ function extractEffectsFromMusicXMLNote(noteElement: Element): {
     }
   }
   
-  // Обработка вибрато также может быть в technical
   if (technical) {
     const vibrato = technical.querySelector('vibrato');
     if (vibrato) {
@@ -315,15 +301,12 @@ function extractEffectsFromMusicXMLNote(noteElement: Element): {
     }
   }
   
-  // Обработка технических эффектов
   if (technical) {
-    // Хаммер-он
     const hammerOn = technical.querySelector('hammer-on');
     if (hammerOn) {
       const type = hammerOn.getAttribute('type');
       if (type === 'start') {
         effects.hammer = true;
-        // Извлекаем целевой лад из текстового содержимого
         const hammerText = hammerOn.textContent;
         if (hammerText && !isNaN(parseInt(hammerText))) {
           effects.hammerTarget = parseInt(hammerText);
@@ -331,7 +314,6 @@ function extractEffectsFromMusicXMLNote(noteElement: Element): {
       }
     }
     
-    // Слайд
     const slide = technical.querySelector('slide');
     if (slide) {
       const type = slide.getAttribute('type');
@@ -345,7 +327,9 @@ function extractEffectsFromMusicXMLNote(noteElement: Element): {
 }
 
 /**
- * Импорт табулатуры из MusicXML формата
+ * Импорт табулатуры из MusicXML формата.
+ * Парсит XML-документ и извлекает структуру табулатуры, включая настройку струн,
+ * временные сигнатуры, ноты и эффекты.
  * 
  * @param content - Содержимое MusicXML файла
  * @returns Promise с объектом TabData
@@ -360,7 +344,6 @@ export const importFromMusicXML = async (content: string): Promise<TabData> => {
   const title = xmlDoc.querySelector('work-title')?.textContent || 'Imported Tab';
   const artist = xmlDoc.querySelector('creator')?.textContent || '';
   
-  // Извлекаем настройку струн из MusicXML
   const tuning: string[] = [];
   const staffDetails = xmlDoc.querySelector('staff-details');
   if (staffDetails) {
@@ -376,7 +359,6 @@ export const importFromMusicXML = async (content: string): Promise<TabData> => {
     });
   }
   
-  // Если не нашли настройку, используем стандартную
   const finalTuning = tuning.length >= 4 ? tuning : ['E4', 'B3', 'G3', 'D3', 'A2', 'E2'];
   const tuningLength = finalTuning.length;
   const measures: TabMeasure[] = [];
@@ -387,7 +369,6 @@ export const importFromMusicXML = async (content: string): Promise<TabData> => {
   for (let measureIdx = 0; measureIdx < measureElements.length; measureIdx++) {
     const measure = measureElements[measureIdx];
     
-    // Получаем divisions (количество делений на четверть)
     let divisions = 4;
     const attributes = measure.querySelector('attributes');
     if (attributes) {
@@ -397,7 +378,6 @@ export const importFromMusicXML = async (content: string): Promise<TabData> => {
       }
     }
     
-    // Получаем временную сигнатуру
     let beats = 4;
     let beatType = 4;
     if (attributes) {
@@ -410,14 +390,11 @@ export const importFromMusicXML = async (content: string): Promise<TabData> => {
       }
     }
     
-    // Вычисляем длительность 16-й ноты в divisions
     const SIXTEENTH_DIVISIONS = divisions / 4;
     
-    // Создаем временное хранилище для нот
     const notesAtPositions: Map<number, Map<number, Note>> = new Map();
     let currentPosition = 0;
     
-    // Получаем все ноты в такте
     const notes = measure.querySelectorAll('note');
     let pendingChord: Array<{
       stringIndex: number;
@@ -431,17 +408,14 @@ export const importFromMusicXML = async (content: string): Promise<TabData> => {
       const isRest = noteElement.querySelector('rest') !== null;
       const isChord = noteElement.getAttribute('chord') !== null;
       
-      // Получаем длительность
       const durationElem = noteElement.querySelector('duration');
       if (durationElem && durationElem.textContent) {
         currentDuration = parseInt(durationElem.textContent);
       }
       
-      // Конвертируем в количество 16-х нот
       let durationInSixteenths = Math.max(1, Math.round(currentDuration / SIXTEENTH_DIVISIONS));
       
       if (isRest) {
-        // Пауза - просто перемещаем позицию
         if (pendingChord.length > 0) {
           pendingChord = [];
         }
@@ -449,7 +423,6 @@ export const importFromMusicXML = async (content: string): Promise<TabData> => {
         continue;
       }
       
-      // Извлекаем информацию о ноте
       const technical = noteElement.querySelector('technical');
       const stringEl = technical?.querySelector('string');
       const fretEl = technical?.querySelector('fret');
@@ -459,14 +432,11 @@ export const importFromMusicXML = async (content: string): Promise<TabData> => {
         const fret = parseInt(fretEl.textContent);
         
         if (stringIndex >= 0 && stringIndex < tuningLength && fret >= 0) {
-          // Извлекаем эффекты
           const effects = extractEffectsFromMusicXMLNote(noteElement);
           
           if (isChord) {
-            // Добавляем в аккорд
             pendingChord.push({ stringIndex, fret, effects });
           } else {
-            // Завершаем предыдущий аккорд
             if (pendingChord.length > 0) {
               if (!notesAtPositions.has(currentPosition)) {
                 notesAtPositions.set(currentPosition, new Map());
@@ -496,7 +466,6 @@ export const importFromMusicXML = async (content: string): Promise<TabData> => {
               currentPosition += durationInSixteenths;
             }
             
-            // Обрабатываем текущую ноту
             if (!notesAtPositions.has(currentPosition)) {
               notesAtPositions.set(currentPosition, new Map());
             }
@@ -520,7 +489,6 @@ export const importFromMusicXML = async (content: string): Promise<TabData> => {
             
             positionMap.set(stringIndex, note);
             
-            // Проверяем, является ли следующая нота частью аккорда
             const nextNote = notes[i + 1];
             if (nextNote && nextNote.getAttribute('chord') !== null) {
               pendingChord.push({ stringIndex, fret, effects });
@@ -532,7 +500,6 @@ export const importFromMusicXML = async (content: string): Promise<TabData> => {
       }
     }
     
-    // Добавляем последний аккорд если есть
     if (pendingChord.length > 0) {
       if (!notesAtPositions.has(currentPosition)) {
         notesAtPositions.set(currentPosition, new Map());
@@ -561,7 +528,6 @@ export const importFromMusicXML = async (content: string): Promise<TabData> => {
       currentPosition += 1;
     }
     
-    // Определяем количество позиций в такте
     const positions = Array.from(notesAtPositions.keys()).sort((a, b) => a - b);
     const maxPosition = positions.length > 0 ? Math.max(...positions) + 1 : (beats === 4 && beatType === 4 ? 16 : beats);
     
@@ -569,12 +535,10 @@ export const importFromMusicXML = async (content: string): Promise<TabData> => {
       globalNotesPerMeasure = maxPosition;
     }
     
-    // Создаем массив струн с нотами
     const strings: any[] = [];
     for (let i = 0; i < tuningLength; i++) {
       const fullNotes: Note[] = Array.from({ length: maxPosition }, () => createEmptyNote());
       
-      // Заполняем ноты из временного хранилища
       for (const [position, positionMap] of notesAtPositions.entries()) {
         const note = positionMap.get(i);
         if (note && position < maxPosition) {
@@ -616,40 +580,36 @@ export const importFromMusicXML = async (content: string): Promise<TabData> => {
 };
 
 /**
- * Основная функция импорта табулатуры (автоопределение формата)
+ * Основная функция импорта табулатуры с автоопределением формата.
+ * Определяет формат по содержимому файла и вызывает соответствующий парсер.
+ * Поддерживаемые форматы: JSON, Guitar Pro JSON, MusicXML.
  * 
  * @param content - Содержимое файла
- * @param fileName - Имя файла (опционально)
+ * @param fileName - Имя файла (опционально, используется для определения формата по расширению)
  * @returns Promise с объектом TabData
  * @throws {Error} При неизвестном формате или ошибке парсинга
  */
 export const importTabFromFile = async (content: string, fileName?: string): Promise<TabData> => {
-  // Определяем формат по содержимому
   const trimmedContent = content.trim();
   
-  // Проверка на JSON
   if (trimmedContent.startsWith('{') || trimmedContent.startsWith('[')) {
     try {
       const data = JSON.parse(trimmedContent);
       
-      // Проверяем, содержит ли JSON поля, характерные для Guitar Pro
       if (data.format === 'guitar-pro-compatible' || data.song || data.measures?.[0]?.voices) {
         return importFromGpJson(trimmedContent);
       }
       
-      // Обычный JSON формат
       return importFromJson(trimmedContent);
     } catch (e) {
       // Невалидный JSON, пробуем другие форматы
     }
   }
   
-  // Проверка на MusicXML (начинается с <?xml или <score-partwise)
   if (trimmedContent.startsWith('<?xml') || trimmedContent.startsWith('<score-partwise')) {
     return await importFromMusicXML(trimmedContent);
   }
   
-  // Проверка по расширению файла
   if (fileName) {
     const ext = fileName.split('.').pop()?.toLowerCase();
     if (ext === 'musicxml' || ext === 'xml') {
@@ -662,7 +622,6 @@ export const importTabFromFile = async (content: string, fileName?: string): Pro
       try {
         return importFromJson(content);
       } catch (e) {
-        // Если не удалось, пробуем GP JSON
         return importFromGpJson(content);
       }
     }

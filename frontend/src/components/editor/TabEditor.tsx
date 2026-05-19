@@ -12,6 +12,7 @@ import TabString from './TabString';
 import TabControls from './TabControls';
 import TabPlayer from './TabPlayer';
 import ExportModal from '../modals/ExportModal';
+import GuitarTuner from './GuitarTuner';
 import { saveToLibrary, updateInLibrary } from '../../services/libraryService';
 import { getCurrentUser } from '../../services/authService';
 import './TabEditor.css';
@@ -26,10 +27,9 @@ import {
   Minus,
   Grid2X2,
   Grid3X3,
-  Loader2
+  Loader2,
+  Mic
 } from 'lucide-react';
-
-// ==================== КОНСТАНТЫ ====================
 
 /** Стандартный строй 6-струнной гитары (EADGBE) */
 const DEFAULT_TUNING = ['E4', 'B3', 'G3', 'D3', 'A2', 'E2'];
@@ -40,19 +40,31 @@ const DEFAULT_MEASURE_COUNT = 1;
 /** Максимальный номер лада (24 лада - стандарт для большинства гитар) */
 const MAX_FRET = 24;
 
-// ==================== ИНТЕРФЕЙСЫ ====================
-
+/**
+ * Свойства компонента TabEditor
+ */
 interface TabEditorProps {
+  /** Начальные данные табулатуры для редактирования */
   initialTabData?: TabData;
+  /** Колбэк при изменении данных табулатуры */
   onTabDataChange?: () => void;
+  /** Колбэк при сохранении табулатуры */
   onTabSaved?: () => void;
+  /** Колбэк при запросе создания новой табулатуры */
   onNewTabRequest?: () => void;
+  /** Колбэк для передачи состояния родительскому компоненту */
   onStateChange?: (state: any) => void;
+  /** Восстановленное состояние редактора */
   restoredState?: any;
 }
 
-// ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
-
+/**
+ * Инициализация массива тактов
+ * 
+ * @param count - Количество тактов
+ * @param notesCount - Количество нот в такте
+ * @returns Массив тактов с пустыми нотами
+ */
 const initializeMeasures = (count: number, notesCount: number = 16): TabMeasure[] => {
   return Array.from({ length: count }, (_, i) => ({
     id: `measure-${i}-${Date.now()}`,
@@ -64,6 +76,25 @@ const initializeMeasures = (count: number, notesCount: number = 16): TabMeasure[
   }));
 };
 
+/**
+ * Компонент редактора табулатур.
+ * Предоставляет полный функционал для создания, редактирования и сохранения табулатур.
+ * Поддерживает ввод нот (0-9), эффекты (бенд, хаммер, слайд, вибрато), навигацию стрелками,
+ * автосохранение, экспорт в PDF/JSON/XML и публикацию.
+ * 
+ * @component
+ * @param props - Свойства компонента
+ * @returns Отрисованный редактор табулатур
+ * 
+ * @example
+ * ```tsx
+ * <TabEditor 
+ *   initialTabData={tabData}
+ *   onTabSaved={() => refreshLibrary()}
+ *   onNewTabRequest={() => createNewTab()}
+ * />
+ * ```
+ */
 const TabEditor: React.FC<TabEditorProps> = ({ 
   initialTabData, 
   onTabSaved, 
@@ -74,17 +105,15 @@ const TabEditor: React.FC<TabEditorProps> = ({
   const currentUser = getCurrentUser();
   const hasRestoredRef = useRef<boolean>(false);
   
-  // Refs
   const measuresContainerRef = useRef<HTMLDivElement>(null);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const isProcessingRef = useRef<boolean>(false);
   const isDraggingRef = useRef<boolean>(false);
-  const tabPlayerRef = useRef<any>(null); // Ссылка на компонент плеера
-  const autoScrollIntervalRef = useRef<NodeJS.Timeout | null>(null); // Для автопрокрутки
-  const lastMousePositionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 }); // Для хранения последней позиции мыши
+  const tabPlayerRef = useRef<any>(null);
+  const autoScrollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const lastMousePositionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
 
-  // ==================== СОСТОЯНИЯ ====================
-
+  /** Количество нот в такте (4, 8 или 16) */
   const [notesPerMeasure, setNotesPerMeasure] = useState<number>(() => {
     if (restoredState?.notesPerMeasure !== undefined && !hasRestoredRef.current) {
       return restoredState.notesPerMeasure;
@@ -98,6 +127,7 @@ const TabEditor: React.FC<TabEditorProps> = ({
     return 16;
   });
 
+  /** Данные текущей табулатуры */
   const [tabData, setTabData] = useState<TabData>(() => {
     if (restoredState?.tabData && !hasRestoredRef.current) { 
       hasRestoredRef.current = true; 
@@ -132,6 +162,7 @@ const TabEditor: React.FC<TabEditorProps> = ({
     };
   });
 
+  /** Флаг режима "только чтение" (для чужих табулатур) */
   const [isReadOnly, setIsReadOnly] = useState<boolean>(() => {
     if (restoredState?.isReadOnly !== undefined && !hasRestoredRef.current) {
       return restoredState.isReadOnly;
@@ -139,6 +170,7 @@ const TabEditor: React.FC<TabEditorProps> = ({
     return tabData.isOwn === false;
   });
 
+  /** Флаг публикации табулатуры */
   const [isPublic, setIsPublic] = useState<boolean>(() => {
     if (restoredState?.isPublic !== undefined && !hasRestoredRef.current) {
       return restoredState.isPublic;
@@ -146,6 +178,7 @@ const TabEditor: React.FC<TabEditorProps> = ({
     return tabData.isPublic || false;
   });
 
+  /** Флаг новой (не сохранённой) табулатуры */
   const [isNewTab, setIsNewTab] = useState<boolean>(() => {
     if (restoredState?.isNewTab !== undefined && !hasRestoredRef.current) {
       return restoredState.isNewTab;
@@ -153,36 +186,55 @@ const TabEditor: React.FC<TabEditorProps> = ({
     return !tabData.id;
   });
 
+  /** Текущая позиция курсора в табулатуре */
   const [cursor, setCursor] = useState<CursorPosition>(() => 
     restoredState?.cursor && !hasRestoredRef.current 
       ? restoredState.cursor 
       : { measureIndex: 0, stringIndex: 0, noteIndex: 0 }
   );
   
+  /** Выбранный инструмент редактирования */
   const [selectedTool, setSelectedTool] = useState<'note' | 'bend' | 'hammer' | 'vibrato' | 'slide'>(() => 
     restoredState?.selectedTool && !hasRestoredRef.current 
       ? restoredState.selectedTool 
       : 'note'
   );
   
+  /** Позиция воспроизведения для подсветки нот */
   const [playingPosition, setPlayingPosition] = useState<CursorPosition | null>(null);
+  /** Горизонтальная позиция полоски воспроизведения */
   const [playheadLeft, setPlayheadLeft] = useState<number | null>(null);
+  /** Вертикальная позиция полоски воспроизведения */
   const [playheadTop, setPlayheadTop] = useState<number | null>(null);
+  /** Высота текущего такта для вертикальной полоски */
   const [currentMeasureHeight, setCurrentMeasureHeight] = useState<number>(100);
+  /** Флаг перетаскивания полоски воспроизведения */
   const [isDraggingPlayhead, setIsDraggingPlayhead] = useState<boolean>(false);
+  /** Ожидаемый ввод лада (для двухзначных чисел) */
   const [pendingFret, setPendingFret] = useState<string>('');
+  /** Ожидаемый ввод хаммера */
   const [pendingHammerInput, setPendingHammerInput] = useState<string>('');
+  /** Ожидаемый ввод слайда */
   const [pendingSlideInput, setPendingSlideInput] = useState<string>('');
+  /** Уровень масштабирования (50-200%) */
   const [zoom, setZoom] = useState<number>(() => restoredState?.zoom || 100);
+  /** Имя файла для экспорта */
   const [fileName] = useState<string>(() => restoredState?.fileName || 'Без названия.gp');
+  /** Флаг открытия модального окна экспорта */
   const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
+  /** Флаг сохранения (для отображения спиннера) */
   const [isSaving, setIsSaving] = useState<boolean>(false);
+  /** Раскладка табулатуры: горизонтальная (в строку) или вертикальная (в столбец) */
   const [tabLayout, setTabLayout] = useState<'horizontal' | 'vertical'>(() => 
     restoredState?.tabLayout || 'horizontal'
   );
 
-  // ==================== ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ====================
+  /** Флаг отображения тюнера */
+  const [showTuner, setShowTuner] = useState<boolean>(false);
+  /** Несоответствия строя табулатуры */
+  const [tuningMismatches, setTuningMismatches] = useState<Array<{ string: number; expected: string; detected: string; message: string }>>([]);
 
+  /** Очистка таймера ожидания ввода лада */
   const clearFretTimeout = useCallback(() => { 
     if (timeoutRef.current) { 
       clearTimeout(timeoutRef.current); 
@@ -190,6 +242,11 @@ const TabEditor: React.FC<TabEditorProps> = ({
     } 
   }, []);
 
+  /**
+   * Изменение количества нот в такте
+   * 
+   * @param newSize - Новое количество нот (4, 8 или 16)
+   */
   const handleNotesPerMeasureChange = useCallback((newSize: number) => {
     if (isReadOnly) return;
     
@@ -233,6 +290,11 @@ const TabEditor: React.FC<TabEditorProps> = ({
     }));
   }, [isReadOnly]);
 
+  /**
+   * Добавление ноты в текущую позицию курсора
+   * 
+   * @param fretValue - Номер лада (0-24)
+   */
   const addNoteAtCursor = useCallback((fretValue: number) => {
     if (isReadOnly || isProcessingRef.current) return;
     isProcessingRef.current = true;
@@ -270,6 +332,12 @@ const TabEditor: React.FC<TabEditorProps> = ({
     }, 100);
   }, [cursor, selectedTool, isReadOnly, notesPerMeasure]);
 
+  /**
+   * Добавление хаммер-она (hammer-on) в текущую позицию
+   * 
+   * @param fromFret - Начальный лад
+   * @param toFret - Конечный лад
+   */
   const addHammerAtCursor = useCallback((fromFret: number, toFret: number) => {
     if (isReadOnly || isProcessingRef.current) return;
     isProcessingRef.current = true;
@@ -308,6 +376,12 @@ const TabEditor: React.FC<TabEditorProps> = ({
     }, 100);
   }, [cursor, isReadOnly, notesPerMeasure]);
 
+  /**
+   * Добавление слайда (slide) в текущую позицию
+   * 
+   * @param fromFret - Начальный лад
+   * @param toFret - Конечный лад
+   */
   const addSlideAtCursor = useCallback((fromFret: number, toFret: number) => {
     if (isReadOnly || isProcessingRef.current) return;
     isProcessingRef.current = true;
@@ -351,6 +425,7 @@ const TabEditor: React.FC<TabEditorProps> = ({
     }, 100);
   }, [cursor, isReadOnly, notesPerMeasure]);
 
+  /** Удаление ноты в текущей позиции курсора */
   const handleDeleteNote = useCallback(() => {
     if (isReadOnly) return;
     
@@ -372,6 +447,13 @@ const TabEditor: React.FC<TabEditorProps> = ({
     });
   }, [cursor, isReadOnly]);
 
+  /**
+   * Обработчик клика по ноте для установки курсора
+   * 
+   * @param measureIndex - Индекс такта
+   * @param stringIndex - Индекс струны
+   * @param noteIndex - Индекс ноты
+   */
   const handleNoteClick = useCallback((measureIndex: number, stringIndex: number, noteIndex: number) => {
     if (isReadOnly) return;
     
@@ -382,6 +464,21 @@ const TabEditor: React.FC<TabEditorProps> = ({
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
   }, [isReadOnly]);
 
+  /**
+   * Обработчик несоответствия строя от тюнера
+   */
+  const handleTuningMismatch = useCallback((mismatches: Array<{ string: number; expected: string; detected: string; message: string }>) => {
+    setTuningMismatches(mismatches);
+    if (mismatches.length > 0) {
+      console.warn('Tuning mismatch detected:', mismatches);
+    }
+  }, []);
+
+  /**
+   * Глобальный обработчик клавиатуры для редактора
+   * Поддерживает: цифры для ввода лада, стрелки для навигации,
+   * Delete/Backspace для удаления, Esc для отмены, b/h/v/s для выбора инструментов
+   */
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     if (isReadOnly) return;
     
@@ -543,289 +640,7 @@ const TabEditor: React.FC<TabEditorProps> = ({
     }
   }, [addNoteAtCursor, addHammerAtCursor, addSlideAtCursor, clearFretTimeout, cursor, isReadOnly, handleDeleteNote, notesPerMeasure, selectedTool, pendingHammerInput, pendingSlideInput]);
 
-  // ==================== ЭФФЕКТ ДЛЯ УПРАВЛЕНИЯ ПЛЕЕРОМ ====================
-  
-  // Обработчик клавиш для управления плеером (пробел и enter)
-  useEffect(() => {
-    if (isReadOnly) return;
-
-    const handlePlayerKeys = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
-      
-      if (e.code === 'Enter') {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        if (tabPlayerRef.current) {
-          tabPlayerRef.current.toggle();
-        }
-      }
-    };
-
-    window.addEventListener('keydown', handlePlayerKeys);
-    return () => window.removeEventListener('keydown', handlePlayerKeys);
-  }, [isReadOnly]);
-
-  // ==================== ОБРАБОТЧИКИ ПЕРЕТАСКИВАНИЯ ПОЛОСКИ С АВТОПРОКРУТКОЙ ====================
-
-  const handlePlayheadMouseDown = useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDraggingPlayhead(true);
-    isDraggingRef.current = true;
-    
-    // Сохраняем позицию мыши
-    lastMousePositionRef.current = { x: e.clientX, y: e.clientY };
-    
-    document.body.style.cursor = tabLayout === 'horizontal' ? 'ew-resize' : 'ns-resize';
-    
-    const element = document.elementFromPoint(e.clientX, e.clientY);
-    const noteCell = element?.closest('.note-cell');
-    if (noteCell) {
-      const measureIndex = parseInt(noteCell.getAttribute('data-measure') || '-1');
-      const noteIndex = parseInt(noteCell.getAttribute('data-note') || '-1');
-      
-      if (measureIndex >= 0 && noteIndex >= 0) {
-        const containerRect = measuresContainerRef.current?.getBoundingClientRect();
-        const noteRect = noteCell.getBoundingClientRect();
-        const scrollLeft = measuresContainerRef.current?.scrollLeft || 0;
-        const scrollTop = measuresContainerRef.current?.scrollTop || 0;
-        
-        if (containerRect) {
-          if (tabLayout === 'horizontal') {
-            const leftPosition = noteRect.left - containerRect.left + scrollLeft + (noteRect.width / 2);
-            setPlayheadLeft(leftPosition);
-          } else {
-            const measureElement = noteCell.closest('.measure');
-            if (measureElement) {
-              const measureRect = measureElement.getBoundingClientRect();
-              const topPosition = measureRect.top - containerRect.top + scrollTop;
-              const leftPosition = noteRect.left - containerRect.left + scrollLeft + (noteRect.width / 2);
-              setPlayheadTop(topPosition);
-              setPlayheadLeft(leftPosition);
-              setCurrentMeasureHeight(measureRect.height);
-            } else {
-              const topPosition = noteRect.top - containerRect.top + scrollTop;
-              const leftPosition = noteRect.left - containerRect.left + scrollLeft + (noteRect.width / 2);
-              setPlayheadTop(topPosition);
-              setPlayheadLeft(leftPosition);
-            }
-          }
-          
-          const event = new CustomEvent('seekToPosition', {
-            detail: { measureIndex, noteIndex }
-          });
-          window.dispatchEvent(event);
-        }
-      }
-    }
-  }, [tabLayout]);
-
-  // Функция для поиска ноты под курсором с учетом скролла
-  const findNoteAtPosition = useCallback((clientX: number, clientY: number) => {
-    // Сначала проверяем элемент под курсором
-    let element = document.elementFromPoint(clientX, clientY);
-    let noteCell = element?.closest('.note-cell');
-    
-    // Если не нашли ноту, возможно курсор за пределами контейнера
-    // В этом случае ищем ближайшую ноту по направлению
-    if (!noteCell && measuresContainerRef.current) {
-      const containerRect = measuresContainerRef.current.getBoundingClientRect();
-      const scrollLeft = measuresContainerRef.current.scrollLeft;
-      const scrollTop = measuresContainerRef.current.scrollTop;
-      
-      // Ищем все ноты в контейнере
-      const allNotes = measuresContainerRef.current.querySelectorAll('.note-cell');
-      let closestNote: Element | null = null;
-      let minDistance = Infinity;
-      
-      allNotes.forEach((note) => {
-        const rect = note.getBoundingClientRect();
-        // Вычисляем расстояние от курсора до центра ноты
-        const distance = Math.sqrt(
-          Math.pow(clientX - (rect.left + rect.width / 2), 2) +
-          Math.pow(clientY - (rect.top + rect.height / 2), 2)
-        );
-        
-        if (distance < minDistance) {
-          minDistance = distance;
-          closestNote = note;
-        }
-      });
-      
-      noteCell = closestNote;
-    }
-    
-    return noteCell;
-  }, []);
-
-  const handleGlobalMouseMove = useCallback((e: MouseEvent) => {
-    if (!isDraggingRef.current || !measuresContainerRef.current) return;
-    
-    const container = measuresContainerRef.current;
-    const containerRect = container.getBoundingClientRect();
-    const mouseX = e.clientX;
-    const mouseY = e.clientY;
-    
-    // Сохраняем позицию мыши для автопрокрутки
-    lastMousePositionRef.current = { x: mouseX, y: mouseY };
-    
-    // Настройки автопрокрутки
-    const SCROLL_THRESHOLD = 30; // Порог в пикселях от края
-    const SCROLL_SPEED = 12; // Скорость прокрутки
-    
-    let shouldAutoScroll = false;
-    let scrollDeltaX = 0;
-    let scrollDeltaY = 0;
-    
-    if (tabLayout === 'horizontal') {
-      // Горизонтальная прокрутка
-      if (mouseX < containerRect.left + SCROLL_THRESHOLD && container.scrollLeft > 0) {
-        shouldAutoScroll = true;
-        scrollDeltaX = -SCROLL_SPEED;
-      } else if (mouseX > containerRect.right - SCROLL_THRESHOLD && 
-                 container.scrollLeft < container.scrollWidth - container.clientWidth) {
-        shouldAutoScroll = true;
-        scrollDeltaX = SCROLL_SPEED;
-      }
-    } else {
-      // Вертикальная прокрутка
-      if (mouseY < containerRect.top + SCROLL_THRESHOLD && container.scrollTop > 0) {
-        shouldAutoScroll = true;
-        scrollDeltaY = -SCROLL_SPEED;
-      } else if (mouseY > containerRect.bottom - SCROLL_THRESHOLD && 
-                 container.scrollTop < container.scrollHeight - container.clientHeight) {
-        shouldAutoScroll = true;
-        scrollDeltaY = SCROLL_SPEED;
-      }
-    }
-    
-    // Останавливаем предыдущий интервал автопрокрутки
-    if (autoScrollIntervalRef.current) {
-      clearInterval(autoScrollIntervalRef.current);
-      autoScrollIntervalRef.current = null;
-    }
-    
-    if (shouldAutoScroll) {
-      // Запускаем автопрокрутку
-      autoScrollIntervalRef.current = setInterval(() => {
-        if (!isDraggingRef.current || !measuresContainerRef.current) {
-          if (autoScrollIntervalRef.current) {
-            clearInterval(autoScrollIntervalRef.current);
-            autoScrollIntervalRef.current = null;
-          }
-          return;
-        }
-        
-        const currentContainer = measuresContainerRef.current;
-        if (tabLayout === 'horizontal') {
-          currentContainer.scrollLeft += scrollDeltaX;
-        } else {
-          currentContainer.scrollTop += scrollDeltaY;
-        }
-        
-        // После прокрутки обновляем позицию на основе сохраненной позиции мыши
-        setTimeout(() => {
-          if (isDraggingRef.current) {
-            const noteCell = findNoteAtPosition(
-              lastMousePositionRef.current.x,
-              lastMousePositionRef.current.y
-            );
-            
-            if (noteCell) {
-              const measureIndex = parseInt(noteCell.getAttribute('data-measure') || '-1');
-              const noteIndex = parseInt(noteCell.getAttribute('data-note') || '-1');
-              
-              if (measureIndex >= 0 && noteIndex >= 0) {
-                const currentContainerRect = measuresContainerRef.current?.getBoundingClientRect();
-                const noteRect = noteCell.getBoundingClientRect();
-                const currentScrollLeft = measuresContainerRef.current?.scrollLeft || 0;
-                const currentScrollTop = measuresContainerRef.current?.scrollTop || 0;
-                
-                if (currentContainerRect) {
-                  const leftPosition = noteRect.left - currentContainerRect.left + currentScrollLeft + (noteRect.width / 2);
-                  
-                  if (tabLayout === 'horizontal') {
-                    setPlayheadLeft(leftPosition);
-                    setPlayheadTop(null);
-                  } else {
-                    const measureElement = noteCell.closest('.measure');
-                    if (measureElement) {
-                      const measureRect = measureElement.getBoundingClientRect();
-                      const topPosition = measureRect.top - currentContainerRect.top + currentScrollTop;
-                      setPlayheadTop(topPosition);
-                      setPlayheadLeft(leftPosition);
-                      setCurrentMeasureHeight(measureRect.height);
-                    }
-                  }
-                  
-                  const event = new CustomEvent('seekToPosition', {
-                    detail: { measureIndex, noteIndex }
-                  });
-                  window.dispatchEvent(event);
-                }
-              }
-            }
-          }
-        }, 10);
-      }, 16); // ~60fps
-    }
-    
-    // Находим ноту под курсором для обновления позиции
-    const noteCell = findNoteAtPosition(mouseX, mouseY);
-    
-    if (noteCell) {
-      const measureIndex = parseInt(noteCell.getAttribute('data-measure') || '-1');
-      const noteIndex = parseInt(noteCell.getAttribute('data-note') || '-1');
-      
-      if (measureIndex >= 0 && noteIndex >= 0) {
-        const noteRect = noteCell.getBoundingClientRect();
-        const scrollLeft = container.scrollLeft;
-        const scrollTop = container.scrollTop;
-        
-        const leftPosition = noteRect.left - containerRect.left + scrollLeft + (noteRect.width / 2);
-        
-        if (tabLayout === 'horizontal') {
-          setPlayheadLeft(leftPosition);
-          setPlayheadTop(null);
-        } else {
-          const measureElement = noteCell.closest('.measure');
-          if (measureElement) {
-            const measureRect = measureElement.getBoundingClientRect();
-            const topPosition = measureRect.top - containerRect.top + scrollTop;
-            setPlayheadTop(topPosition);
-            setPlayheadLeft(leftPosition);
-            setCurrentMeasureHeight(measureRect.height);
-          } else {
-            const topPosition = noteRect.top - containerRect.top + scrollTop;
-            setPlayheadTop(topPosition);
-            setPlayheadLeft(leftPosition);
-          }
-        }
-        
-        const event = new CustomEvent('seekToPosition', {
-          detail: { measureIndex, noteIndex }
-        });
-        window.dispatchEvent(event);
-      }
-    }
-  }, [tabLayout, findNoteAtPosition]);
-
-  const handleGlobalMouseUp = useCallback(() => {
-    setIsDraggingPlayhead(false);
-    isDraggingRef.current = false;
-    document.body.style.cursor = '';
-    
-    // Очищаем интервал автопрокрутки
-    if (autoScrollIntervalRef.current) {
-      clearInterval(autoScrollIntervalRef.current);
-      autoScrollIntervalRef.current = null;
-    }
-  }, []);
-
-  // ==================== ОСТАЛЬНЫЕ ОБРАБОТЧИКИ ====================
-
+  /** Добавление нового такта в конец табулатуры */
   const addMeasure = () => {
     if (isReadOnly) return;
     setTabData(prev => ({ 
@@ -842,14 +657,23 @@ const TabEditor: React.FC<TabEditorProps> = ({
     }));
   };
 
+  /**
+   * Удаление такта по индексу
+   * 
+   * @param index - Индекс такта для удаления
+   */
   const removeMeasure = (index: number) => {
     if (isReadOnly || tabData.measures.length <= 1) return;
     setTabData(prev => ({ ...prev, measures: prev.measures.filter((_, i) => i !== index) }));
   };
 
+  /** Увеличение масштаба (макс. 200%) */
   const handleZoomIn = () => setZoom(prev => Math.min(prev + 10, 200));
+  
+  /** Уменьшение масштаба (мин. 50%) */
   const handleZoomOut = () => setZoom(prev => Math.max(prev - 10, 50));
 
+  /** Сохранение табулатуры в библиотеку */
   const handleSaveToLibrary = async () => {
     if (!tabData.isOwn) {
       alert('Нельзя сохранять чужие табулатуры');
@@ -897,8 +721,10 @@ const TabEditor: React.FC<TabEditorProps> = ({
     }
   };
 
+  /** Открытие модального окна экспорта */
   const handleDownload = () => setIsExportModalOpen(true);
   
+  /** Переключение статуса публикации табулатуры */
   const handlePublish = async () => {
     if (!tabData.isOwn) {
       alert('Нельзя публиковать чужие табулатуры');
@@ -925,22 +751,47 @@ const TabEditor: React.FC<TabEditorProps> = ({
     }
   };
 
+  /**
+   * Обработчик изменения названия табулатуры
+   * 
+   * @param e - Событие изменения поля ввода
+   */
   const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => { 
     if (!isReadOnly) setTabData(prev => ({ ...prev, title: e.target.value })); 
   };
   
+  /**
+   * Обработчик изменения имени исполнителя
+   * 
+   * @param e - Событие изменения поля ввода
+   */
   const handleArtistChange = (e: React.ChangeEvent<HTMLInputElement>) => { 
     if (!isReadOnly) setTabData(prev => ({ ...prev, artist: e.target.value })); 
   };
   
+  /**
+   * Обработчик изменения строя гитары
+   * 
+   * @param newTuning - Новый массив настроек струн
+   */
   const handleTuningChange = (newTuning: string[]) => { 
     if (!isReadOnly) setTabData(prev => ({ ...prev, tuning: newTuning })); 
   };
   
+  /**
+   * Обработчик изменения позиции воспроизведения
+   * 
+   * @param position - Новая позиция воспроизведения
+   */
   const handlePlayingPositionChange = useCallback((position: CursorPosition) => {
     setPlayingPosition(position);
   }, []);
 
+  /**
+   * Обработчик обновления позиции полоски воспроизведения
+   * 
+   * @param position - Позиция полоски (left, top, measureIndex, noteIndex, height)
+   */
   const handlePlayheadPosition = useCallback((position: { left: number; top: number; measureIndex: number; noteIndex: number; height?: number } | null) => {
     if (position && !isDraggingRef.current) {
       if (tabLayout === 'horizontal') {
@@ -959,7 +810,245 @@ const TabEditor: React.FC<TabEditorProps> = ({
     }
   }, [tabLayout]);
 
-  // ==================== ЭФФЕКТЫ ====================
+  /**
+   * Обработчик начала перетаскивания полоски воспроизведения
+   * 
+   * @param e - Событие мыши
+   */
+  const handlePlayheadMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDraggingPlayhead(true);
+    isDraggingRef.current = true;
+    
+    lastMousePositionRef.current = { x: e.clientX, y: e.clientY };
+    
+    document.body.style.cursor = tabLayout === 'horizontal' ? 'ew-resize' : 'ns-resize';
+    
+    const element = document.elementFromPoint(e.clientX, e.clientY);
+    const noteCell = element?.closest('.note-cell');
+    if (noteCell) {
+      const measureIndex = parseInt(noteCell.getAttribute('data-measure') || '-1');
+      const noteIndex = parseInt(noteCell.getAttribute('data-note') || '-1');
+      
+      if (measureIndex >= 0 && noteIndex >= 0) {
+        const containerRect = measuresContainerRef.current?.getBoundingClientRect();
+        const noteRect = noteCell.getBoundingClientRect();
+        const scrollLeft = measuresContainerRef.current?.scrollLeft || 0;
+        const scrollTop = measuresContainerRef.current?.scrollTop || 0;
+        
+        if (containerRect) {
+          if (tabLayout === 'horizontal') {
+            const leftPosition = noteRect.left - containerRect.left + scrollLeft + (noteRect.width / 2);
+            setPlayheadLeft(leftPosition);
+          } else {
+            const measureElement = noteCell.closest('.measure');
+            if (measureElement) {
+              const measureRect = measureElement.getBoundingClientRect();
+              const topPosition = measureRect.top - containerRect.top + scrollTop;
+              const leftPosition = noteRect.left - containerRect.left + scrollLeft + (noteRect.width / 2);
+              setPlayheadTop(topPosition);
+              setPlayheadLeft(leftPosition);
+              setCurrentMeasureHeight(measureRect.height);
+            } else {
+              const topPosition = noteRect.top - containerRect.top + scrollTop;
+              const leftPosition = noteRect.left - containerRect.left + scrollLeft + (noteRect.width / 2);
+              setPlayheadTop(topPosition);
+              setPlayheadLeft(leftPosition);
+            }
+          }
+          
+          const event = new CustomEvent('seekToPosition', {
+            detail: { measureIndex, noteIndex }
+          });
+          window.dispatchEvent(event);
+        }
+      }
+    }
+  }, [tabLayout]);
+
+  const findNoteAtPosition = useCallback((clientX: number, clientY: number) => {
+    let element = document.elementFromPoint(clientX, clientY);
+    let noteCell = element?.closest('.note-cell');
+    
+    if (!noteCell && measuresContainerRef.current) {
+      const allNotes = measuresContainerRef.current.querySelectorAll('.note-cell');
+      let closestNote: Element | null = null;
+      let minDistance = Infinity;
+      
+      allNotes.forEach((note) => {
+        const rect = note.getBoundingClientRect();
+        const distance = Math.sqrt(
+          Math.pow(clientX - (rect.left + rect.width / 2), 2) +
+          Math.pow(clientY - (rect.top + rect.height / 2), 2)
+        );
+        
+        if (distance < minDistance) {
+          minDistance = distance;
+          closestNote = note;
+        }
+      });
+      
+      noteCell = closestNote;
+    }
+    
+    return noteCell;
+  }, []);
+
+  const handleGlobalMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDraggingRef.current || !measuresContainerRef.current) return;
+    
+    const container = measuresContainerRef.current;
+    const containerRect = container.getBoundingClientRect();
+    const mouseX = e.clientX;
+    const mouseY = e.clientY;
+    
+    lastMousePositionRef.current = { x: mouseX, y: mouseY };
+    
+    const SCROLL_THRESHOLD = 30;
+    const SCROLL_SPEED = 12;
+    
+    let shouldAutoScroll = false;
+    let scrollDeltaX = 0;
+    let scrollDeltaY = 0;
+    
+    if (tabLayout === 'horizontal') {
+      if (mouseX < containerRect.left + SCROLL_THRESHOLD && container.scrollLeft > 0) {
+        shouldAutoScroll = true;
+        scrollDeltaX = -SCROLL_SPEED;
+      } else if (mouseX > containerRect.right - SCROLL_THRESHOLD && 
+                 container.scrollLeft < container.scrollWidth - container.clientWidth) {
+        shouldAutoScroll = true;
+        scrollDeltaX = SCROLL_SPEED;
+      }
+    } else {
+      if (mouseY < containerRect.top + SCROLL_THRESHOLD && container.scrollTop > 0) {
+        shouldAutoScroll = true;
+        scrollDeltaY = -SCROLL_SPEED;
+      } else if (mouseY > containerRect.bottom - SCROLL_THRESHOLD && 
+                 container.scrollTop < container.scrollHeight - container.clientHeight) {
+        shouldAutoScroll = true;
+        scrollDeltaY = SCROLL_SPEED;
+      }
+    }
+    
+    if (autoScrollIntervalRef.current) {
+      clearInterval(autoScrollIntervalRef.current);
+      autoScrollIntervalRef.current = null;
+    }
+    
+    if (shouldAutoScroll) {
+      autoScrollIntervalRef.current = setInterval(() => {
+        if (!isDraggingRef.current || !measuresContainerRef.current) {
+          if (autoScrollIntervalRef.current) {
+            clearInterval(autoScrollIntervalRef.current);
+            autoScrollIntervalRef.current = null;
+          }
+          return;
+        }
+        
+        const currentContainer = measuresContainerRef.current;
+        if (tabLayout === 'horizontal') {
+          currentContainer.scrollLeft += scrollDeltaX;
+        } else {
+          currentContainer.scrollTop += scrollDeltaY;
+        }
+        
+        setTimeout(() => {
+          if (isDraggingRef.current) {
+            const noteCell = findNoteAtPosition(
+              lastMousePositionRef.current.x,
+              lastMousePositionRef.current.y
+            );
+            
+            if (noteCell) {
+              const measureIndex = parseInt(noteCell.getAttribute('data-measure') || '-1');
+              const noteIndex = parseInt(noteCell.getAttribute('data-note') || '-1');
+              
+              if (measureIndex >= 0 && noteIndex >= 0) {
+                const currentContainerRect = measuresContainerRef.current?.getBoundingClientRect();
+                const noteRect = noteCell.getBoundingClientRect();
+                const currentScrollLeft = measuresContainerRef.current?.scrollLeft || 0;
+                const currentScrollTop = measuresContainerRef.current?.scrollTop || 0;
+                
+                if (currentContainerRect) {
+                  const leftPosition = noteRect.left - currentContainerRect.left + currentScrollLeft + (noteRect.width / 2);
+                  
+                  if (tabLayout === 'horizontal') {
+                    setPlayheadLeft(leftPosition);
+                    setPlayheadTop(null);
+                  } else {
+                    const measureElement = noteCell.closest('.measure');
+                    if (measureElement) {
+                      const measureRect = measureElement.getBoundingClientRect();
+                      const topPosition = measureRect.top - currentContainerRect.top + currentScrollTop;
+                      setPlayheadTop(topPosition);
+                      setPlayheadLeft(leftPosition);
+                      setCurrentMeasureHeight(measureRect.height);
+                    }
+                  }
+                  
+                  const event = new CustomEvent('seekToPosition', {
+                    detail: { measureIndex, noteIndex }
+                  });
+                  window.dispatchEvent(event);
+                }
+              }
+            }
+          }
+        }, 10);
+      }, 16);
+    }
+    
+    const noteCell = findNoteAtPosition(mouseX, mouseY);
+    
+    if (noteCell) {
+      const measureIndex = parseInt(noteCell.getAttribute('data-measure') || '-1');
+      const noteIndex = parseInt(noteCell.getAttribute('data-note') || '-1');
+      
+      if (measureIndex >= 0 && noteIndex >= 0) {
+        const noteRect = noteCell.getBoundingClientRect();
+        const scrollLeft = container.scrollLeft;
+        const scrollTop = container.scrollTop;
+        
+        const leftPosition = noteRect.left - containerRect.left + scrollLeft + (noteRect.width / 2);
+        
+        if (tabLayout === 'horizontal') {
+          setPlayheadLeft(leftPosition);
+          setPlayheadTop(null);
+        } else {
+          const measureElement = noteCell.closest('.measure');
+          if (measureElement) {
+            const measureRect = measureElement.getBoundingClientRect();
+            const topPosition = measureRect.top - containerRect.top + scrollTop;
+            setPlayheadTop(topPosition);
+            setPlayheadLeft(leftPosition);
+            setCurrentMeasureHeight(measureRect.height);
+          } else {
+            const topPosition = noteRect.top - containerRect.top + scrollTop;
+            setPlayheadTop(topPosition);
+            setPlayheadLeft(leftPosition);
+          }
+        }
+        
+        const event = new CustomEvent('seekToPosition', {
+          detail: { measureIndex, noteIndex }
+        });
+        window.dispatchEvent(event);
+      }
+    }
+  }, [tabLayout, findNoteAtPosition]);
+
+  const handleGlobalMouseUp = useCallback(() => {
+    setIsDraggingPlayhead(false);
+    isDraggingRef.current = false;
+    document.body.style.cursor = '';
+    
+    if (autoScrollIntervalRef.current) {
+      clearInterval(autoScrollIntervalRef.current);
+      autoScrollIntervalRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     if (onStateChange && !initialTabData) {
@@ -991,21 +1080,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
   }, [handleKeyDown]);
 
   useEffect(() => {
-    if (isDraggingPlayhead) {
-      window.addEventListener('mousemove', handleGlobalMouseMove);
-      window.addEventListener('mouseup', handleGlobalMouseUp);
-    }
-    
-    return () => {
-      window.removeEventListener('mousemove', handleGlobalMouseMove);
-      window.removeEventListener('mouseup', handleGlobalMouseUp);
-      if (autoScrollIntervalRef.current) {
-        clearInterval(autoScrollIntervalRef.current);
-      }
-    };
-  }, [isDraggingPlayhead, handleGlobalMouseMove, handleGlobalMouseUp]);
-
-  useEffect(() => {
     if (!tabData.isOwn || !tabData.id || isSaving || isReadOnly) {
       return;
     }
@@ -1030,17 +1104,51 @@ const TabEditor: React.FC<TabEditorProps> = ({
     }
   }, [tabData.measures, tabData.notesPerMeasure]);
 
-  // ==================== РЕНДЕР ====================
-  
+  useEffect(() => {
+    if (isDraggingPlayhead) {
+      window.addEventListener('mousemove', handleGlobalMouseMove);
+      window.addEventListener('mouseup', handleGlobalMouseUp);
+    }
+    
+    return () => {
+      window.removeEventListener('mousemove', handleGlobalMouseMove);
+      window.removeEventListener('mouseup', handleGlobalMouseUp);
+      if (autoScrollIntervalRef.current) {
+        clearInterval(autoScrollIntervalRef.current);
+      }
+    };
+  }, [isDraggingPlayhead, handleGlobalMouseMove, handleGlobalMouseUp]);
+
+  useEffect(() => {
+    if (isReadOnly) return;
+
+    const handlePlayerKeys = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+      
+      if (e.code === 'Enter') {
+        e.preventDefault();
+        e.stopPropagation();
+        
+        if (tabPlayerRef.current) {
+          tabPlayerRef.current.toggle();
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handlePlayerKeys);
+    return () => window.removeEventListener('keydown', handlePlayerKeys);
+  }, [isReadOnly]);
+
   return (
     <div 
-  className={`tab-editor ${tabLayout}`}
-  data-grid-cols={
-    tabLayout === 'vertical' 
-      ? (notesPerMeasure === 4 ? 4 : notesPerMeasure === 8 ? 2 : 1)
-      : undefined
-  }
->
+      className={`tab-editor ${tabLayout}`}
+      data-grid-cols={
+        tabLayout === 'vertical' 
+          ? (notesPerMeasure === 4 ? 4 : notesPerMeasure === 8 ? 2 : 1)
+          : undefined
+      }
+    >
       {isReadOnly && (
         <div className="readonly-banner">
           ⚠️ Режим просмотра. Вы не можете изменять эту табулатуру.
@@ -1077,6 +1185,14 @@ const TabEditor: React.FC<TabEditorProps> = ({
           <button className="btn btn-secondary" title="Новая табулатура" onClick={onNewTabRequest}>
             <Plus size={16} />
           </button>
+          <button 
+            className="btn btn-secondary" 
+            title="Тюнер"
+            onClick={() => setShowTuner(true)}
+            type="button"
+          >
+            <Mic size={16} />
+          </button>
           {!isReadOnly && tabData.isOwn && (
             <button 
               className={`btn btn-publish ${isPublic ? 'published' : ''}`} 
@@ -1103,7 +1219,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
         </div>
       </div>
 
-      {/* Панель инструментов с плеером внутри */}
       <TabControls 
         selectedTool={selectedTool} 
         onToolSelect={setSelectedTool} 
@@ -1123,7 +1238,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
         }
       />
 
-      {/* Индикатор ввода лада */}
       {selectedTool === 'hammer' && pendingHammerInput && (
         <div className="fret-indicator hammer-input-indicator">
           Хаммер: {pendingHammerInput}
@@ -1143,47 +1257,46 @@ const TabEditor: React.FC<TabEditorProps> = ({
       )}
 
       <div className="canvas-toolbar">
-          <div className="canvas-toolbar-group">
-            <span className="canvas-toolbar-label">Масштаб</span>
-            <button className="canvas-toolbar-btn" onClick={handleZoomOut} title="Уменьшить" type="button">
-              <Minus size={16} />
-            </button>
-            <span className="canvas-zoom-value">{zoom}%</span>
-            <button className="canvas-toolbar-btn" onClick={handleZoomIn} title="Увеличить" type="button">
-              <Plus size={16} />
-            </button>
-          </div>
+        <div className="canvas-toolbar-group">
+          <span className="canvas-toolbar-label">Масштаб</span>
+          <button className="canvas-toolbar-btn" onClick={handleZoomOut} title="Уменьшить" type="button">
+            <Minus size={16} />
+          </button>
+          <span className="canvas-zoom-value">{zoom}%</span>
+          <button className="canvas-toolbar-btn" onClick={handleZoomIn} title="Увеличить" type="button">
+            <Plus size={16} />
+          </button>
+        </div>
 
-          <div className="canvas-toolbar-group">
-            <span className="canvas-toolbar-label">Вид</span>
-            <div className="canvas-layout-toggle">
-              <button 
-                className={`canvas-layout-btn ${tabLayout === 'horizontal' ? 'active' : ''}`}
-                onClick={() => setTabLayout('horizontal')}
-                title="Горизонтальный (в строку)"
-                type="button"
-              >
-                <Grid2X2 size={14} />
-              </button>
-              <button 
-                className={`canvas-layout-btn ${tabLayout === 'vertical' ? 'active' : ''}`}
-                onClick={() => setTabLayout('vertical')}
-                title="Вертикальный (в столбец)"
-                type="button"
-              >
-                <Grid3X3 size={14} />
-              </button>
-            </div>
-          </div>
-
-          <div className="canvas-toolbar-group">
-            <button className="canvas-add-measure-btn" onClick={addMeasure} disabled={isReadOnly} type="button">
-              <Plus size={14} /> Добавить такт
+        <div className="canvas-toolbar-group">
+          <span className="canvas-toolbar-label">Вид</span>
+          <div className="canvas-layout-toggle">
+            <button 
+              className={`canvas-layout-btn ${tabLayout === 'horizontal' ? 'active' : ''}`}
+              onClick={() => setTabLayout('horizontal')}
+              title="Горизонтальный (в строку)"
+              type="button"
+            >
+              <Grid2X2 size={14} />
+            </button>
+            <button 
+              className={`canvas-layout-btn ${tabLayout === 'vertical' ? 'active' : ''}`}
+              onClick={() => setTabLayout('vertical')}
+              title="Вертикальный (в столбец)"
+              type="button"
+            >
+              <Grid3X3 size={14} />
             </button>
           </div>
         </div>
 
-      {/* Холст с табулатурой */}
+        <div className="canvas-toolbar-group">
+          <button className="canvas-add-measure-btn" onClick={addMeasure} disabled={isReadOnly} type="button">
+            <Plus size={14} /> Добавить такт
+          </button>
+        </div>
+      </div>
+
       <div className="tab-canvas" ref={measuresContainerRef}>
         <div 
           className={`measures-container ${tabLayout}`}
@@ -1233,7 +1346,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
           ))}
         </div>
         
-        {/* Полоска воспроизведения */}
         <div 
           className="tab-playhead" 
           style={{ 
@@ -1280,7 +1392,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
         </div>
       </div>
       
-      {/* Нижняя панель со статусом */}
       <div className="editor-footer">
         <div className="status-bar">
           <span>Такт {cursor.measureIndex + 1}/{tabData.measures.length}</span>
@@ -1299,6 +1410,22 @@ const TabEditor: React.FC<TabEditorProps> = ({
           {isPublic && <span><Globe size={12} /> Опубликовано</span>}
         </div>
       </div>
+
+      {/* Модальное окно тюнера */}
+      {showTuner && (
+        <div className="modal-overlay" onClick={() => setShowTuner(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()}>
+            <GuitarTuner 
+              currentTuning={tabData.tuning}
+              tabData={tabData}
+              onTuningMismatch={handleTuningMismatch}
+            />
+            <button className="modal-close" onClick={() => setShowTuner(false)}>
+              Закрыть
+            </button>
+          </div>
+        </div>
+      )}
 
       <ExportModal 
         tabData={tabData} 

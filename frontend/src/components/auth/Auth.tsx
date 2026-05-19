@@ -39,7 +39,6 @@ interface AuthProps {
  * ```
  */
 const Auth: React.FC<AuthProps> = memo(({ onAuthSuccess }) => {
-  // Состояния формы
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -47,7 +46,6 @@ const Auth: React.FC<AuthProps> = memo(({ onAuthSuccess }) => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
-  // Refs для предотвращения повторных отправок и ограничения частоты запросов
   const isSubmittingRef = useRef(false);
   const lastSubmitTimeRef = useRef(0);
 
@@ -57,15 +55,12 @@ const Auth: React.FC<AuthProps> = memo(({ onAuthSuccess }) => {
    * @returns Сообщение об ошибке или null, если всё валидно
    */
   const validateForm = useCallback((): string | null => {
-    // Проверка email
     if (!email.trim()) return 'Введите email';
     if (!email.includes('@')) return 'Введите корректный email';
     
-    // Проверка пароля
     if (!password) return 'Введите пароль';
     if (password.length < 6) return 'Пароль должен содержать минимум 6 символов';
     
-    // Проверка имени пользователя (только при регистрации)
     if (!isLogin && !username.trim()) return 'Введите имя пользователя';
     if (!isLogin && username.length < 3) {
       return 'Имя пользователя должно содержать минимум 3 символа';
@@ -82,33 +77,28 @@ const Auth: React.FC<AuthProps> = memo(({ onAuthSuccess }) => {
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Предотвращение повторных отправок
     if (isSubmittingRef.current) {
       return;
     }
     
-    // Ограничение частоты запросов (не чаще 1 раза в секунду)
     const now = Date.now();
     if (now - lastSubmitTimeRef.current < 1000) {
       setError('Слишком много попыток. Подождите немного.');
       return;
     }
     
-    // Валидация формы
     const validationError = validateForm();
     if (validationError) { 
       setError(validationError); 
       return; 
     }
     
-    // Сброс ошибки и установка состояния загрузки
     setError(''); 
     setIsLoading(true);
     isSubmittingRef.current = true;
     lastSubmitTimeRef.current = now;
     
     try {
-      // Выполнение входа или регистрации
       const result = isLogin 
         ? await login(email, password) 
         : await register(username, email, password);
@@ -123,7 +113,6 @@ const Auth: React.FC<AuthProps> = memo(({ onAuthSuccess }) => {
       setError('Произошла ошибка. Попробуйте позже.');
     } finally { 
       setIsLoading(false);
-      // Сброс флага через небольшую задержку
       setTimeout(() => {
         isSubmittingRef.current = false;
       }, 500);
@@ -145,7 +134,6 @@ const Auth: React.FC<AuthProps> = memo(({ onAuthSuccess }) => {
   return (
     <div className="auth-overlay">
       <div className="auth-modal">
-        {/* Заголовок */}
         <div className="auth-header">
           <div className="auth-icon" aria-hidden="true"><img 
               src={LOGO_PATH}
@@ -160,9 +148,7 @@ const Auth: React.FC<AuthProps> = memo(({ onAuthSuccess }) => {
           </p>
         </div>
         
-        {/* Форма */}
         <form onSubmit={handleSubmit} className="auth-form" noValidate>
-          {/* Поле имени пользователя (только при регистрации) */}
           {!isLogin && (
             <div className="form-group">
               <label htmlFor="username">Имя пользователя</label>
@@ -179,7 +165,6 @@ const Auth: React.FC<AuthProps> = memo(({ onAuthSuccess }) => {
             </div>
           )}
 
-          {/* Поле email */}
           <div className="form-group">
             <label htmlFor="email">Email</label>
             <input
@@ -195,7 +180,6 @@ const Auth: React.FC<AuthProps> = memo(({ onAuthSuccess }) => {
             />
           </div>
 
-          {/* Поле пароля */}
           <div className="form-group">
             <label htmlFor="password">Пароль</label>
             <input
@@ -214,7 +198,6 @@ const Auth: React.FC<AuthProps> = memo(({ onAuthSuccess }) => {
             )}
           </div>
 
-          {/* Сообщение об ошибке */}
           {error && (
             <div className="auth-error" role="alert">
               <span className="error-icon" aria-hidden="true">⚠️</span>
@@ -222,7 +205,6 @@ const Auth: React.FC<AuthProps> = memo(({ onAuthSuccess }) => {
             </div>
           )}
 
-          {/* Кнопка отправки */}
           <button 
             type="submit" 
             className="auth-submit-btn"
@@ -233,7 +215,6 @@ const Auth: React.FC<AuthProps> = memo(({ onAuthSuccess }) => {
           </button>
         </form>
 
-        {/* Футер с переключением режима */}
         <div className="auth-footer">
           <button 
             className="auth-switch-btn"

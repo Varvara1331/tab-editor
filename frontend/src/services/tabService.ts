@@ -71,7 +71,8 @@ const tabDataToRequest = (tabData: TabData): any => ({
 });
 
 /**
- * Сервис для работы с табулатурами пользователя
+ * Сервис для работы с табулатурами пользователя.
+ * Расширяет BaseService и добавляет методы для работы с избранным.
  */
 class TabService extends BaseService<TabResponse> {
   constructor() {

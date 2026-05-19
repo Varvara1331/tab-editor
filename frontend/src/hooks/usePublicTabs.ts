@@ -35,11 +35,13 @@ interface UsePublicTabsReturn {
 /**
  * Хук для работы с публичными табулатурами.
  * Предоставляет методы для загрузки, поиска и управления избранным.
+ * Автоматически загружает публичные табулатуры при монтировании и изменении пользователя.
+ * Поддерживает дебаунсированный поиск (500 мс).
  * 
  * @returns Объект с состоянием и методами управления
  * 
  * @example
- * ```typescript
+ * ```tsx
  * function PublicTabsList() {
  *   const { tabs, isLoading, toggleFavorite, filterTabs } = usePublicTabs();
  *   
@@ -59,16 +61,20 @@ interface UsePublicTabsReturn {
 export const usePublicTabs = (): UsePublicTabsReturn => {
   const { currentUser } = useAuth();
   
+  /** Список публичных табулатур */
   const [tabs, setTabs] = useState<PublicTab[]>([]);
+  /** Флаг загрузки */
   const [isLoading, setIsLoading] = useState(true);
+  /** ID табулатуры, над которой выполняется операция */
   const [processingId, setProcessingId] = useState<number | null>(null);
+  /** Статус избранного для каждой табулатуры */
   const [favoritesStatus, setFavoritesStatus] = useState<Map<number, boolean>>(new Map());
+  /** Текущий поисковый запрос */
   const [searchQuery, setSearchQuery] = useState('');
   
   const isMountedRef = useRef(true);
   const loadingRef = useRef(false);
 
-  // Отслеживание монтирования компонента
   useEffect(() => {
     isMountedRef.current = true;
     return () => { isMountedRef.current = false; };
@@ -76,13 +82,15 @@ export const usePublicTabs = (): UsePublicTabsReturn => {
 
   /**
    * Загрузка статуса избранного для списка табулатур
+   * 
+   * @param tabsList - Список табулатур
+   * @returns Map с ID табулатур и их статусом в избранном
    */
   const loadFavoritesStatus = useCallback(async (tabsList: PublicTab[]) => {
     if (!currentUser) return new Map<number, boolean>();
     
     const statusMap = new Map<number, boolean>();
     for (const tab of tabsList) {
-      // Только чужие табулатуры можно добавлять в избранное
       if (tab.userId !== currentUser.id) {
         const inFavorites = await checkInFavorites(tab.id);
         if (isMountedRef.current) statusMap.set(tab.id, inFavorites);
@@ -94,10 +102,11 @@ export const usePublicTabs = (): UsePublicTabsReturn => {
   }, [currentUser]);
 
   /**
-   * Загрузка публичных табулатур
+   * Загрузка публичных табулатур из API
+   * 
+   * @param search - Опциональный поисковый запрос
    */
   const loadTabs = useCallback(async (search?: string) => {
-    // Предотвращение повторных загрузок
     if (loadingRef.current) return;
     if (!currentUser) return;
     
@@ -131,14 +140,12 @@ export const usePublicTabs = (): UsePublicTabsReturn => {
     }
   }, [currentUser, loadFavoritesStatus]);
 
-  // Загрузка при монтировании и изменении пользователя
   useEffect(() => {
     if (currentUser) {
       loadTabs(searchQuery || undefined);
     }
-  }, [currentUser]); // Только при изменении пользователя
+  }, [currentUser]);
 
-  // Дебаунсированная загрузка при изменении поиска
   useEffect(() => {
     if (currentUser) {
       const timer = setTimeout(() => {
@@ -150,14 +157,14 @@ export const usePublicTabs = (): UsePublicTabsReturn => {
 
   /**
    * Фильтрация табулатур по поисковому запросу
+   * 
+   * @param search - Поисковый запрос
    */
   const filterTabs = useCallback((search: string) => {
     setSearchQuery(search);
   }, []);
 
-  /**
-   * Принудительное обновление списка
-   */
+  /** Принудительное обновление списка */
   const refresh = useCallback(() => {
     if (currentUser) {
       loadTabs(searchQuery || undefined);
@@ -167,7 +174,7 @@ export const usePublicTabs = (): UsePublicTabsReturn => {
   /**
    * Переключение статуса избранного для табулатуры
    * 
-   * @param tab - Табулатура
+   * @param tab - Табулатура для добавления/удаления из избранного
    * @returns true при успешном переключении
    */
   const toggleFavorite = useCallback(async (tab: PublicTab): Promise<boolean> => {

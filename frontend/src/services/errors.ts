@@ -28,7 +28,8 @@ export enum ApiErrorType {
 }
 
 /**
- * Кастомный класс для ошибок API
+ * Кастомный класс для ошибок API.
+ * Расширяет стандартный Error, добавляя тип ошибки, HTTP статус код и исходную ошибку.
  * 
  * @example
  * ```typescript
@@ -58,7 +59,8 @@ export class ApiError extends Error {
 }
 
 /**
- * Нормализация ошибки в объект ApiError
+ * Нормализация ошибки в объект ApiError.
+ * Преобразует любую ошибку (Error, строку, неизвестный тип) в стандартный ApiError.
  * 
  * @param error - Исходная ошибка
  * @param defaultMessage - Сообщение по умолчанию
@@ -86,7 +88,7 @@ export const normalizeError = (error: unknown, defaultMessage: string): ApiError
 };
 
 /**
- * Извлечение сообщения об ошибке из различных форматов
+ * Извлечение сообщения об ошибке из различных форматов.
  * 
  * @param error - Исходная ошибка
  * @param fallback - Сообщение по умолчанию

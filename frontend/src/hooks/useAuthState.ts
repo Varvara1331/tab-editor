@@ -24,21 +24,35 @@ interface UseAuthStateReturn {
 }
 
 /**
- * Хук для управления состоянием аутентификации
+ * Хук для управления состоянием аутентификации.
+ * Предоставляет состояние входа, данные пользователя и обработчики для событий аутентификации.
+ * Автоматически проверяет статус при монтировании компонента.
  * 
  * @returns Объект с состоянием аутентификации и методами управления
  * 
  * @example
- * ```typescript
+ * ```tsx
  * const { isLoggedIn, currentUser, isLoading, handleAuthSuccess, handleLogout } = useAuthState();
+ * 
+ * if (isLoading) return <LoadingSpinner />;
+ * if (!isLoggedIn) return <Auth onAuthSuccess={handleAuthSuccess} />;
+ * 
+ * return (
+ *   <div>
+ *     <p>Добро пожаловать, {currentUser?.username}!</p>
+ *     <button onClick={handleLogout}>Выйти</button>
+ *   </div>
+ * );
  * ```
  */
 export const useAuthState = (): UseAuthStateReturn => {
+  /** Флаг авторизации пользователя */
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  /** Текущий пользователь */
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  /** Флаг загрузки состояния */
   const [isLoading, setIsLoading] = useState(true);
 
-  // Проверка аутентификации при монтировании компонента
   useEffect(() => {
     const checkAuth = async () => {
       const authenticated = isAuthenticated();
@@ -52,7 +66,8 @@ export const useAuthState = (): UseAuthStateReturn => {
   }, []);
 
   /**
-   * Обработчик успешной аутентификации
+   * Обработчик успешной аутентификации.
+   * Очищает состояние редактора и обновляет данные пользователя.
    */
   const handleAuthSuccess = useCallback(() => {
     clearEditorState();
@@ -61,7 +76,8 @@ export const useAuthState = (): UseAuthStateReturn => {
   }, []);
 
   /**
-   * Обработчик выхода из системы
+   * Обработчик выхода из системы.
+   * Запрашивает подтверждение у пользователя и выполняет выход.
    */
   const handleLogout = useCallback(() => {
     if (window.confirm('Вы уверены, что хотите выйти?')) {

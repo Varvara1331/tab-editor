@@ -35,7 +35,11 @@ const getDisplayTimeSignature = (notesPerMeasure: number): string => {
 };
 
 /**
- * Получение целевого лада для хаммера (поддержка обоих форматов: число или объект)
+ * Получение целевого лада для хаммера
+ * 
+ * @param note - Нота
+ * @returns Целевой лад или null
+ * @private
  */
 const getHammerTarget = (note: Note): number | null => {
   if (typeof note.hammer === 'number') return note.hammer;
@@ -46,7 +50,11 @@ const getHammerTarget = (note: Note): number | null => {
 };
 
 /**
- * Получение целевого лада для пулла (поддержка обоих форматов: число или объект)
+ * Получение целевого лада для пулла
+ * 
+ * @param note - Нота
+ * @returns Целевой лад или null
+ * @private
  */
 const getPullTarget = (note: Note): number | null => {
   if (typeof note.pull === 'number') return note.pull;
@@ -57,7 +65,9 @@ const getPullTarget = (note: Note): number | null => {
 };
 
 /**
- * Экспорт табулатуры в формат MusicXML
+ * Экспорт табулатуры в формат MusicXML.
+ * Генерирует XML-документ, совместимый со стандартом MusicXML 3.1.
+ * Поддерживает нотацию TAB, строй гитары, бенды, хаммеры, пуллы, слайды и вибрато.
  * 
  * @param tabData - Данные табулатуры
  * @returns XML строка в формате MusicXML
@@ -96,11 +106,9 @@ export const exportToMusicXML = (tabData: TabData): string => {
   const NOTE_TYPE = notesPerMeasure === 4 ? 'quarter' : notesPerMeasure === 8 ? 'eighth' : '16th';
   const numStrings = tabData.tuning.length;
   
-  // Счетчики для лиг (slur) и слайдов
   let slurCounter = 1;
   let slideCounter = 1;
   
-  // Хранилище для отслеживания активных эффектов между нотами
   const activeSlurs: Map<string, { number: number; targetNote: { measureIndex: number; stringIndex: number; position: number } }> = new Map();
   const activeSlides: Map<string, { number: number; targetNote: { measureIndex: number; stringIndex: number; position: number } }> = new Map();
   
@@ -156,7 +164,6 @@ export const exportToMusicXML = (tabData: TabData): string => {
         <staff-details>
           <staff-lines>${numStrings}</staff-lines>`;
     
-    // Настройка струн
     for (let i = 0; i < numStrings; i++) {
       const line = numStrings - i;
       const tuningNote = tabData.tuning[i];
@@ -192,9 +199,7 @@ export const exportToMusicXML = (tabData: TabData): string => {
         </staff-details>
       </attributes>`;
     
-    // Генерируем каждую позицию в такте
     for (let position = 0; position < measureSize; position++) {
-      // Собираем ВСЕ ноты на этой конкретной позиции со всех струн
       const notesAtThisPosition: Array<{
         stringIndex: number;
         fret: number;
@@ -228,7 +233,6 @@ export const exportToMusicXML = (tabData: TabData): string => {
       }
       
       if (notesAtThisPosition.length === 0) {
-        // Пауза
         xml += `
         <note>
           <rest/>
@@ -237,16 +241,13 @@ export const exportToMusicXML = (tabData: TabData): string => {
           <type>${NOTE_TYPE}</type>
         </note>`;
       } else {
-        // Сортируем ноты аккорда по номеру струны (от нижней к верхней)
         notesAtThisPosition.sort((a, b) => a.stringIndex - b.stringIndex);
         
-        // Генерируем все ноты аккорда
         for (let i = 0; i < notesAtThisPosition.length; i++) {
           const note = notesAtThisPosition[i];
           const effect = note.effects;
           const noteKey = `${measureIndex}-${note.stringIndex}-${position}`;
           
-          // Проверяем, является ли эта нота целью активного хаммера/пулла
           let isHammerTarget = false;
           let activeSlur = null;
           for (const [key, value] of activeSlurs.entries()) {
@@ -259,7 +260,6 @@ export const exportToMusicXML = (tabData: TabData): string => {
             }
           }
           
-          // Проверяем, является ли эта нота целью активного слайда
           let isSlideTarget = false;
           let activeSlide = null;
           for (const [key, value] of activeSlides.entries()) {
@@ -272,17 +272,14 @@ export const exportToMusicXML = (tabData: TabData): string => {
             }
           }
           
-          // Открываем тег note
           xml += `
         <note>`;
           
-          // Добавляем тег chord для всех нот, кроме первой
           if (i > 0) {
             xml += `
           <chord/>`;
           }
           
-          // Добавляем pitch
           xml += `
           <pitch>
             <step>${note.noteName.step}</step>
@@ -291,19 +288,12 @@ export const exportToMusicXML = (tabData: TabData): string => {
           </pitch>
           <duration>${DURATION}</duration>
           <voice>1</voice>
-          <type>${NOTE_TYPE}</type>`;
-          
-          // Добавляем notations
-          xml += `
-          <notations>`;
-          
-          // Technical блок
-          xml += `
+          <type>${NOTE_TYPE}</type>
+          <notations>
             <technical>
               <string>${note.stringIndex}</string>
               <fret>${note.fret}</fret>`;
           
-          // Бенд
           if (effect.bend) {
             xml += `
               <bend>
@@ -311,7 +301,6 @@ export const exportToMusicXML = (tabData: TabData): string => {
               </bend>`;
           }
           
-          // Хаммер или Пулл (начало)
           const hammerTarget = getHammerTarget(effect);
           const pullTarget = getPullTarget(effect);
           
@@ -321,7 +310,6 @@ export const exportToMusicXML = (tabData: TabData): string => {
               number: slurNumber,
               targetNote: { measureIndex, stringIndex: note.stringIndex, position: position + 1 }
             });
-            // Добавляем целевой лад в текст элемента
             xml += `
               <hammer-on type="start" number="${slurNumber}">${hammerTarget}</hammer-on>`;
           } else if (pullTarget !== null && !isHammerTarget) {
@@ -330,19 +318,16 @@ export const exportToMusicXML = (tabData: TabData): string => {
               number: slurNumber,
               targetNote: { measureIndex, stringIndex: note.stringIndex, position: position + 1 }
             });
-            // Добавляем целевой лад в текст элемента
             xml += `
               <pull-off type="start" number="${slurNumber}">${pullTarget}</pull-off>`;
           }
           
-          // Завершение хаммера или пулла
           if (isHammerTarget && activeSlur) {
             xml += `
               <hammer-on type="stop" number="${activeSlur.number}"/>`;
             activeSlurs.delete(noteKey);
           }
           
-          // Слайд (начало)
           if (effect.slide === 'up' || effect.slide === 'down') {
             const slideNumber = slideCounter++;
             activeSlides.set(noteKey, {
@@ -353,7 +338,6 @@ export const exportToMusicXML = (tabData: TabData): string => {
               <slide line-type="solid" type="start" number="${slideNumber}"/>`;
           }
           
-          // Завершение слайда
           if (isSlideTarget && activeSlide) {
             xml += `
               <slide line-type="solid" type="stop" number="${activeSlide.number}"/>`;
@@ -363,7 +347,6 @@ export const exportToMusicXML = (tabData: TabData): string => {
           xml += `
             </technical>`;
           
-          // Slur (лига) для хаммера/пулла
           if ((hammerTarget !== null || pullTarget !== null) && !isHammerTarget) {
             const slurNumber = slurCounter - 1;
             xml += `
@@ -373,7 +356,6 @@ export const exportToMusicXML = (tabData: TabData): string => {
             <slur type="stop" number="${activeSlur.number}"/>`;
           }
           
-          // Slur для слайда
           if ((effect.slide === 'up' || effect.slide === 'down') && !isSlideTarget) {
             const slideSlurNumber = slideCounter - 1;
             xml += `
@@ -383,7 +365,6 @@ export const exportToMusicXML = (tabData: TabData): string => {
             <slur type="stop" number="${activeSlide.number}"/>`;
           }
           
-          // Вибрато
           if (effect.vibrato) {
             xml += `
             <ornaments>
@@ -410,7 +391,9 @@ export const exportToMusicXML = (tabData: TabData): string => {
 };
 
 /**
- * Экспорт табулатуры в PDF (формат: 6 линий-струн с номерами ладов)
+ * Экспорт табулатуры в PDF.
+ * Генерирует PDF-документ с нотацией табулатуры в виде стандартных шестилинейных табов.
+ * Поддерживает многостраничный вывод, заголовок, информацию о табулатуре и номера страниц.
  * 
  * @param tabData - Данные табулатуры
  * @returns Promise с Blob PDF файла
@@ -425,58 +408,46 @@ export const exportToPDF = async (tabData: TabData): Promise<Blob> => {
   const firstMeasureSize = tabData.measures[0] ? getNotesPerMeasure(tabData.measures[0]) : 16;
   const displayTimeSignature = getDisplayTimeSignature(firstMeasureSize);
   
-  // Расстояние между струнами
   const STRING_SPACING = 41;
   const STAFF_HEIGHT = (numStrings - 1) * STRING_SPACING;
   const STAFF_TOP_OFFSET = 22;
   const POSITION_WIDTH = 79;
   
-  // Определяем количество тактов в строке в зависимости от размера
-  let MEASURES_PER_ROW = 4; // по умолчанию для 4/4
+  let MEASURES_PER_ROW = 4;
   if (firstMeasureSize === 8) {
-    MEASURES_PER_ROW = 2; // для 8/8 - 2 такта
+    MEASURES_PER_ROW = 2;
   } else if (firstMeasureSize === 16) {
-    MEASURES_PER_ROW = 1; // для 16/16 - 1 такт
+    MEASURES_PER_ROW = 1;
   }
   
-  // Высота одной строки табулатуры
   const ROW_HEIGHT = STAFF_HEIGHT + STAFF_TOP_OFFSET + 50;
-  
-  // Высота заголовка и нижнего колонтитула
   const HEADER_HEIGHT = 230;
   const FOOTER_HEIGHT = 70;
-  
-  // Доступная высота для строк табулатуры на странице A4
   const PAGE_HEIGHT_PX = 1123;
   const CONTENT_HEIGHT = PAGE_HEIGHT_PX - HEADER_HEIGHT - FOOTER_HEIGHT;
   const MAX_ROWS_PER_PAGE = 5;
   
-  // Группируем такты в строки по фиксированному количеству тактов
   const rows: typeof tabData.measures[] = [];
   for (let i = 0; i < tabData.measures.length; i += MEASURES_PER_ROW) {
     rows.push(tabData.measures.slice(i, i + MEASURES_PER_ROW));
   }
   
-  // Разбиваем строки на страницы
   const pages: typeof rows[] = [];
   for (let i = 0; i < rows.length; i += MAX_ROWS_PER_PAGE) {
     pages.push(rows.slice(i, i + MAX_ROWS_PER_PAGE));
   }
   
-  // Создаем PDF
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',
     format: 'a4'
   });
   
-  // Обрабатываем каждую страницу отдельно
   for (let pageIdx = 0; pageIdx < pages.length; pageIdx++) {
     const pageRows = pages[pageIdx];
     const pageNumber = pageIdx + 1;
     const totalPages = pages.length;
     
-    // Создаем временный контейнер для страницы
     const pageContainer = document.createElement('div');
     pageContainer.style.cssText = `
       width: 1300px;
@@ -506,15 +477,12 @@ export const exportToPDF = async (tabData: TabData): Promise<Blob> => {
           <hr style="border-color:#000000;margin-bottom:30px;width:100%;"/>
         </div>`;
     
-    // Рисуем строки табулатуры для этой страницы
     pageRows.forEach((row, rowIndex) => {
       const actualWidth = row.reduce((sum, measure) => sum + (getNotesPerMeasure(measure) * POSITION_WIDTH), 0);
       
-      // Сдвигаем все строки левее (уменьшаем margin-left)
       pageHtml += `<div style="margin-bottom:22px;margin-left:-50px;">
         <div style="position:relative;">`;
       
-      // Номера тактов (тоже сдвигаем левее)
       pageHtml += `<div style="display:flex;margin-left:115px;margin-bottom:12px;">`;
       row.forEach((measure) => {
         const notesPerMeasure = getNotesPerMeasure(measure);
@@ -526,21 +494,17 @@ export const exportToPDF = async (tabData: TabData): Promise<Blob> => {
       });
       pageHtml += `</div>`;
       
-      // Нотный стан
       pageHtml += `<div style="position:relative;margin-left:115px;width:${actualWidth}px;">`;
       
-      // Линии струн
       for (let s = 0; s < numStrings; s++) {
         const lineTop = s * STRING_SPACING + STAFF_TOP_OFFSET;
         pageHtml += `<div style="position:absolute;left:0;right:0;top:${lineTop}px;height:2.5px;background:#000000;"></div>`;
       }
       
-      // Вертикальная черта в начале строки (левая граница)
       const startLineTop = STAFF_TOP_OFFSET - 8;
       const lineHeight = STAFF_HEIGHT + 16;
       pageHtml += `<div style="position:absolute;left:-8px;top:${startLineTop}px;width:3px;height:${lineHeight}px;background:#000000;"></div>`;
       
-      // Названия струн слева (сдвигаем еще левее)
       pageHtml += `<div style="position:absolute;left:-115px;top:0;width:105px;">`;
       for (let s = 0; s < numStrings; s++) {
         const lineY = s * STRING_SPACING + STAFF_TOP_OFFSET - 15;
@@ -550,21 +514,18 @@ export const exportToPDF = async (tabData: TabData): Promise<Blob> => {
       }
       pageHtml += `</div>`;
       
-      // Ноты
       let measureStartPosition = 0;
       
       row.forEach((measure, measureIdx) => {
         const notesPerMeasure = getNotesPerMeasure(measure);
         const measureStartX = measureStartPosition * POSITION_WIDTH;
         
-        // Вертикальная линия такта (между тактами)
         if (measureIdx > 0) {
           const lineTop = STAFF_TOP_OFFSET - 8;
           const lineHeight = STAFF_HEIGHT + 16;
           pageHtml += `<div style="position:absolute;left:${measureStartX}px;top:${lineTop}px;width:2.5px;height:${lineHeight}px;background:#000000;"></div>`;
         }
         
-        // Позиции
         for (let pos = 0; pos < notesPerMeasure; pos++) {
           const cellLeft = (measureStartPosition + pos) * POSITION_WIDTH;
           
@@ -573,7 +534,6 @@ export const exportToPDF = async (tabData: TabData): Promise<Blob> => {
             if (pos < stringNotes.length) {
               const note = stringNotes[pos];
               
-              // Проверяем, является ли эта нота целью слайда с предыдущей позиции
               let isSlideTarget = false;
               let slideFromFret: number | null = null;
               let slideDirection: string | null = null;
@@ -590,7 +550,6 @@ export const exportToPDF = async (tabData: TabData): Promise<Blob> => {
                 }
               }
               
-              // Если нота является целью слайда, пропускаем её отрисовку
               if (isSlideTarget) {
                 continue;
               }
@@ -601,11 +560,9 @@ export const exportToPDF = async (tabData: TabData): Promise<Blob> => {
                 let symbol = note.fret.toString();
                 let effectHtml = '';
                 
-                // Обработка разных типов эффектов
                 if (note.bend) {
                   effectHtml = `<span style="font-size:32px;font-weight:bold;margin-left:4px;">⤴</span>`;
                 } else if (note.slide === 'up') {
-                  // Для слайда вверх: проверяем следующую ноту на этой же струне
                   let nextFret: number | null = null;
                   
                   if (pos + 1 < notesPerMeasure) {
@@ -616,13 +573,11 @@ export const exportToPDF = async (tabData: TabData): Promise<Blob> => {
                   }
                   
                   if (nextFret !== null) {
-                    // Формат: текущий лад / следующий лад
                     effectHtml = `<span style="font-size:28px;font-weight:bold;margin-left:4px;margin-right:4px;">/</span><span style="font-size:32px;font-weight:bold;">${nextFret}</span>`;
                   } else {
                     effectHtml = `<span style="font-size:32px;font-weight:bold;margin-left:4px;">/</span>`;
                   }
                 } else if (note.slide === 'down') {
-                  // Для слайда вниз: проверяем следующую ноту на этой же струне
                   let nextFret: number | null = null;
                   
                   if (pos + 1 < notesPerMeasure) {
@@ -633,7 +588,6 @@ export const exportToPDF = async (tabData: TabData): Promise<Blob> => {
                   }
                   
                   if (nextFret !== null) {
-                    // Формат: текущий лад \ следующий лад
                     effectHtml = `<span style="font-size:28px;font-weight:bold;margin-left:4px;margin-right:4px;">\\</span><span style="font-size:32px;font-weight:bold;">${nextFret}</span>`;
                   } else {
                     effectHtml = `<span style="font-size:32px;font-weight:bold;margin-left:4px;">\\</span>`;
@@ -650,7 +604,6 @@ export const exportToPDF = async (tabData: TabData): Promise<Blob> => {
                 
                 const textX = cellLeft + (POSITION_WIDTH / 2);
                 
-                // Основной номер лада
                 pageHtml += `<div style="position:absolute;left:${textX}px;top:${lineY}px;transform:translateX(-50%);text-align:center;font-family:monospace;font-size:32px;font-weight:bold;background:#ffffff;color:#000000;z-index:10;white-space:nowrap;">
                   ${escapeHtml(symbol)}${effectHtml}
                 </div>`;
@@ -659,7 +612,6 @@ export const exportToPDF = async (tabData: TabData): Promise<Blob> => {
           }
         }
         
-        // ВЕРТИКАЛЬНАЯ ЧЕРТА В КОНЦЕ КАЖДОГО ТАКТА (в том числе последнего в строке)
         const measureEndX = (measureStartPosition + notesPerMeasure) * POSITION_WIDTH;
         const lineTop = STAFF_TOP_OFFSET - 8;
         const lineHeightTotal = STAFF_HEIGHT + 16;
@@ -673,7 +625,6 @@ export const exportToPDF = async (tabData: TabData): Promise<Blob> => {
       pageHtml += `</div></div>`;
     });
     
-    // Нижний колонтитул - теперь полоса на всю ширину (100%)
     pageHtml += `
       <div style="text-align:center;margin-top:30px;">
         <hr style="border-color:#000000;width:100%;margin:10px auto;"/>
@@ -686,7 +637,6 @@ export const exportToPDF = async (tabData: TabData): Promise<Blob> => {
     pageContainer.innerHTML = pageHtml;
     document.body.appendChild(pageContainer);
     
-    // Конвертируем страницу в изображение
     const canvas = await html2canvas(pageContainer, {
       logging: false,
       useCORS: false,
@@ -694,7 +644,6 @@ export const exportToPDF = async (tabData: TabData): Promise<Blob> => {
       backgroundColor: '#ffffff'
     });
     
-    // Добавляем страницу в PDF
     if (pageIdx > 0) {
       pdf.addPage();
     }
@@ -706,17 +655,18 @@ export const exportToPDF = async (tabData: TabData): Promise<Blob> => {
     
     pdf.addImage(imgData, 'PNG', xOffset, 10, imgWidth, imgHeight);
     
-    // Удаляем временный контейнер
     document.body.removeChild(pageContainer);
   }
   
   return pdf.output('blob');
 };
+
 /**
- * Экспорт табулатуры в текстовый формат
+ * Экспорт табулатуры в текстовый формат.
+ * Генерирует ASCII-представление табулатуры с номерами ладов и эффектами.
  * 
  * @param tabData - Данные табулатуры
- * @returns Текстовая строка с табулатурой
+ * @returns Текстовая строка с табулатурой в ASCII-формате
  */
 export const exportToText = (tabData: TabData): string => {
   const { title, artist, tuning, measures } = tabData;
@@ -773,7 +723,8 @@ export const exportToText = (tabData: TabData): string => {
 };
 
 /**
- * Экспорт табулатуры в JSON формат
+ * Экспорт табулатуры в JSON формат.
+ * Сохраняет полные данные табулатуры в структурированном JSON-формате для последующего импорта.
  * 
  * @param tabData - Данные табулатуры
  * @returns Blob с JSON данными
@@ -790,7 +741,8 @@ export const exportToJSON = (tabData: TabData): Blob => {
 };
 
 /**
- * Экспорт табулатуры в Guitar Pro JSON формат
+ * Экспорт табулатуры в Guitar Pro JSON формат.
+ * Генерирует JSON, совместимый с форматом Guitar Pro, для совместимости с другими приложениями.
  * 
  * @param tabData - Данные табулатуры
  * @returns Blob с GP JSON данными
@@ -817,7 +769,6 @@ export const exportToGP = (tabData: TabData): Blob => {
           
           const gpNote: any = { fret: note.fret };
           
-          // Определяем эффект в порядке приоритета
           if (note.bend) {
             gpNote.effect = "bend";
           } else if (note.slide === 'up') {

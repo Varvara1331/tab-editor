@@ -17,7 +17,8 @@ export interface Identifiable {
 }
 
 /**
- * Базовый сервис для работы с API ресурсами
+ * Базовый сервис для работы с API ресурсами.
+ * Предоставляет стандартные CRUD методы: getAll, getById, create, update, delete.
  * 
  * @template T - Тип данных, должен иметь поле id
  * 
@@ -59,7 +60,7 @@ export class BaseService<T extends Identifiable> {
    * Получение записи по ID
    * 
    * @param id - ID записи
-   * @returns Запись или null при ошибке
+   * @returns Запись или null при ошибке или если не найдена
    */
   async getById(id: number): Promise<T | null> {
     if (!this.isValidId(id)) return null;
@@ -93,7 +94,7 @@ export class BaseService<T extends Identifiable> {
    * Обновление существующей записи
    * 
    * @param id - ID записи
-   * @param data - Данные для обновления
+   * @param data - Данные для обновления (частичные)
    * @returns Обновлённая запись или null при ошибке
    */
   async update(id: number, data: Partial<T>): Promise<T | null> {
@@ -130,7 +131,7 @@ export class BaseService<T extends Identifiable> {
    * Проверка валидности ID
    * 
    * @param id - Проверяемый ID
-   * @returns true если ID валиден
+   * @returns true если ID является положительным числом
    * @protected
    */
   protected isValidId(id: number): boolean {

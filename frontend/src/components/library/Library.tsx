@@ -32,7 +32,7 @@ import './Library.css';
 interface LibraryProps {
   /** Функция выбора табулатуры для редактирования */
   onSelectTab: (tabData: TabData) => void;
-  /** Триггер обновления списка (при изменении) */
+  /** Триггер обновления списка при изменении данных */
   refreshTrigger?: boolean;
   /** Функция обратного вызова при изменении избранного */
   onFavoritesChanged?: () => void;
@@ -41,7 +41,26 @@ interface LibraryProps {
 }
 
 /**
- * Компонент библиотеки пользователя
+ * Компонент библиотеки пользователя.
+ * Управляет отображением и действиями с табулатурами пользователя (свои и избранное).
+ * Предоставляет поиск, импорт/экспорт, удаление и навигацию к редактору.
+ * 
+ * @component
+ * @param props - Свойства компонента
+ * @param props.onSelectTab - Функция выбора табулатуры для редактирования
+ * @param props.refreshTrigger - Триггер обновления списка
+ * @param props.onFavoritesChanged - Колбэк при изменении избранного
+ * @param props.onTabDeleted - Колбэк при удалении табулатуры
+ * @returns Отрисованный компонент библиотеки
+ * 
+ * @example
+ * ```tsx
+ * <Library 
+ *   onSelectTab={(tabData) => openEditor(tabData)}
+ *   refreshTrigger={shouldRefresh}
+ *   onFavoritesChanged={() => updateFavoritesCount()}
+ * />
+ * ```
  */
 const Library: React.FC<LibraryProps> = memo(({ 
   onSelectTab, 
@@ -49,14 +68,17 @@ const Library: React.FC<LibraryProps> = memo(({
   onFavoritesChanged,
   onTabDeleted 
 }) => {
-  // Состояния компонента
+  /** Активная секция: 'my' - мои табулатуры, 'favorites' - избранное */
   const [activeSection, setActiveSection] = useState<'my' | 'favorites'>('my');
+  /** Текущий поисковый запрос */
   const [searchQuery, setSearchQuery] = useState<string>('');
+  /** Выбранная табулатура для экспорта */
   const [selectedTabForExport, setSelectedTabForExport] = useState<TabData | null>(null);
+  /** Флаг открытия модального окна экспорта */
   const [isExportModalOpen, setIsExportModalOpen] = useState<boolean>(false);
+  /** Флаг открытия модального окна импорта */
   const [isImportModalOpen, setIsImportModalOpen] = useState<boolean>(false);
 
-  // Хуки
   const { currentUser, isLoading: authLoading } = useAuth();
   const { 
     myTabs, 
@@ -69,7 +91,6 @@ const Library: React.FC<LibraryProps> = memo(({
     refresh 
   } = useTabsLibrary();
 
-  // Обновление при изменении refreshTrigger
   useEffect(() => {
     if (refreshTrigger && currentUser) {
       refresh();
@@ -78,6 +99,8 @@ const Library: React.FC<LibraryProps> = memo(({
 
   /**
    * Обработчик удаления своей табулатуры
+   * 
+   * @param id - ID удаляемой табулатуры
    */
   const handleDeleteMyTab = useCallback(async (id: number) => {
     if (!window.confirm('Удалить эту табулатуру? Она будет удалена безвозвратно.')) return;
@@ -93,6 +116,8 @@ const Library: React.FC<LibraryProps> = memo(({
 
   /**
    * Обработчик удаления табулатуры из избранного
+   * 
+   * @param id - ID табулатуры для удаления из избранного
    */
   const handleRemoveFromFavorites = useCallback(async (id: number) => {
     if (!window.confirm('Удалить эту табулатуру из избранного?')) return;
@@ -107,7 +132,10 @@ const Library: React.FC<LibraryProps> = memo(({
   }, [removeFromFavs, onFavoritesChanged]);
 
   /**
-   * Обработчик редактирования табулатуры
+   * Обработчик редактирования табулатуры.
+   * Преобразует LibraryItem в TabData и вызывает onSelectTab.
+   * 
+   * @param tab - Выбранная табулатура из библиотеки
    */
   const handleEdit = useCallback((tab: LibraryItem) => {
     const isOwn = activeSection === 'my';
@@ -122,7 +150,10 @@ const Library: React.FC<LibraryProps> = memo(({
   }, [activeSection, onSelectTab]);
 
   /**
-   * Обработчик экспорта табулатуры
+   * Обработчик экспорта табулатуры.
+   * Открывает модальное окно экспорта.
+   * 
+   * @param tab - Табулатура для экспорта
    */
   const handleExport = useCallback((tab: LibraryItem) => { 
     setSelectedTabForExport(tab.tabData); 
@@ -130,7 +161,10 @@ const Library: React.FC<LibraryProps> = memo(({
   }, []);
 
   /**
-   * Обработчик успешного импорта
+   * Обработчик успешного импорта.
+   * Обновляет список и открывает импортированную табулатуру.
+   * 
+   * @param importedTab - Импортированная табулатура
    */
   const handleImportSuccess = useCallback((importedTab: TabData) => { 
     refresh(); 
@@ -138,7 +172,7 @@ const Library: React.FC<LibraryProps> = memo(({
   }, [refresh, onSelectTab]);
 
   /**
-   * Закрытие модального окна экспорта
+   * Закрытие модального окна экспорта и очистка выбранной табулатуры
    */
   const handleCloseExportModal = useCallback(() => { 
     setIsExportModalOpen(false); 
@@ -146,7 +180,7 @@ const Library: React.FC<LibraryProps> = memo(({
   }, []);
 
   /**
-   * Создание новой табулатуры
+   * Создание новой пустой табулатуры
    */
   const handleNewTab = useCallback(() => { 
     onSelectTab({
@@ -163,12 +197,10 @@ const Library: React.FC<LibraryProps> = memo(({
     } as TabData); 
   }, [onSelectTab]);
 
-  // Мемоизированные отфильтрованные списки
   const filteredMyTabs = useMemo(() => filterTabs(myTabs, searchQuery), [myTabs, searchQuery, filterTabs]);
   const filteredFavorites = useMemo(() => filterTabs(favorites, searchQuery), [favorites, searchQuery, filterTabs]);
   const currentTabs = activeSection === 'my' ? filteredMyTabs : filteredFavorites;
 
-  // Условные возвраты
   if (authLoading) {
     return <LoadingSpinner message="Проверка авторизации..." />;
   }
@@ -189,7 +221,6 @@ const Library: React.FC<LibraryProps> = memo(({
 
   return (
     <div className="library-container">
-      {/* Заголовок с кнопкой импорта */}
       <div className="library-header">
         <div className="library-header-content">
           <div className="library-header-left">
@@ -197,7 +228,6 @@ const Library: React.FC<LibraryProps> = memo(({
             <p className="library-subtitle">Управляйте своими табулатурами и избранным</p>
           </div>
           
-          {/* Кнопка импорта - справа в заголовке */}
           <button 
             className="library-import-btn" 
             onClick={() => setIsImportModalOpen(true)} 
@@ -209,7 +239,6 @@ const Library: React.FC<LibraryProps> = memo(({
         </div>
       </div>
 
-      {/* Вкладки переключения - только иконки, текст в счетчике справа */}
       <div className="library-view-tabs">
         <button 
           className={`view-tab ${activeSection === 'my' ? 'active' : ''}`} 
@@ -231,7 +260,6 @@ const Library: React.FC<LibraryProps> = memo(({
         </button>
       </div>
 
-      {/* Поиск */}
       <div className="library-search">
         <SearchBar 
           value={searchQuery}
@@ -246,7 +274,6 @@ const Library: React.FC<LibraryProps> = memo(({
         )}
       </div>
 
-      {/* Список табулатур */}
       {currentTabs.length === 0 ? (
         <EmptyState
           icon={activeSection === 'my' ? <FolderOpen size={48} /> : <Heart size={48} />}
@@ -284,7 +311,6 @@ const Library: React.FC<LibraryProps> = memo(({
         </div>
       )}
 
-      {/* Модальные окна */}
       {selectedTabForExport && (
         <ExportModal
           tabData={selectedTabForExport}

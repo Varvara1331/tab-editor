@@ -6,7 +6,6 @@
  */
 
 import React, { useCallback, useRef, useEffect, memo, useState } from 'react';
-//import './Common.css';
 
 /**
  * Свойства компонента SearchBar
@@ -29,13 +28,20 @@ interface SearchBarProps {
 /**
  * Компонент строки поиска с дебаунсингом.
  * Предотвращает слишком частые вызовы onChange при быстром вводе.
+ * Поддерживает очистку поля и автофокус.
  * 
  * @component
  * @param props - Свойства компонента
- * @returns Отрисованный компонент поиска
+ * @param props.value - Текущее значение поиска
+ * @param props.onChange - Колбэк при изменении значения (с дебаунсингом)
+ * @param props.onClear - Колбэк при очистке поля
+ * @param props.placeholder - Плейсхолдер поля ввода
+ * @param props.debounceDelay - Задержка дебаунсинга в мс
+ * @param props.autoFocus - Автофокус при монтировании
+ * @returns Отрисованный компонент строки поиска
  * 
  * @example
- * ```typescript
+ * ```tsx
  * function SearchExample() {
  *   const [query, setQuery] = useState('');
  *   
@@ -59,11 +65,15 @@ const SearchBar: React.FC<SearchBarProps> = memo(({
   autoFocus = false,
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  /** Локальное значение для мгновенного обновления UI */
   const [localValue, setLocalValue] = useState(value);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   /**
-   * Дебаунсированный вызов onChange
+   * Дебаунсированный вызов onChange.
+   * Откладывает вызов на указанную задержку после последнего изменения.
+   * 
+   * @param newValue - Новое значение для отправки
    */
   const debouncedOnChange = useCallback(
     (newValue: string) => {
@@ -77,13 +87,15 @@ const SearchBar: React.FC<SearchBarProps> = memo(({
     [onChange, debounceDelay]
   );
 
-  // Синхронизация внешнего значения с локальным
   useEffect(() => {
     setLocalValue(value);
   }, [value]);
 
   /**
-   * Обработчик изменения значения
+   * Обработчик изменения значения в поле ввода.
+   * Обновляет локальное состояние и вызывает дебаунсированный колбэк.
+   * 
+   * @param e - Событие изменения поля ввода
    */
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -95,24 +107,23 @@ const SearchBar: React.FC<SearchBarProps> = memo(({
   );
 
   /**
-   * Обработчик очистки поля
+   * Обработчик очистки поля.
+   * Сбрасывает локальное значение, вызывает onChange и onClear,
+   * и возвращает фокус на поле ввода.
    */
   const handleClear = useCallback(() => {
     setLocalValue('');
     onChange('');
     onClear?.();
-    // Возвращаем фокус на поле ввода после очистки
     setTimeout(() => inputRef.current?.focus(), 0);
   }, [onChange, onClear]);
 
-  // Автофокус при монтировании
   useEffect(() => {
     if (autoFocus && inputRef.current) {
       inputRef.current.focus();
     }
   }, [autoFocus]);
 
-  // Очистка таймера при размонтировании
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {

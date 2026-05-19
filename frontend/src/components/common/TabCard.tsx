@@ -1,5 +1,5 @@
 /**
- * @fileoverview Компонент карточки табулатуры.
+ * @fileoverview Компонент карточки табулатуры для отображения в списках библиотеки, избранного и публичных табулатур.
  * @module components/common/TabCard
  */
 
@@ -11,11 +11,11 @@ import {
   Loader2,
   Heart,
   X,
-  Eye,           // Иконка для "Опубликовано"
-  FileText,      // Иконка для "Черновик"
-  User,          // Иконка для автора
-  UserCircle,    // Иконка для "Ваша публикация"
-  Globe          // Иконка для публичной табулатуры
+  Eye,
+  FileText,
+  User,
+  UserCircle,
+  Globe
 } from 'lucide-react';
 import { LibraryItem } from '../../services/libraryService';
 import { PublicTab } from '../../services/publicTabsService';
@@ -31,20 +31,64 @@ import {
   isPublicTab 
 } from '../../utils/tabHelpers';
 
+/**
+ * Свойства компонента TabCard
+ */
 interface TabCardProps {
+  /** Данные табулатуры (из библиотеки или публичной коллекции) */
   tab: LibraryItem | PublicTab;
+  /** Тип карточки: 'my' - мои табы, 'favorites' - избранное, 'public' - публичные табы */
   type: 'my' | 'favorites' | 'public';
+  /** Обработчик выбора табулатуры (открытие) */
   onSelect?: (tab: LibraryItem | PublicTab) => void;
+  /** Обработчик экспорта/скачивания табулатуры */
   onExport?: (tab: LibraryItem | PublicTab) => void;
+  /** Обработчик удаления табулатуры (только для своих) */
   onDelete?: (id: number) => void;
+  /** Обработчик удаления из избранного */
   onRemoveFromFavorites?: (id: number) => void;
+  /** Обработчик добавления в избранное (для публичных табулатур) */
   onAddToFavorites?: (tab: PublicTab) => void;
+  /** ID табулатуры, которая сейчас обрабатывается (для отображения спиннера) */
   processingId?: number | null;
+  /** Имя оригинального автора (для избранного) */
   originalAuthor?: string;
+  /** Флаг, находится ли табулатура в избранном (для публичных табов) */
   isInFavorites?: boolean;
+  /** Флаг, является ли табулатура своей (для публичных табов) */
   isOwn?: boolean;
 }
 
+/**
+ * Компонент карточки табулатуры.
+ * Отображает информацию о табулатуре: название, исполнителя, дату, превью, а также кнопки действий.
+ * Поддерживает три режима: мои табы, избранное и публичные табы.
+ * 
+ * @component
+ * @param props - Свойства компонента
+ * @returns Отрисованная карточка табулатуры
+ * 
+ * @example
+ * ```tsx
+ * // Для своих табулатур
+ * <TabCard 
+ *   tab={myTab} 
+ *   type="my" 
+ *   onSelect={handleOpen} 
+ *   onExport={handleExport}
+ *   onDelete={handleDelete}
+ * />
+ * 
+ * // Для публичных табулатур
+ * <TabCard 
+ *   tab={publicTab} 
+ *   type="public" 
+ *   onAddToFavorites={handleAddToFav}
+ *   isInFavorites={isFav}
+ *   isOwn={isOwn}
+ * />
+ * ```
+ */
 const TabCard: React.FC<TabCardProps> = memo(({
   tab, 
   type, 
@@ -70,7 +114,10 @@ const TabCard: React.FC<TabCardProps> = memo(({
   const isPublic = type === 'public';
   const isProcessing = processingId === tabId;
 
-  // Определяем иконку и класс для статуса видимости
+  /**
+   * Конфигурация бейджа видимости табулатуры.
+   * Возвращает иконку, текст и CSS-класс для отображения статуса (опубликовано/черновик/ваша публикация).
+   */
   const visibilityConfig = useMemo(() => {
     if (isPublic && isOwn) {
       return {
@@ -97,13 +144,13 @@ const TabCard: React.FC<TabCardProps> = memo(({
     return null;
   }, [isPublic, isOwn, isMyTab, isTabPublic]);
 
+  /** Имя автора для отображения (для избранного и публичных табов) */
   const authorName = useMemo(() => {
     if (isFav && originalAuthor) return originalAuthor;
     if (isPublic && !isOwn && 'authorName' in tab && tab.authorName) return tab.authorName;
     return null;
   }, [isFav, originalAuthor, isPublic, isOwn, tab]);
 
-  // Обработчики
   const handleCardClick = useCallback(() => {
     onSelect?.(tab);
   }, [onSelect, tab]);
@@ -128,7 +175,6 @@ const TabCard: React.FC<TabCardProps> = memo(({
     if (isPublicTab(tab)) onAddToFavorites?.(tab);
   }, [onAddToFavorites, tab]);
 
-  // Определяем какие кнопки показывать
   const showFavoriteBtn = isPublic && !isOwn && onAddToFavorites;
   const showRemoveFromFavBtn = isFav && onRemoveFromFavorites;
   const showDeleteBtn = isMyTab && onDelete;
@@ -136,7 +182,6 @@ const TabCard: React.FC<TabCardProps> = memo(({
 
   return (
     <div className="tab-card-wrapper">
-      {/* Основная карточка с информацией (кликабельная) */}
       <div 
         className="library-card clickable" 
         onClick={handleCardClick}
@@ -151,7 +196,6 @@ const TabCard: React.FC<TabCardProps> = memo(({
         aria-label={`Открыть ${title}`}
       >
         <div className="card-info">
-          {/* Левая часть */}
           <div className="card-left">
             <div className="card-icon" aria-hidden="true">
               <Guitar size={40} />
@@ -170,7 +214,6 @@ const TabCard: React.FC<TabCardProps> = memo(({
             </div>
           </div>
           
-          {/* Правая часть - бейджи с иконками */}
           <div className="card-right">
             {authorName && (
               <div className="card-author" title={`Автор: ${authorName}`}>
@@ -188,9 +231,7 @@ const TabCard: React.FC<TabCardProps> = memo(({
         </div>
       </div>
 
-      {/* Боковые кнопки действий */}
       <div className="card-actions-side">
-        {/* Кнопка избранного (только для публичных табулатур, не своих) */}
         {showFavoriteBtn && (
           <button 
             className={`nav-btn favorites-btn ${isInFavorites ? 'in-favorites' : ''}`} 
@@ -199,12 +240,10 @@ const TabCard: React.FC<TabCardProps> = memo(({
             type="button"
             title={isInFavorites ? 'Удалить из избранного' : 'Добавить в избранное'}
           >
-            
-              <Heart size={20} fill={isInFavorites ? 'currentColor' : 'none'} />
+            <Heart size={20} fill={isInFavorites ? 'currentColor' : 'none'} />
           </button>
         )}
 
-        {/* Кнопка удаления из избранного (для раздела "Избранное") */}
         {showRemoveFromFavBtn && (
           <button 
             className="nav-btn remove-btn" 
@@ -217,7 +256,6 @@ const TabCard: React.FC<TabCardProps> = memo(({
           </button>
         )}
 
-        {/* Кнопка удаления (для своих табулатур) */}
         {showDeleteBtn && (
           <button 
             className="nav-btn delete-btn" 
@@ -230,7 +268,6 @@ const TabCard: React.FC<TabCardProps> = memo(({
           </button>
         )}
 
-        {/* Кнопка экспорта/скачивания (только для библиотеки) */}
         {showExportBtn && (
           <button 
             className="nav-btn export-btn" 

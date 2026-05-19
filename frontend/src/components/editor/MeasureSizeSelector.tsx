@@ -8,6 +8,9 @@
 import React from 'react';
 import './TabEditor.css';
 
+/**
+ * Свойства компонента MeasureSizeSelector
+ */
 interface MeasureSizeSelectorProps {
   /** Текущий размер такта (количество позиций) */
   notesPerMeasure: number;
@@ -22,13 +25,18 @@ const MEASURE_SIZES = [4, 8, 16];
 
 /**
  * Компонент выбора размера такта.
+ * Позволяет переключаться между предустановленными размерами: 4/4, 8/8, 16/16.
  * 
  * @component
+ * @param props - Свойства компонента
+ * @returns Отрисованный компонент выбора размера
+ * 
  * @example
- * ```typescript
+ * ```tsx
  * <MeasureSizeSelector
  *   notesPerMeasure={16}
- *   onNotesPerMeasureChange={(size) => setSize(size)}
+ *   onNotesPerMeasureChange={(size) => setNotesPerMeasure(size)}
+ *   isReadOnly={false}
  * />
  * ```
  */
@@ -38,7 +46,9 @@ const MeasureSizeSelector: React.FC<MeasureSizeSelectorProps> = ({
   isReadOnly = false,
 }) => {
   /**
-   * Обработчик изменения размера
+   * Обработчик изменения размера такта
+   * 
+   * @param size - Новый размер такта
    */
   const handleSizeChange = (size: number) => {
     if (!isReadOnly && size !== notesPerMeasure) {
@@ -46,17 +56,20 @@ const MeasureSizeSelector: React.FC<MeasureSizeSelectorProps> = ({
     }
   };
 
-    /**
-    * Получение отображаемого названия размера
-    */
-    const getSizeLabel = (size: number): string => {
+  /**
+   * Получение отображаемого названия размера такта
+   * 
+   * @param size - Размер такта (4, 8 или 16)
+   * @returns Название в формате X/X
+   */
+  const getSizeLabel = (size: number): string => {
     switch (size) {
-        case 4: return '4/4';
-        case 8: return '8/8';
-        case 16: return '16/16';
-        default: return `${size}/16`;
+      case 4: return '4/4';
+      case 8: return '8/8';
+      case 16: return '16/16';
+      default: return `${size}/16`;
     }
-};
+  };
 
   return (
     <div className="measure-size-selector">

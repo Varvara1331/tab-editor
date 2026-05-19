@@ -19,6 +19,9 @@ import {
   Music
 } from 'lucide-react';
 
+/**
+ * Свойства компонента TabPlayer
+ */
 interface TabPlayerProps {
   /** Данные табулатуры для воспроизведения */
   tabData: TabData;
@@ -32,8 +35,31 @@ interface TabPlayerProps {
 
 /**
  * Компонент плеера табулатур.
+ * Обеспечивает MIDI-воспроизведение табулатур с использованием SoundFont 2.
+ * Поддерживает управление воспроизведением (play/pause/stop), регулировку темпа,
+ * отображение текущей позиции и синхронизацию с интерфейсом редактора.
  * 
  * @component
+ * @param props - Свойства компонента
+ * @param ref - Ref для доступа к методам плеера (play, pause, stop, toggle, seekTo)
+ * @returns Отрисованный компонент панели управления плеером
+ * 
+ * @example
+ * ```tsx
+ * const playerRef = useRef();
+ * 
+ * <TabPlayer 
+ *   ref={playerRef}
+ *   tabData={tabData}
+ *   onPositionChange={(pos) => setCurrentPosition(pos)}
+ *   onPlayheadPosition={(pos) => setPlayheadPosition(pos)}
+ * />
+ * 
+ * // Вызов методов через ref
+ * playerRef.current?.play();
+ * playerRef.current?.toggle();
+ * playerRef.current?.seekTo(0, 4);
+ * ```
  */
 const TabPlayer = forwardRef<any, TabPlayerProps>(({ 
   tabData, 
@@ -41,7 +67,9 @@ const TabPlayer = forwardRef<any, TabPlayerProps>(({
   onPlayheadPosition,
   measuresContainerRef 
 }, ref) => {
+  /** Текущий темп воспроизведения (ударов в минуту) */
   const [bpm, setBpm] = useState<number>(tabData.measures[0]?.tempo || 120);
+  /** Флаг инициализации плеера */
   const [isInitialized, setIsInitialized] = useState<boolean>(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const initializationPromiseRef = useRef<Promise<void> | null>(null);
@@ -64,7 +92,6 @@ const TabPlayer = forwardRef<any, TabPlayerProps>(({
     seekToPosition
   } = useGuitarPlayerSF2();
 
-  // Отслеживание монтирования компонента
   useEffect(() => {
     isMountedRef.current = true;
     return () => {
@@ -72,7 +99,6 @@ const TabPlayer = forwardRef<any, TabPlayerProps>(({
     };
   }, []);
 
-  // Инициализация плеера
   useEffect(() => {
     let mounted = true;
     const init = async () => {
@@ -95,7 +121,6 @@ const TabPlayer = forwardRef<any, TabPlayerProps>(({
     return () => { mounted = false; };
   }, [initializePlayer]);
 
-  // Загрузка табулатуры - при каждом изменении tabData перезагружаем
   useEffect(() => {
     if (isReady && tabData && isMountedRef.current) {
       loadTab(tabData);
@@ -103,23 +128,23 @@ const TabPlayer = forwardRef<any, TabPlayerProps>(({
     }
   }, [isReady, tabData, loadTab]);
 
-  // Установка темпа
   useEffect(() => {
     setTempo(bpm);
   }, [bpm, setTempo]);
 
-  // Отправка позиции при изменении
   useEffect(() => {
     if (currentPosition && onPositionChange && isMountedRef.current) {
       onPositionChange(currentPosition);
     }
   }, [currentPosition, onPositionChange]);
 
-  // Добавляем методы, которые будут доступны через ref
+  /**
+   * Экспонируемые методы для доступа через ref
+   */
   useImperativeHandle(ref, () => ({
+    /** Начать воспроизведение */
     play: async () => {
       if (!isReady && isInitialized) {
-        // Ждем готовности плеера
         await new Promise(resolve => {
           const checkReady = setInterval(() => {
             if (isReady) {
@@ -131,12 +156,15 @@ const TabPlayer = forwardRef<any, TabPlayerProps>(({
       }
       await play();
     },
+    /** Поставить на паузу */
     pause: () => {
       pause();
     },
+    /** Остановить воспроизведение и сбросить позицию */
     stop: () => {
       stop();
     },
+    /** Переключить состояние (play/pause) */
     toggle: async () => {
       if (isPlaying) {
         pause();
@@ -154,7 +182,9 @@ const TabPlayer = forwardRef<any, TabPlayerProps>(({
         await play();
       }
     },
+    /** Получить статус воспроизведения */
     getIsPlaying: () => isPlaying,
+    /** Перейти к указанной позиции */
     seekTo: (measureIndex: number, noteIndex: number) => {
       if (seekToPosition) {
         seekToPosition({
@@ -168,15 +198,14 @@ const TabPlayer = forwardRef<any, TabPlayerProps>(({
 
   /**
    * Прокрутка контейнера к текущей позиции воспроизведения
+   * 
    * @param force - Принудительная прокрутка (игнорирует флаг перетаскивания)
    */
   const scrollToCurrentPosition = useCallback((force: boolean = false) => {
     if (!currentPosition || !measuresContainerRef?.current) return;
     
-    // Проверяем, нужно ли прокручивать
     if (!force && isDraggingRef.current) return;
     
-    // Проверяем, не была ли уже прокрутка к этой позиции
     const positionKey = `${currentPosition.measureIndex}:${currentPosition.noteIndex}`;
     if (lastScrolledPositionRef.current && 
         lastScrolledPositionRef.current.measureIndex === currentPosition.measureIndex &&
@@ -194,27 +223,20 @@ const TabPlayer = forwardRef<any, TabPlayerProps>(({
       const containerRect = measuresContainerRef.current.getBoundingClientRect();
       const scrollTop = measuresContainerRef.current.scrollTop;
       
-      // Определяем раскладку
       const measuresContainerDiv = measuresContainerRef.current.querySelector('.measures-container');
       const isVerticalLayout = measuresContainerDiv?.classList.contains('vertical') || false;
       
       if (isVerticalLayout) {
-        // Вертикальная прокрутка - прокручиваем к верхнему краю tab-canvas
         const measureElement = noteElement.closest('.measure');
         if (measureElement) {
           const measureRect = measureElement.getBoundingClientRect();
-          
-          // Целевая позиция прокрутки: позиция такта относительно контейнера + текущий скролл
-          // Прокручиваем так, чтобы такт оказался у верхнего края tab-canvas
           const targetScroll = measureRect.top - containerRect.top + scrollTop - 10;
           
-          // Всегда прокручиваем, так как нужно, чтобы текущий такт был вверху
           measuresContainerRef.current.scrollTo({
             top: Math.max(0, targetScroll),
             behavior: force ? 'auto' : 'smooth'
           });
         } else {
-          // Fallback: прокрутка к ноте
           const noteRect = noteElement.getBoundingClientRect();
           const targetScroll = noteRect.top - containerRect.top + scrollTop - 10;
           
@@ -229,16 +251,11 @@ const TabPlayer = forwardRef<any, TabPlayerProps>(({
           noteIndex: currentPosition.noteIndex
         };
       } else {
-        // Горизонтальная прокрутка - прокручиваем к левому краю такта
         const measureElement = noteElement.closest('.measure');
         if (measureElement) {
           const measureRect = measureElement.getBoundingClientRect();
           const scrollLeft = measuresContainerRef.current.scrollLeft;
-          
-          // Прокручиваем так, чтобы такт оказался у левого края контейнера
           const targetScroll = measureRect.left - containerRect.left + scrollLeft - 10;
-          
-          // Проверяем, виден ли такт полностью
           const isFullyVisible = (measureRect.left - containerRect.left) >= 0 && 
                                  (measureRect.right - containerRect.left) <= measuresContainerRef.current.clientWidth;
           
@@ -249,7 +266,6 @@ const TabPlayer = forwardRef<any, TabPlayerProps>(({
             });
           }
         } else {
-          // Fallback: прокрутка к ноте
           const noteRect = noteElement.getBoundingClientRect();
           const scrollLeft = measuresContainerRef.current.scrollLeft;
           const targetScroll = noteRect.left - containerRect.left + scrollLeft - 10;
@@ -273,12 +289,11 @@ const TabPlayer = forwardRef<any, TabPlayerProps>(({
   }, [currentPosition, measuresContainerRef]);
 
   /**
-   * Обновление позиции полоски воспроизведения
+   * Обновление позиции полоски воспроизведения на холсте
    */
   const updatePlayheadPosition = useCallback(() => {
     if (!currentPosition || !measuresContainerRef?.current) return;
     
-    // Находим все элементы нот с нужным тактом и позицией
     const noteElements = document.querySelectorAll(
       `.note-cell[data-measure="${currentPosition.measureIndex}"][data-note="${currentPosition.noteIndex}"]`
     );
@@ -290,13 +305,11 @@ const TabPlayer = forwardRef<any, TabPlayerProps>(({
       const scrollLeft = measuresContainerRef.current.scrollLeft;
       const scrollTop = measuresContainerRef.current.scrollTop;
       
-      // Определяем раскладку по классу measures-container
       const measuresContainerDiv = measuresContainerRef.current.querySelector('.measures-container');
       const isVerticalLayout = measuresContainerDiv?.classList.contains('vertical') || false;
       
       let position;
       if (isVerticalLayout) {
-        // Для вертикальной раскладки: находим родительский такт
         const measureElement = noteElement.closest('.measure');
         if (measureElement) {
           const measureRect = measureElement.getBoundingClientRect();
@@ -312,7 +325,6 @@ const TabPlayer = forwardRef<any, TabPlayerProps>(({
             noteIndex: currentPosition.noteIndex
           };
         } else {
-          // Fallback
           const topPosition = noteRect.top - containerRect.top + scrollTop;
           const leftPosition = noteRect.left - containerRect.left + scrollLeft + (noteRect.width / 2);
           position = {
@@ -323,7 +335,6 @@ const TabPlayer = forwardRef<any, TabPlayerProps>(({
           };
         }
       } else {
-        // Для горизонтальной раскладки: позиция по горизонтали
         const leftPosition = noteRect.left - containerRect.left + scrollLeft + (noteRect.width / 2);
         const topPosition = noteRect.top - containerRect.top + scrollTop;
         position = {
@@ -338,24 +349,20 @@ const TabPlayer = forwardRef<any, TabPlayerProps>(({
         onPlayheadPosition(position);
       }
       
-      // Авто-скролл: прокручиваем, если позиция не видна
       scrollToCurrentPosition(false);
     }
   }, [currentPosition, measuresContainerRef, onPlayheadPosition, scrollToCurrentPosition]);
   
-  // Обновление полоски при изменении позиции
   useEffect(() => {
     updatePlayheadPosition();
   }, [currentPosition, updatePlayheadPosition]);
 
-  // Отслеживание изменения раскладки
   useEffect(() => {
     if (!measuresContainerRef?.current) return;
     
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-          // При смене класса обновляем позицию
           setTimeout(() => updatePlayheadPosition(), 50);
         }
       });
@@ -369,12 +376,10 @@ const TabPlayer = forwardRef<any, TabPlayerProps>(({
     return () => observer.disconnect();
   }, [measuresContainerRef, updatePlayheadPosition]);
 
-  // Обработка события перетаскивания из редактора
   useEffect(() => {
     const handleSeekToPosition = (e: CustomEvent) => {
       const { measureIndex, noteIndex } = e.detail;
       if (seekToPosition && isMountedRef.current) {
-        // Останавливаем воспроизведение при перетаскивании
         if (isPlaying) {
           pause();
         }
@@ -394,7 +399,7 @@ const TabPlayer = forwardRef<any, TabPlayerProps>(({
 
   /**
    * Обработчик начала перетаскивания полоски
-   * Устанавливает флаг, чтобы отключить автоскролл во время перетаскивания
+   * Отключает автоскролл во время перетаскивания
    */
   const handleDragStart = useCallback(() => {
     isDraggingRef.current = true;
@@ -402,18 +407,17 @@ const TabPlayer = forwardRef<any, TabPlayerProps>(({
 
   /**
    * Обработчик окончания перетаскивания полоски
-   * Сбрасывает флаг и выполняет принудительную прокрутку к текущей позиции
+   * Включает автоскролл и выполняет принудительную прокрутку
    */
   const handleDragEnd = useCallback(() => {
     isDraggingRef.current = false;
-    // Принудительно прокручиваем к текущей позиции после перетаскивания
     setTimeout(() => {
       scrollToCurrentPosition(true);
     }, 50);
   }, [scrollToCurrentPosition]);
 
   /**
-   * Обработчик кнопки Play/Pause
+   * Обработчик нажатия кнопки Play/Pause
    */
   const handlePlayClick = async () => {
     if (!isMountedRef.current) return;
@@ -446,7 +450,6 @@ const TabPlayer = forwardRef<any, TabPlayerProps>(({
       pause();
     } else {
       await play();
-      // При начале воспроизведения принудительно прокручиваем к текущей позиции
       setTimeout(() => {
         scrollToCurrentPosition(true);
       }, 100);
@@ -454,14 +457,16 @@ const TabPlayer = forwardRef<any, TabPlayerProps>(({
   };
 
   /**
-   * Обработчик кнопки Stop
+   * Обработчик нажатия кнопки Stop
    */
   const handleStopClick = () => {
     if (isMountedRef.current) stop();
   };
 
   /**
-   * Обработчик изменения темпа
+   * Обработчик изменения темпа воспроизведения
+   * 
+   * @param e - Событие изменения ползунка
    */
   const handleBpmChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (isMountedRef.current) setBpm(parseInt(e.target.value));
@@ -469,7 +474,6 @@ const TabPlayer = forwardRef<any, TabPlayerProps>(({
 
   const canPlay = isReady && isInitialized;
 
-  // Получение отображаемого названия размера такта
   const getMeasureSizeLabel = (): string => {
     const size = tabData.notesPerMeasure || 16;
     switch (size) {

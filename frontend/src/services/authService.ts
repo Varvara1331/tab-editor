@@ -25,7 +25,7 @@ export interface User {
 }
 
 /**
- * Ответ аутентификации
+ * Ответ аутентификации (регистрация/вход)
  */
 export interface AuthResponse extends ApiResponse {
   /** JWT токен */
@@ -46,11 +46,7 @@ const saveSession = (token: string, user: User): void => {
   localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
 };
 
-/**
- * Очистка сессии из localStorage
- * 
- * @private
- */
+/** Очистка сессии из localStorage */
 const clearSession = (): void => {
   localStorage.removeItem(STORAGE_KEYS.TOKEN);
   localStorage.removeItem(STORAGE_KEYS.USER);
@@ -74,9 +70,7 @@ export const clearEditorDrafts = (userId?: number): void => {
   localStorage.removeItem('currentTabData');
 };
 
-/**
- * Очистка состояния редактора (алиас для clearEditorDrafts)
- */
+/** Очистка состояния редактора (алиас для clearEditorDrafts) */
 export const clearEditorState = clearEditorDrafts;
 
 /**
@@ -151,8 +145,8 @@ export const login = async (email: string, password: string): Promise<AuthRespon
 };
 
 /**
- * Выход пользователя из системы
- * Очищает сессию и черновики редактора
+ * Выход пользователя из системы.
+ * Очищает сессию и черновики редактора.
  * 
  * @example
  * ```typescript
@@ -192,7 +186,7 @@ export const getCurrentUser = (): User | null => {
 /**
  * Проверка, авторизован ли пользователь
  * 
- * @returns true если есть валидный токен
+ * @returns true если есть валидный токен в localStorage
  * 
  * @example
  * ```typescript
