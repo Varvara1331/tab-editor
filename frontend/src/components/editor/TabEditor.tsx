@@ -1416,9 +1416,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
         <div className="modal-overlay" onClick={() => setShowTuner(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <GuitarTuner 
-              currentTuning={tabData.tuning}
-              tabData={tabData}
-              onTuningMismatch={handleTuningMismatch}
             />
             <button className="modal-close" onClick={() => setShowTuner(false)}>
               Закрыть
