@@ -5,6 +5,8 @@
  * @module services/errors
  */
 
+import axios, { AxiosError } from 'axios';
+
 /**
  * Типы ошибок API
  */
@@ -109,9 +111,36 @@ export const getErrorMessage = (error: unknown, fallback: string = 'Произо
   if (error instanceof Error) return error.message;
   if (typeof error === 'string') return error;
   
-  const axiosError = error as { response?: { data?: { error?: string } } };
-  if (axiosError.response?.data?.error) {
-    return axiosError.response.data.error;
+  if (axios.isAxiosError(error)) {
+    const responseData = error.response?.data;
+    
+    if (responseData && typeof responseData === 'object') {
+      if ('error' in responseData && typeof responseData.error === 'string') {
+        return responseData.error;
+      }
+      if ('message' in responseData && typeof responseData.message === 'string') {
+        return responseData.message;
+      }
+    }
+    
+    switch (error.response?.status) {
+      case 400:
+        return 'Некорректные данные запроса';
+      case 401:
+        return 'Неверный email или пароль';
+      case 403:
+        return 'Доступ запрещён';
+      case 404:
+        return 'Ресурс не найден';
+      case 409:
+        return 'Конфликт данных';
+      case 429:
+        return 'Слишком много запросов. Попробуйте позже';
+      case 500:
+        return 'Ошибка сервера. Попробуйте позже';
+      default:
+        return fallback;
+    }
   }
   
   return fallback;

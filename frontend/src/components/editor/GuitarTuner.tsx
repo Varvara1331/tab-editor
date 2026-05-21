@@ -1,11 +1,30 @@
-// src/components/tuner/GuitarTuner.tsx
+/**
+ * @fileoverview Компонент гитарного тюнера.
+ * Обеспечивает определение высоты звука через микрофон и визуальную настройку гитары.
+ * 
+ * @module components/editor/GuitarTuner
+ */
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Mic, MicOff, AlertCircle, Music, Activity } from 'lucide-react';
 import { usePitchDetection } from '../../hooks/usePitchDetection';
 import './GuitarTuner.css';
 
+/** Массив нот хроматического звукоряда */
 const NOTES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
+/**
+ * Преобразует частоту в ноту и отклонение в центах
+ * 
+ * @param freq - Частота звука в Герцах
+ * @returns Объект с названием ноты и отклонением в центах
+ * 
+ * @example
+ * ```ts
+ * getNoteFromFrequency(440) // { note: 'A', cents: 0 }
+ * getNoteFromFrequency(261.63) // { note: 'C', cents: 0 }
+ * ```
+ */
 const getNoteFromFrequency = (freq: number): { note: string; cents: number } => {
   if (freq <= 0) return { note: '-', cents: 0 };
   
@@ -22,16 +41,50 @@ const getNoteFromFrequency = (freq: number): { note: string; cents: number } => 
   };
 };
 
-const GuitarTuner: React.FC = () => {
+/**
+ * Свойства компонента GuitarTuner
+ */
+interface GuitarTunerProps {
+  /** Флаг открытия модального окна тюнера */
+  isOpen: boolean;
+  /** 
+   * Функция обратного вызова при обнаружении расстройки струн
+   * Вызывается когда определяемая нота не соответствует ожидаемой для текущей струны
+   */
+  onTuningMismatch?: (mismatches: Array<{ string: number; expected: string; detected: string; message: string }>) => void;
+}
+
+/**
+ * Компонент гитарного тюнера.
+ * Предоставляет визуальный интерфейс для настройки гитары с использованием микрофона.
+ * Отображает определяемую ноту, частоту, отклонение от эталона и справочник стандартного строя.
+ * 
+ * @component
+ * @param props - Свойства компонента
+ * @returns Отрисованный компонент тюнера
+ * 
+ * @example
+ * ```tsx
+ * const [isTunerOpen, setIsTunerOpen] = useState(false);
+ * 
+ * <GuitarTuner 
+ *   isOpen={isTunerOpen}
+ *   onTuningMismatch={(mismatches) => console.log(mismatches)}
+ * />
+ * ```
+ */
+const GuitarTuner: React.FC<GuitarTunerProps> = ({ isOpen, onTuningMismatch }) => {
   const { isListening, error, pitch, start, stop } = usePitchDetection();
   
-  // Сглаженные значения
+  /** Сглаженное значение частоты для плавного отображения */
   const [smoothFrequency, setSmoothFrequency] = useState<number | null>(null);
+  /** Сглаженное отклонение в центах */
   const [smoothCents, setSmoothCents] = useState<number>(0);
+  /** Отображаемая нота */
   const [displayNote, setDisplayNote] = useState<string | null>(null);
+  /** Флаг активности сигнала */
   const [isActive, setIsActive] = useState(false);
   
-  // Refs для плавной интерполяции
   const targetFreqRef = useRef<number | null>(null);
   const currentFreqRef = useRef<number | null>(null);
   const targetCentsRef = useRef<number>(0);
@@ -40,18 +93,44 @@ const GuitarTuner: React.FC = () => {
   const animationRef = useRef<number | null>(null);
   const lastUpdateRef = useRef<number>(0);
   
-  // Константы для плавности (чем меньше число, тем плавнее)
-  const SMOOTHING_FACTOR = 0.03; // Очень сильное сглаживание
-  const UPDATE_THRESHOLD = 0.5; // Минимальное изменение для обновления UI
+  const SMOOTHING_FACTOR = 0.03;
+  const UPDATE_THRESHOLD = 0.5;
 
-  // Плавная анимация
+  /**
+   * Останавливает запись при закрытии модального окна
+   */
+  useEffect(() => {
+    if (!isOpen && isListening) {
+      stop();
+    }
+  }, [isOpen, isListening, stop]);
+
+  /**
+   * Очистка ресурсов при размонтировании компонента
+   */
+  useEffect(() => {
+    return () => {
+      if (isListening) {
+        stop();
+      }
+      if (animationRef.current) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  /**
+   * Плавная анимация и интерполяция значений частоты и отклонения
+   */
   useEffect(() => {
     if (!isListening) {
       if (animationRef.current) {
         cancelAnimationFrame(animationRef.current);
         animationRef.current = null;
       }
-      // Плавно затухаем
+      
       const fadeOut = () => {
         if (currentFreqRef.current !== null) {
           currentFreqRef.current = currentFreqRef.current * 0.95;
@@ -78,17 +157,14 @@ const GuitarTuner: React.FC = () => {
     const animate = () => {
       const now = Date.now();
       
-      // Обновляем целевые значения из питч-детектора (не каждый кадр, чтобы уменьшить дерганье)
       if (pitch && pitch.clarity > 0.7 && pitch.frequency > 70 && pitch.frequency < 500) {
         const noteData = getNoteFromFrequency(pitch.frequency);
         
-        // Обновляем цели
         targetFreqRef.current = pitch.frequency;
         targetCentsRef.current = noteData.cents;
         targetNoteRef.current = noteData.note;
         setIsActive(true);
       } else if (targetFreqRef.current !== null) {
-        // Если звук пропал, начинаем затухание через 300мс
         if (now - lastUpdateRef.current > 300) {
           targetFreqRef.current = null;
           targetNoteRef.current = null;
@@ -96,22 +172,17 @@ const GuitarTuner: React.FC = () => {
         }
       }
       
-      // Плавно двигаем текущие значения к целевым
       if (targetFreqRef.current !== null && currentFreqRef.current !== null) {
-        // Медленно двигаем частоту
         currentFreqRef.current = currentFreqRef.current + 
           (targetFreqRef.current - currentFreqRef.current) * SMOOTHING_FACTOR;
         
-        // Двигаем центы
         currentCentsRef.current = currentCentsRef.current + 
           (targetCentsRef.current - currentCentsRef.current) * SMOOTHING_FACTOR;
         
       } else if (targetFreqRef.current !== null && currentFreqRef.current === null) {
-        // Первое значение
         currentFreqRef.current = targetFreqRef.current;
         currentCentsRef.current = targetCentsRef.current;
       } else if (targetFreqRef.current === null && currentFreqRef.current !== null) {
-        // Затухаем
         currentFreqRef.current = currentFreqRef.current * 0.98;
         currentCentsRef.current = currentCentsRef.current * 0.98;
         
@@ -121,7 +192,6 @@ const GuitarTuner: React.FC = () => {
         }
       }
       
-      // Обновляем UI только при значительных изменениях
       if (currentFreqRef.current !== null) {
         const roundedFreq = Math.round(currentFreqRef.current);
         const roundedCents = Math.round(currentCentsRef.current);
@@ -139,7 +209,6 @@ const GuitarTuner: React.FC = () => {
       animationRef.current = requestAnimationFrame(animate);
     };
     
-    // Инициализация
     if (pitch && pitch.frequency) {
       targetFreqRef.current = pitch.frequency;
       currentFreqRef.current = pitch.frequency;
@@ -160,6 +229,11 @@ const GuitarTuner: React.FC = () => {
     };
   }, [isListening, pitch]);
 
+  /**
+   * Определяет цвет индикатора отклонения на основе величины расстройки
+   * 
+   * @returns CSS цвет в формате hex
+   */
   const getCentsColor = () => {
     if (!isActive) return '#666';
     const absCents = Math.abs(smoothCents);
@@ -169,17 +243,11 @@ const GuitarTuner: React.FC = () => {
     return '#d32f2f';
   };
 
-  const getCentsMessage = () => {
-    if (!isActive) return '🎸 Сыграйте на гитаре';
-    const absCents = Math.abs(smoothCents);
-    if (absCents < 3) return '✓ Идеально!';
-    if (absCents < 8) return '👍 Отлично';
-    if (absCents < 15) return '🎵 Хорошо';
-    if (absCents < 25) return '⚠️ Нужно подстроить';
-    return '🔴 Сильно расстроена';
-  };
-
-  // Вычисляем позицию маркера с ограничением
+  /**
+   * Вычисляет позицию маркера отклонения на шкале
+   * 
+   * @returns Процентное значение позиции от 0 до 100
+   */
   const markerPosition = () => {
     if (!isActive) return 50;
     const position = 50 + Math.min(45, Math.max(-45, smoothCents));
@@ -195,7 +263,6 @@ const GuitarTuner: React.FC = () => {
           className={isListening ? 'listening' : ''}
         >
           {isListening ? <MicOff size={16} /> : <Mic size={16} />}
-          {isListening ? 'Выключить' : 'Включить тюнер'}
         </button>
       </div>
 
@@ -205,7 +272,6 @@ const GuitarTuner: React.FC = () => {
         </div>
       )}
 
-      {/* Note Display - главный блок */}
       <div className={`note-display ${isActive ? 'active' : 'inactive'}`}>
         <div className="frequency-section">
           <Activity size={16} />
@@ -253,7 +319,6 @@ const GuitarTuner: React.FC = () => {
         </div>
       </div>
 
-      {/* Справочник струн */}
       <div className="strings-reference">
         <div className="strings-title">Стандартный строй гитары:</div>
         <div className="strings-grid">

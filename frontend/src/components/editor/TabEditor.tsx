@@ -1411,15 +1411,13 @@ const TabEditor: React.FC<TabEditorProps> = ({
         </div>
       </div>
 
-      {/* Модальное окно тюнера */}
       {showTuner && (
         <div className="modal-overlay" onClick={() => setShowTuner(false)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
-            <GuitarTuner 
+             <GuitarTuner 
+              isOpen={showTuner}
+              onTuningMismatch={handleTuningMismatch}
             />
-            <button className="modal-close" onClick={() => setShowTuner(false)}>
-              Закрыть
-            </button>
           </div>
         </div>
       )}

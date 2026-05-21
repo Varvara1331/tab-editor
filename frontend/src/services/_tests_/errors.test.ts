@@ -1,6 +1,16 @@
 import { ApiError, ApiErrorType, normalizeError, getErrorMessage } from '../errors';
+import axios from 'axios';
+
+// Мок для axios.isAxiosError
+jest.mock('axios', () => ({
+  isAxiosError: jest.fn(),
+}));
 
 describe('errors', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   describe('ApiError', () => {
     it('should create error with default type', () => {
       const error = new ApiError('Test error');
@@ -63,8 +73,12 @@ describe('errors', () => {
     });
 
     it('should extract error from Axios-like response', () => {
-      const error = { response: { data: { error: 'Axios error' } } };
-      expect(getErrorMessage(error)).toBe('Axios error');
+      // Создаём настоящий AxiosError с помощью конструктора
+      const axiosError = new Error('Axios error') as any;
+      axiosError.isAxiosError = true;
+      axiosError.response = { data: { error: 'Axios error' } };
+      
+      expect(getErrorMessage(axiosError)).toBe('Axios error');
     });
 
     it('should return fallback for empty object', () => {

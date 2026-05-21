@@ -1,0 +1,226 @@
+import { LibraryService } from '../libraryService';
+import { db } from '../../database';
+
+jest.mock('../../database');
+
+describe('LibraryService', () => {
+  const mockLibraryRow = {
+    Id: 1,
+    UserId: 1,
+    TabId: 1,
+    TabData: '{"title":"Test"}',
+    IsPublication: 0,
+    OriginalAuthorId: null,
+    OriginalAuthorName: null,
+    AddedAt: '2024-01-01T00:00:00.000Z',
+    LastOpened: null,
+  };
+
+  const mockPublicationRow = {
+    ...mockLibraryRow,
+    IsPublication: 1,
+    OriginalAuthorId: 2,
+    OriginalAuthorName: 'Author',
+  };
+
+  const mockFavoriteTabRow = {
+    TabId: 1,
+    UserId: 2,
+    Title: 'Favorite Song',
+    Artist: 'Favorite Artist',
+    Tuning: '["E","A","D","G","B","E"]',
+    Measures: '[]',
+    IsPublic: 1,
+    Preview: null,
+    Tags: '[]',
+    CreatedAt: '2024-01-01T00:00:00.000Z',
+    UpdatedAt: '2024-01-01T00:00:00.000Z',
+    authorName: 'Author Name',
+    AddedAt: '2024-01-01T00:00:00.000Z',
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('add', () => {
+    it('should add tab to library', async () => {
+      (db.run as jest.Mock).mockResolvedValue({ lastID: 1 });
+      (db.get as jest.Mock).mockResolvedValue(mockLibraryRow);
+
+      const result = await LibraryService.add(1, { id: 1 } as any, false);
+
+      expect(result.id).toBe(1);
+      expect(db.run).toHaveBeenCalled();
+    });
+
+    it('should add tab as publication', async () => {
+      (db.run as jest.Mock).mockResolvedValue({ lastID: 1 });
+      (db.get as jest.Mock).mockResolvedValue(mockPublicationRow);
+
+      const result = await LibraryService.add(1, { id: 1, userId: 2 } as any, true);
+
+      expect(result.isPublication).toBe(true);
+    });
+  });
+
+  describe('addFromPublication', () => {
+    it('should add publication to library', async () => {
+      (db.run as jest.Mock).mockResolvedValue({ lastID: 1 });
+      (db.get as jest.Mock).mockResolvedValue(mockPublicationRow);
+
+      const result = await LibraryService.addFromPublication(1, { id: 1, userId: 2 } as any);
+
+      expect(result.isPublication).toBe(true);
+      expect(db.run).toHaveBeenCalled();
+    });
+  });
+
+  describe('findById', () => {
+    it('should return library item when found', async () => {
+      (db.get as jest.Mock).mockResolvedValue(mockLibraryRow);
+
+      const result = await LibraryService.findById(1);
+
+      expect(result).not.toBeNull();
+      expect(result?.id).toBe(1);
+    });
+
+    it('should return null when not found', async () => {
+      (db.get as jest.Mock).mockResolvedValue(null);
+
+      const result = await LibraryService.findById(999);
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('findByUserId', () => {
+    it('should return user library items', async () => {
+      (db.all as jest.Mock).mockResolvedValue([mockLibraryRow]);
+
+      const result = await LibraryService.findByUserId(1);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(1);
+    });
+
+    it('should return empty array when user has no library items', async () => {
+      (db.all as jest.Mock).mockResolvedValue([]);
+
+      const result = await LibraryService.findByUserId(999);
+
+      expect(result).toHaveLength(0);
+    });
+  });
+
+  describe('checkExists', () => {
+    it('should return true if tab exists in library', async () => {
+      (db.get as jest.Mock).mockResolvedValue({ Id: 1 });
+
+      const result = await LibraryService.checkExists(1, 1);
+
+      expect(result).toBe(true);
+    });
+
+    it('should return false if tab not in library', async () => {
+      (db.get as jest.Mock).mockResolvedValue(null);
+
+      const result = await LibraryService.checkExists(1, 999);
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('removeFromLibrary', () => {
+    it('should remove tab from library successfully', async () => {
+      (db.run as jest.Mock).mockResolvedValue({ changes: 1 });
+
+      const result = await LibraryService.removeFromLibrary(1, 1);
+
+      expect(result).toBe(true);
+    });
+
+    it('should return false when tab not in library', async () => {
+      (db.run as jest.Mock).mockResolvedValue({ changes: 0 });
+
+      const result = await LibraryService.removeFromLibrary(1, 999);
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe('updateLastOpened', () => {
+    it('should update last opened timestamp', async () => {
+      (db.run as jest.Mock).mockResolvedValue({ changes: 1 });
+
+      await LibraryService.updateLastOpened(1);
+
+      expect(db.run).toHaveBeenCalledWith(
+        'UPDATE Library SET LastOpened = datetime("now") WHERE Id = ?',
+        [1]
+      );
+    });
+  });
+
+  describe('getFavoritesByUserId', () => {
+    it('should return favorites for user', async () => {
+      (db.all as jest.Mock).mockResolvedValue([mockFavoriteTabRow]);
+
+      const result = await LibraryService.getFavoritesByUserId(1);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].title).toBe('Favorite Song');
+      expect(result[0].authorName).toBe('Author Name');
+    });
+
+    it('should return empty array when user has no favorites', async () => {
+      (db.all as jest.Mock).mockResolvedValue([]);
+
+      const result = await LibraryService.getFavoritesByUserId(1);
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('should parse JSON fields correctly', async () => {
+      (db.all as jest.Mock).mockResolvedValue([mockFavoriteTabRow]);
+
+      const result = await LibraryService.getFavoritesByUserId(1);
+
+      expect(result[0].tuning).toEqual(['E', 'A', 'D', 'G', 'B', 'E']);
+      expect(result[0].measures).toEqual([]);
+      expect(result[0].tags).toEqual([]);
+    });
+  });
+
+  describe('mapToLibraryItem', () => {
+    it('should correctly map database row to ILibraryItem', async () => {
+      (db.get as jest.Mock).mockResolvedValue(mockLibraryRow);
+
+      const result = await LibraryService.findById(1);
+
+      expect(result).toMatchObject({
+        id: 1,
+        userId: 1,
+        tabId: 1,
+        tabData: '{"title":"Test"}',
+        isPublication: false,
+        originalAuthorId: null,
+        originalAuthorName: null,
+      });
+      expect(result?.addedAt).toBeInstanceOf(Date);
+    });
+
+    it('should handle lastOpened date', async () => {
+      const rowWithLastOpened = {
+        ...mockLibraryRow,
+        LastOpened: '2024-01-15T00:00:00.000Z',
+      };
+      (db.get as jest.Mock).mockResolvedValue(rowWithLastOpened);
+
+      const result = await LibraryService.findById(1);
+
+      expect(result?.lastOpened).toBeInstanceOf(Date);
+    });
+  });
+});

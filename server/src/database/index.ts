@@ -258,6 +258,7 @@ class Database {
  */
 export const db = Database.getInstance();
 
+export { Database };
 /**
  * Функция для инициализации базы данных.
  * Удобная обёртка над db.initTables().
