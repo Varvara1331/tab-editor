@@ -17,7 +17,7 @@ describe('UserModel', () => {
   });
 
   describe('create', () => {
-    it('should call UserService.create', async () => {
+    it('должен вызывать UserService.create при создании нового пользователя', async () => {
       (UserService.create as jest.Mock).mockResolvedValue(mockUser);
 
       const result = await UserModel.create('testuser', 'test@test.com', 'password123');
@@ -28,7 +28,7 @@ describe('UserModel', () => {
   });
 
   describe('findByEmail', () => {
-    it('should call UserService.findByEmail', async () => {
+    it('должен вызывать UserService.findByEmail при поиске пользователя по email', async () => {
       (UserService.findByEmail as jest.Mock).mockResolvedValue(mockUser);
 
       const result = await UserModel.findByEmail('test@test.com');
@@ -39,7 +39,7 @@ describe('UserModel', () => {
   });
 
   describe('findByUsername', () => {
-    it('should call UserService.findByUsername', async () => {
+    it('должен вызывать UserService.findByUsername при поиске пользователя по имени пользователя', async () => {
       (UserService.findByUsername as jest.Mock).mockResolvedValue(mockUser);
 
       const result = await UserModel.findByUsername('testuser');
@@ -50,7 +50,7 @@ describe('UserModel', () => {
   });
 
   describe('findById', () => {
-    it('should call UserService.findById', async () => {
+    it('должен вызывать UserService.findById при поиске пользователя по ID', async () => {
       (UserService.findById as jest.Mock).mockResolvedValue(mockUser);
 
       const result = await UserModel.findById(1);
@@ -61,7 +61,7 @@ describe('UserModel', () => {
   });
 
   describe('updateLastLogin', () => {
-    it('should call UserService.updateLastLogin', async () => {
+    it('должен вызывать UserService.updateLastLogin при обновлении времени последнего входа', async () => {
       (UserService.updateLastLogin as jest.Mock).mockResolvedValue(undefined);
 
       await UserModel.updateLastLogin(1);
@@ -71,7 +71,7 @@ describe('UserModel', () => {
   });
 
   describe('comparePassword', () => {
-    it('should call UserService.comparePassword', async () => {
+    it('должен вызывать UserService.comparePassword при сравнении паролей', async () => {
       (UserService.comparePassword as jest.Mock).mockResolvedValue(true);
 
       const result = await UserModel.comparePassword(mockUser as any, 'password123');

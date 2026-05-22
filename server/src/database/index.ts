@@ -253,14 +253,16 @@ class Database {
   }
 }
 
+const dbInstance = Database.getInstance();
+
 /**
  * Синглтон экземпляр Database для использования во всём приложении.
  */
-export const db = Database.getInstance();
+export const db = dbInstance;
 
 export { Database };
+
 /**
  * Функция для инициализации базы данных.
- * Удобная обёртка над db.initTables().
  */
-export const initDatabase = (): Promise<void> => db.initTables();
+export const initDatabase = (): Promise<void> => dbInstance.initTables();

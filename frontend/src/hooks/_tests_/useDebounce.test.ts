@@ -10,12 +10,12 @@ describe('useDebounce', () => {
     jest.useRealTimers();
   });
 
-  it('should return initial value immediately', () => {
+  it('должен возвращать начальное значение немедленно', () => {
     const { result } = renderHook(() => useDebounce('test', 500));
     expect(result.current).toBe('test');
   });
 
-  it('should update value after delay', () => {
+  it('должен обновлять значение только после указанной задержки', () => {
     const { result, rerender } = renderHook(
       ({ value, delay }) => useDebounce(value, delay),
       { initialProps: { value: 'initial', delay: 500 } }
@@ -33,7 +33,7 @@ describe('useDebounce', () => {
     expect(result.current).toBe('updated');
   });
 
-  it('should reset timer on rapid changes', () => {
+  it('должен сбрасывать таймер при частых изменениях значения', () => {
     const { result, rerender } = renderHook(
       ({ value, delay }) => useDebounce(value, delay),
       { initialProps: { value: 'initial', delay: 500 } }
@@ -50,7 +50,7 @@ describe('useDebounce', () => {
     expect(result.current).toBe('change3');
   });
 
-  it('should support immediate flag', () => {
+  it('должен корректно работать с флагом immediate', () => {
     const { result, rerender } = renderHook(
       ({ value, delay, immediate }) => useDebounce(value, delay, immediate),
       { initialProps: { value: 'initial', delay: 500, immediate: true } }
@@ -59,7 +59,6 @@ describe('useDebounce', () => {
     expect(result.current).toBe('initial');
 
     rerender({ value: 'updated', delay: 500, immediate: true });
-    // При immediate=true значение обновляется только при первом рендере
     expect(result.current).toBe('initial');
   });
 });
@@ -73,7 +72,7 @@ describe('useDebouncedCallback', () => {
     jest.useRealTimers();
   });
 
-  it('should call callback after delay', () => {
+  it('должен вызывать колбэк только после указанной задержки', () => {
     const callback = jest.fn();
     const { result } = renderHook(() => useDebouncedCallback(callback, 500));
 
@@ -91,7 +90,7 @@ describe('useDebouncedCallback', () => {
     expect(callback).toHaveBeenCalledTimes(1);
   });
 
-  it('should reset timer on multiple calls', () => {
+  it('должен сбрасывать таймер при множественных вызовах', () => {
     const callback = jest.fn();
     const { result } = renderHook(() => useDebouncedCallback(callback, 500));
 
@@ -111,7 +110,7 @@ describe('useDebouncedCallback', () => {
     expect(callback).toHaveBeenCalledWith('third');
   });
 
-  it('should clear timeout on unmount', () => {
+  it('должен очищать таймер при размонтировании компонента', () => {
     const callback = jest.fn();
     const { unmount } = renderHook(() => useDebouncedCallback(callback, 500));
 

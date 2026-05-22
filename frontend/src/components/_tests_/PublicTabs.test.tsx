@@ -1,13 +1,11 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import PublicTabs from '../public/PublicTabs';
 import { usePublicTabs } from '../../hooks/usePublicTabs';
 import { useAuth } from '../../hooks/useAuth';
 
-// Моки для хуков
 jest.mock('../../hooks/usePublicTabs');
 jest.mock('../../hooks/useAuth');
 
-// Моки для дочерних компонентов
 jest.mock('../common/SearchBar', () => ({ value, onChange, onClear, placeholder, debounceDelay }: any) => (
   <div data-testid="search-bar-wrapper">
     <input

@@ -1,7 +1,6 @@
 import { exportTab, getDownloadUrl, isFormatSupported, getSupportedFormats } from '../export/exportUtils';
 import { TabData } from '../../types/tab';
 
-// Моки для функций из exportFormats
 jest.mock('../export/exportFormats', () => ({
   exportToMusicXML: jest.fn().mockReturnValue('<xml>mock</xml>'),
   exportToPDF: jest.fn().mockResolvedValue(new Blob(['mock pdf'], { type: 'application/pdf' })),
@@ -10,11 +9,9 @@ jest.mock('../export/exportFormats', () => ({
   exportToGP: jest.fn().mockReturnValue(new Blob(['{"gp":"json"}'], { type: 'application/json' })),
 }));
 
-// Мок для URL.createObjectURL
 const mockCreateObjectURL = jest.fn().mockReturnValue('blob:mock-url');
 const mockRevokeObjectURL = jest.fn();
 
-// Сохраняем оригинальные функции
 const originalCreateObjectURL = global.URL.createObjectURL;
 const originalRevokeObjectURL = global.URL.revokeObjectURL;
 
@@ -45,14 +42,14 @@ describe('exportUtils', () => {
   });
 
   describe('getSupportedFormats', () => {
-    it('should return array of supported formats', () => {
+    it('должен возвращать массив поддерживаемых форматов экспорта', () => {
       const formats = getSupportedFormats();
       expect(formats).toEqual(['pdf', 'txt', 'json', 'gp', 'xml']);
     });
   });
 
   describe('isFormatSupported', () => {
-    it('should return true for supported formats', () => {
+    it('должен возвращать true для поддерживаемых форматов', () => {
       expect(isFormatSupported('pdf')).toBe(true);
       expect(isFormatSupported('txt')).toBe(true);
       expect(isFormatSupported('json')).toBe(true);
@@ -60,39 +57,39 @@ describe('exportUtils', () => {
       expect(isFormatSupported('xml')).toBe(true);
     });
 
-    it('should return false for unsupported formats', () => {
+    it('должен возвращать false для неподдерживаемых форматов', () => {
       expect(isFormatSupported('unsupported')).toBe(false);
       expect(isFormatSupported('')).toBe(false);
     });
   });
 
   describe('exportTab', () => {
-    it('should export to PDF format', async () => {
+    it('должен экспортировать табулатуру в формат PDF', async () => {
       const result = await exportTab(mockTabData, 'pdf');
       expect(result).toBeInstanceOf(Blob);
     });
 
-    it('should export to TXT format', async () => {
+    it('должен экспортировать табулатуру в текстовый формат', async () => {
       const result = await exportTab(mockTabData, 'txt');
       expect(result).toBeInstanceOf(Blob);
     });
 
-    it('should export to JSON format', async () => {
+    it('должен экспортировать табулатуру в формат JSON', async () => {
       const result = await exportTab(mockTabData, 'json');
       expect(result).toBeInstanceOf(Blob);
     });
 
-    it('should export to GP format', async () => {
+    it('должен экспортировать табулатуру в формат Guitar Pro', async () => {
       const result = await exportTab(mockTabData, 'gp');
       expect(result).toBeInstanceOf(Blob);
     });
 
-    it('should export to XML format', async () => {
+    it('должен экспортировать табулатуру в формат MusicXML', async () => {
       const result = await exportTab(mockTabData, 'xml');
       expect(result).toBeInstanceOf(Blob);
     });
 
-    it('should throw error for unsupported format', async () => {
+    it('должен выбрасывать ошибку для неподдерживаемого формата', async () => {
       await expect(exportTab(mockTabData, 'unsupported' as any)).rejects.toThrow('Unsupported format');
     });
   });

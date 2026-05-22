@@ -37,7 +37,7 @@ describe('Tabs Routes', () => {
   });
 
   describe('GET /api/tabs/favorites', () => {
-    it('should return favorites', async () => {
+    it('должен возвращать список избранных табулатур', async () => {
       (LibraryModel.getFavoritesByUserId as jest.Mock).mockResolvedValue([mockTab]);
 
       const response = await request(app).get('/api/tabs/favorites');
@@ -47,7 +47,7 @@ describe('Tabs Routes', () => {
       expect(response.body.data).toHaveLength(1);
     });
 
-    it('should handle server error', async () => {
+    it('должен обрабатывать ошибку сервера', async () => {
       (LibraryModel.getFavoritesByUserId as jest.Mock).mockRejectedValue(new Error('DB Error'));
 
       const response = await request(app).get('/api/tabs/favorites');
@@ -59,7 +59,7 @@ describe('Tabs Routes', () => {
   });
 
   describe('GET /api/tabs', () => {
-    it('should return user tabs', async () => {
+    it('должен возвращать табулатуры текущего пользователя', async () => {
       (TabModel.findByUserId as jest.Mock).mockResolvedValue([mockTab]);
 
       const response = await request(app).get('/api/tabs');
@@ -69,7 +69,7 @@ describe('Tabs Routes', () => {
       expect(response.body.data).toHaveLength(1);
     });
 
-    it('should handle server error', async () => {
+    it('должен обрабатывать ошибку сервера', async () => {
       (TabModel.findByUserId as jest.Mock).mockRejectedValue(new Error('DB Error'));
 
       const response = await request(app).get('/api/tabs');
@@ -81,7 +81,7 @@ describe('Tabs Routes', () => {
   });
 
   describe('GET /api/tabs/:id', () => {
-    it('should return own tab by id', async () => {
+    it('должен возвращать свою табулатуру по ID', async () => {
       (TabModel.findById as jest.Mock).mockResolvedValue(mockTab);
 
       const response = await request(app).get('/api/tabs/1');
@@ -91,7 +91,7 @@ describe('Tabs Routes', () => {
       expect(response.body.data).toEqual(mockTab);
     });
 
-    it('should return public tab for other user', async () => {
+    it('должен возвращать публичную табулатуру другого пользователя', async () => {
       (TabModel.findById as jest.Mock).mockResolvedValue(mockPublicTab);
 
       const response = await request(app).get('/api/tabs/2');
@@ -100,7 +100,7 @@ describe('Tabs Routes', () => {
       expect(response.body.success).toBe(true);
     });
 
-    it('should return 404 if tab not found', async () => {
+    it('должен возвращать 404 если табулатура не найдена', async () => {
       (TabModel.findById as jest.Mock).mockResolvedValue(null);
 
       const response = await request(app).get('/api/tabs/999');
@@ -109,7 +109,7 @@ describe('Tabs Routes', () => {
       expect(response.body.error).toBe('Табулатура не найдена');
     });
 
-    it('should return 403 if user has no access to private tab', async () => {
+    it('должен возвращать 403 если нет доступа к приватной табулатуре', async () => {
       const privateTab = { ...mockTab, userId: 2, isPublic: false };
       (TabModel.findById as jest.Mock).mockResolvedValue(privateTab);
 
@@ -119,7 +119,7 @@ describe('Tabs Routes', () => {
       expect(response.body.error).toBe('Нет доступа к этой табулатуре');
     });
 
-    it('should handle server error', async () => {
+    it('должен обрабатывать ошибку сервера', async () => {
       (TabModel.findById as jest.Mock).mockRejectedValue(new Error('DB Error'));
 
       const response = await request(app).get('/api/tabs/1');
@@ -131,7 +131,7 @@ describe('Tabs Routes', () => {
   });
 
   describe('POST /api/tabs', () => {
-    it('should create new tab', async () => {
+    it('должен создавать новую табулатуру', async () => {
       (TabModel.create as jest.Mock).mockResolvedValue(mockTab);
 
       const response = await request(app)
@@ -143,7 +143,7 @@ describe('Tabs Routes', () => {
       expect(response.body.data).toEqual(mockTab);
     });
 
-    it('should handle server error', async () => {
+    it('должен обрабатывать ошибку сервера', async () => {
       (TabModel.create as jest.Mock).mockRejectedValue(new Error('DB Error'));
 
       const response = await request(app)
@@ -157,7 +157,7 @@ describe('Tabs Routes', () => {
   });
 
   describe('PUT /api/tabs/:id', () => {
-    it('should update tab', async () => {
+    it('должен обновлять табулатуру', async () => {
       (TabModel.update as jest.Mock).mockResolvedValue({ ...mockTab, title: 'Updated' });
 
       const response = await request(app)
@@ -169,7 +169,7 @@ describe('Tabs Routes', () => {
       expect(response.body.data.title).toBe('Updated');
     });
 
-    it('should return 404 if tab not found', async () => {
+    it('должен возвращать 404 если табулатура не найдена', async () => {
       (TabModel.update as jest.Mock).mockResolvedValue(null);
 
       const response = await request(app)
@@ -180,7 +180,7 @@ describe('Tabs Routes', () => {
       expect(response.body.error).toBe('Табулатура не найдена');
     });
 
-    it('should handle server error', async () => {
+    it('должен обрабатывать ошибку сервера', async () => {
       (TabModel.update as jest.Mock).mockRejectedValue(new Error('DB Error'));
 
       const response = await request(app)
@@ -194,7 +194,7 @@ describe('Tabs Routes', () => {
   });
 
   describe('DELETE /api/tabs/:id', () => {
-    it('should delete tab', async () => {
+    it('должен удалять табулатуру', async () => {
       (TabModel.delete as jest.Mock).mockResolvedValue(true);
 
       const response = await request(app).delete('/api/tabs/1');
@@ -204,7 +204,7 @@ describe('Tabs Routes', () => {
       expect(response.body.message).toBe('Табулатура успешно удалена');
     });
 
-    it('should return 404 if tab not found', async () => {
+    it('должен возвращать 404 если табулатура не найдена', async () => {
       (TabModel.delete as jest.Mock).mockResolvedValue(false);
 
       const response = await request(app).delete('/api/tabs/999');
@@ -213,7 +213,7 @@ describe('Tabs Routes', () => {
       expect(response.body.error).toBe('Табулатура не найдена');
     });
 
-    it('should handle server error', async () => {
+    it('должен обрабатывать ошибку сервера', async () => {
       (TabModel.delete as jest.Mock).mockRejectedValue(new Error('DB Error'));
 
       const response = await request(app).delete('/api/tabs/1');

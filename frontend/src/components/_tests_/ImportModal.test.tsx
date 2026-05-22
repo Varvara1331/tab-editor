@@ -3,7 +3,6 @@ import ImportModal from '../modals/ImportModal';
 import { importTabFromFile, canImportFile } from '../../utils/import/importUtils';
 import { saveToLibrary } from '../../services/libraryService';
 
-// Моки для утилит
 jest.mock('../../utils/import/importUtils', () => ({
   importTabFromFile: jest.fn(),
   canImportFile: jest.fn(),

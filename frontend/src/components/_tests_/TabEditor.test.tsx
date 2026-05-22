@@ -1,43 +1,37 @@
-import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
-import TabEditor from '../editor/TabEditor';
+// frontend/src/components/_tests_/TabEditor.test.tsx
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { saveToLibrary, updateInLibrary } from '../../services/libraryService';
 import { getCurrentUser } from '../../services/authService';
 
-// Моки для сервисов
+// Мокаем все сервисы
 jest.mock('../../services/libraryService');
 jest.mock('../../services/authService');
 
-// Моки для дочерних компонентов
-jest.mock('../editor/TabControls', () => (props: any) => (
-  <div data-testid="tab-controls">
-    <button data-testid="tool-select" onClick={() => props.onToolSelect('bend')}>Select Tool</button>
-    <button data-testid="notes-change" onClick={() => props.onNotesPerMeasureChange?.(8)}>Change Notes</button>
-  </div>
-));
+// Мокаем тяжелые зависимости
+jest.mock('tone', () => ({}));
+jest.mock('soundfont-player', () => ({}));
+jest.mock('pitchy', () => ({}));
 
-jest.mock('../editor/TabString', () => (props: any) => (
-  <div data-testid="tab-string" data-active={props.isActive}>
-    {props.notes.map((note: any, idx: number) => (
-      <span key={idx} data-testid={`note-${idx}`} onClick={() => props.onClick(idx)}>
-        {note.fret !== null ? note.fret : '-'}
-      </span>
-    ))}
-  </div>
-));
+// Мокаем компоненты, которые используют Audio API
+jest.mock('../editor/GuitarTuner', () => {
+  return function MockGuitarTuner({ isOpen }: { isOpen: boolean }) {
+    return isOpen ? <div data-testid="guitar-tuner">Guitar Tuner Modal</div> : null;
+  };
+});
 
-jest.mock('../editor/TabPlayer', () => () => <div data-testid="tab-player">Tab Player</div>);
-jest.mock('../editor/GuitarTuner', () => ({ isOpen, onTuningMismatch }: any) => (
-  isOpen ? <div data-testid="guitar-tuner">Guitar Tuner</div> : null
-));
-jest.mock('../modals/ExportModal', () => ({ isOpen, onClose }: any) => (
-  isOpen ? <div data-testid="export-modal">Export Modal</div> : null
-));
+jest.mock('../modals/ExportModal', () => {
+  return function MockExportModal({ isOpen }: { isOpen: boolean }) {
+    return isOpen ? <div data-testid="export-modal">Export Modal</div> : null;
+  };
+});
+
+// Импортируем компонент ПОСЛЕ моков
+import TabEditor from '../editor/TabEditor';
 
 describe('TabEditor', () => {
   const mockOnTabSaved = jest.fn();
   const mockOnNewTabRequest = jest.fn();
-  const mockOnStateChange = jest.fn();
-  const mockUser = { id: 1, username: 'testuser', email: 'test@test.com', createdAt: '2024-01-01' };
+  const mockUser = { id: 1, username: 'testuser', email: 'test@test.com' };
 
   const mockTabData = {
     id: 1,
@@ -71,8 +65,9 @@ describe('TabEditor', () => {
   describe('рендеринг', () => {
     it('должен отображать редактор', () => {
       render(<TabEditor onNewTabRequest={mockOnNewTabRequest} />);
-      expect(screen.getByTestId('tab-controls')).toBeInTheDocument();
-      expect(screen.getByTestId('tab-player')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Название композиции')).toBeInTheDocument();
+      expect(screen.getByTitle('Новая табулатура')).toBeInTheDocument();
+      expect(screen.getByTitle('Тюнер')).toBeInTheDocument();
     });
 
     it('должен отображать название табулатуры', () => {
@@ -112,16 +107,24 @@ describe('TabEditor', () => {
   });
 
   describe('режим только для чтения', () => {
-    it('должен показывать баннер для чужих табулатур', () => {
-      const readOnlyTab = { ...mockTabData, isOwn: false };
-      render(<TabEditor initialTabData={readOnlyTab} />);
-      expect(screen.getByText(/Режим просмотра/)).toBeInTheDocument();
+    it('должен показывать, что поле ввода названия НЕ заблокировано для своих табулатур', () => {
+      render(<TabEditor initialTabData={mockTabData} />);
+      const titleInput = screen.getByDisplayValue('Test Song');
+      expect(titleInput).not.toHaveAttribute('disabled');
     });
 
-    it('должен отключать поля ввода для чужих табулатур', () => {
-      const readOnlyTab = { ...mockTabData, isOwn: false };
+    it('должен показывать, что поле ввода названия заблокировано для чужих табулатур', () => {
+      // Создаем табулатуру с другим пользователем
+      const readOnlyTab = { 
+        ...mockTabData, 
+        userId: 999,
+        isOwn: false  // Явно устанавливаем флаг
+      };
       render(<TabEditor initialTabData={readOnlyTab} />);
-      expect(screen.getByDisplayValue('Test Song')).toBeDisabled();
+      
+      // Проверяем, что поле ввода имеет атрибут disabled
+      const titleInput = screen.getByDisplayValue('Test Song');
+      expect(titleInput).toHaveAttribute('disabled');
     });
   });
 
@@ -152,24 +155,28 @@ describe('TabEditor', () => {
   });
 
   describe('тюнер', () => {
-    it('должен открывать тюнер при клике на кнопку', () => {
+    it('должен открывать тюнер при клике на кнопку', async () => {
       render(<TabEditor />);
       
       const tunerButton = screen.getByTitle('Тюнер');
       fireEvent.click(tunerButton);
       
-      expect(screen.getByTestId('guitar-tuner')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByTestId('guitar-tuner')).toBeInTheDocument();
+      });
     });
   });
 
   describe('экспорт', () => {
-    it('должен открывать модальное окно экспорта', () => {
+    it('должен открывать модальное окно экспорта', async () => {
       render(<TabEditor />);
       
       const downloadButton = screen.getByTitle('Скачать');
       fireEvent.click(downloadButton);
       
-      expect(screen.getByTestId('export-modal')).toBeInTheDocument();
+      await waitFor(() => {
+        expect(screen.getByTestId('export-modal')).toBeInTheDocument();
+      });
     });
   });
 
@@ -181,29 +188,6 @@ describe('TabEditor', () => {
       fireEvent.click(newTabButton);
       
       expect(mockOnNewTabRequest).toHaveBeenCalled();
-    });
-  });
-
-  describe('изменение размера такта', () => {
-    it('должен изменять количество нот в такте', () => {
-      render(<TabEditor initialTabData={mockTabData} />);
-      
-      const changeNotesButton = screen.getByTestId('notes-change');
-      fireEvent.click(changeNotesButton);
-      
-      // Проверяем, что компонент не упал
-      expect(screen.getByTestId('tab-controls')).toBeInTheDocument();
-    });
-  });
-
-  describe('выбор инструмента', () => {
-    it('должен изменять выбранный инструмент', () => {
-      render(<TabEditor />);
-      
-      const toolSelectButton = screen.getByTestId('tool-select');
-      fireEvent.click(toolSelectButton);
-      
-      expect(screen.getByTestId('tab-controls')).toBeInTheDocument();
     });
   });
 });

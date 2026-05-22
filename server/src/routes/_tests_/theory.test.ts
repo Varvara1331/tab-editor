@@ -28,7 +28,7 @@ describe('Theory Routes', () => {
   });
 
   describe('GET /api/theory/progress', () => {
-    it('should return user progress', async () => {
+    it('должен возвращать прогресс пользователя', async () => {
       (TheoryProgressModel.getProgress as jest.Mock).mockResolvedValue(mockProgress);
 
       const response = await request(app).get('/api/theory/progress');
@@ -38,7 +38,7 @@ describe('Theory Routes', () => {
       expect(response.body.data).toEqual(mockProgress);
     });
 
-    it('should return default progress when user has no progress', async () => {
+    it('должен возвращать прогресс по умолчанию если у пользователя нет прогресса', async () => {
       (TheoryProgressModel.getProgress as jest.Mock).mockResolvedValue(null);
 
       const response = await request(app).get('/api/theory/progress');
@@ -49,7 +49,7 @@ describe('Theory Routes', () => {
       expect(response.body.data.totalPoints).toBe(0);
     });
 
-    it('should return 401 when user not authenticated', async () => {
+    it('должен возвращать 401 если пользователь не авторизован', async () => {
       jest.resetModules();
       jest.doMock('../../middleware/auth', () => ({
         protect: (req: any, _res: any, next: any) => {
@@ -69,7 +69,7 @@ describe('Theory Routes', () => {
       expect(response.body.success).toBe(false);
     });
 
-    it('should handle server error', async () => {
+    it('должен обрабатывать ошибку сервера', async () => {
       (TheoryProgressModel.getProgress as jest.Mock).mockRejectedValue(new Error('DB Error'));
 
       const response = await request(app).get('/api/theory/progress');
@@ -81,7 +81,7 @@ describe('Theory Routes', () => {
   });
 
   describe('PUT /api/theory/progress', () => {
-    it('should update user progress', async () => {
+    it('должен обновлять прогресс пользователя', async () => {
       (TheoryProgressModel.upsertProgress as jest.Mock).mockResolvedValue(mockProgress);
 
       const response = await request(app)
@@ -93,7 +93,7 @@ describe('Theory Routes', () => {
       expect(response.body.data).toEqual(mockProgress);
     });
 
-    it('should handle server error', async () => {
+    it('должен обрабатывать ошибку сервера', async () => {
       (TheoryProgressModel.upsertProgress as jest.Mock).mockRejectedValue(new Error('DB Error'));
 
       const response = await request(app)
@@ -107,7 +107,7 @@ describe('Theory Routes', () => {
   });
 
   describe('POST /api/theory/progress/complete', () => {
-    it('should complete article', async () => {
+    it('должен отмечать статью как пройденную', async () => {
       (TheoryProgressModel.completeArticle as jest.Mock).mockResolvedValue(mockProgress);
 
       const response = await request(app)
@@ -119,7 +119,7 @@ describe('Theory Routes', () => {
       expect(response.body.data).toEqual(mockProgress);
     });
 
-    it('should return 400 when articleId is missing', async () => {
+    it('должен возвращать 400 если articleId отсутствует', async () => {
       const response = await request(app)
         .post('/api/theory/progress/complete')
         .send({ quizScore: 85 });
@@ -128,7 +128,7 @@ describe('Theory Routes', () => {
       expect(response.body.error).toBe('ID статьи обязателен');
     });
 
-    it('should complete article without quizScore', async () => {
+    it('должен отмечать статью как пройденную без quizScore', async () => {
       (TheoryProgressModel.completeArticle as jest.Mock).mockResolvedValue({
         ...mockProgress,
         quizScores: {},
@@ -142,7 +142,7 @@ describe('Theory Routes', () => {
       expect(response.body.success).toBe(true);
     });
 
-    it('should handle server error', async () => {
+    it('должен обрабатывать ошибку сервера', async () => {
       (TheoryProgressModel.completeArticle as jest.Mock).mockRejectedValue(new Error('DB Error'));
 
       const response = await request(app)
@@ -156,7 +156,7 @@ describe('Theory Routes', () => {
   });
 
   describe('GET /api/theory/statistics', () => {
-    it('should return statistics', async () => {
+    it('должен возвращать статистику прогресса', async () => {
       const mockStatistics = {
         totalArticlesCompleted: 1,
         totalPoints: 85,
@@ -172,7 +172,7 @@ describe('Theory Routes', () => {
       expect(response.body.data).toEqual(mockStatistics);
     });
 
-    it('should handle server error', async () => {
+    it('должен обрабатывать ошибку сервера', async () => {
       (TheoryProgressModel.getStatistics as jest.Mock).mockRejectedValue(new Error('DB Error'));
 
       const response = await request(app).get('/api/theory/statistics');
@@ -184,7 +184,7 @@ describe('Theory Routes', () => {
   });
 
   describe('GET /api/theory/leaderboard', () => {
-    it('should return leaderboard', async () => {
+    it('должен возвращать таблицу лидеров', async () => {
       const mockLeaderboard = [
         { userId: 1, username: 'user1', totalPoints: 100, articlesCompleted: 5 },
         { userId: 2, username: 'user2', totalPoints: 80, articlesCompleted: 4 },
@@ -198,7 +198,7 @@ describe('Theory Routes', () => {
       expect(response.body.data).toEqual(mockLeaderboard);
     });
 
-    it('should use default limit when not provided', async () => {
+    it('должен использовать лимит по умолчанию когда не указан', async () => {
       (TheoryProgressModel.getLeaderboard as jest.Mock).mockResolvedValue([]);
 
       const response = await request(app).get('/api/theory/leaderboard');
@@ -207,7 +207,7 @@ describe('Theory Routes', () => {
       expect(TheoryProgressModel.getLeaderboard).toHaveBeenCalledWith(10);
     });
 
-    it('should use custom limit from query', async () => {
+    it('должен использовать пользовательский лимит из запроса', async () => {
       (TheoryProgressModel.getLeaderboard as jest.Mock).mockResolvedValue([]);
 
       const response = await request(app).get('/api/theory/leaderboard?limit=5');
@@ -216,7 +216,7 @@ describe('Theory Routes', () => {
       expect(TheoryProgressModel.getLeaderboard).toHaveBeenCalledWith(5);
     });
 
-    it('should handle server error', async () => {
+    it('должен обрабатывать ошибку сервера', async () => {
       (TheoryProgressModel.getLeaderboard as jest.Mock).mockRejectedValue(new Error('DB Error'));
 
       const response = await request(app).get('/api/theory/leaderboard');
@@ -228,7 +228,7 @@ describe('Theory Routes', () => {
   });
 
   describe('GET /api/theory/completed/:articleId', () => {
-    it('should return true if article completed', async () => {
+    it('должен возвращать true если статья пройдена', async () => {
       (TheoryProgressModel.isArticleCompleted as jest.Mock).mockResolvedValue(true);
       (TheoryProgressModel.getArticleScore as jest.Mock).mockResolvedValue(85);
 
@@ -240,7 +240,7 @@ describe('Theory Routes', () => {
       expect(response.body.data.score).toBe(85);
     });
 
-    it('should return false if article not completed', async () => {
+    it('должен возвращать false если статья не пройдена', async () => {
       (TheoryProgressModel.isArticleCompleted as jest.Mock).mockResolvedValue(false);
       (TheoryProgressModel.getArticleScore as jest.Mock).mockResolvedValue(null);
 
@@ -252,7 +252,7 @@ describe('Theory Routes', () => {
       expect(response.body.data.score).toBeNull();
     });
 
-    it('should handle server error', async () => {
+    it('должен обрабатывать ошибку сервера', async () => {
       (TheoryProgressModel.isArticleCompleted as jest.Mock).mockRejectedValue(new Error('DB Error'));
 
       const response = await request(app).get('/api/theory/completed/article-1');

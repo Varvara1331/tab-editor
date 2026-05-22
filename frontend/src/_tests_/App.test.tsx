@@ -1,13 +1,11 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import App from '../App';
 import { useAuthState } from '../hooks/useAuthState';
 import { useNavigation } from '../hooks/useNavigation';
 
-// Моки для хуков
 jest.mock('../hooks/useAuthState');
 jest.mock('../hooks/useNavigation');
 
-// Моки для компонентов
 jest.mock('../components/editor/TabEditor', () => (props: any) => (
   <div data-testid="tab-editor">
     Tab Editor
@@ -15,24 +13,28 @@ jest.mock('../components/editor/TabEditor', () => (props: any) => (
     <button data-testid="save-tab-btn" onClick={props.onTabSaved}>Save Tab</button>
   </div>
 ));
+
 jest.mock('../components/auth/Auth', () => ({ onAuthSuccess }: any) => (
   <div data-testid="auth-component">
     Auth Component
     <button onClick={onAuthSuccess}>Login</button>
   </div>
 ));
+
 jest.mock('../components/library/Library', () => ({ onSelectTab, refreshTrigger, onFavoritesChanged, onTabDeleted }: any) => (
   <div data-testid="library-component">
     Library Component
     <button onClick={() => onSelectTab({ id: 1, title: 'Library Tab' })}>Select Tab</button>
   </div>
 ));
+
 jest.mock('../components/public/PublicTabs', () => ({ onSelectTab, onFavoritesChanged }: any) => (
   <div data-testid="public-tabs-component">
     Public Tabs Component
     <button onClick={() => onSelectTab({ id: 2, title: 'Public Tab' })}>Select Public Tab</button>
   </div>
 ));
+
 jest.mock('../components/theory/Theory', () => () => <div data-testid="theory-component">Theory Component</div>);
 
 describe('App', () => {
@@ -113,7 +115,8 @@ describe('App', () => {
 
     it('должен отображать кнопки навигации', () => {
       render(<App />);
-      expect(screen.getByLabelText('Редактор табулатур')).toBeInTheDocument();
+      // Используем getAllByLabelText + первый элемент, так как есть дублирующиеся aria-label
+      expect(screen.getAllByLabelText('Редактор табулатур')[0]).toBeInTheDocument();
       expect(screen.getByLabelText('Моя библиотека')).toBeInTheDocument();
       expect(screen.getByLabelText('Публичные табулатуры')).toBeInTheDocument();
       expect(screen.getByLabelText('Теория музыки')).toBeInTheDocument();
@@ -156,6 +159,8 @@ describe('App', () => {
       });
       render(<App />);
       expect(screen.getByTestId('library-component')).toBeInTheDocument();
+      // Редактор должен быть скрыт, но все еще в DOM
+      expect(screen.getByTestId('tab-editor')).toBeInTheDocument();
     });
 
     it('должен показывать публичные табулатуры при активной вкладке public', () => {

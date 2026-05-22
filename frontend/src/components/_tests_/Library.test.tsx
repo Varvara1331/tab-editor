@@ -1,13 +1,11 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import Library from '../library/Library';
 import { useTabsLibrary } from '../../hooks/useTabsLibrary';
 import { useAuth } from '../../hooks/useAuth';
 
-// Моки для хуков
 jest.mock('../../hooks/useTabsLibrary');
 jest.mock('../../hooks/useAuth');
 
-// Моки для дочерних компонентов
 jest.mock('../common/SearchBar', () => ({ value, onChange, onClear, placeholder }: any) => (
   <div data-testid="search-bar-wrapper">
     <input
@@ -59,8 +57,6 @@ jest.mock('../modals/ImportModal', () => ({ isOpen, onClose, onImportSuccess }: 
 
 describe('Library', () => {
   const mockOnSelectTab = jest.fn();
-  const mockOnFavoritesChanged = jest.fn();
-  const mockOnTabDeleted = jest.fn();
 
   const mockUser = { id: 1, username: 'testuser', email: 'test@test.com', createdAt: '2024-01-01' };
   

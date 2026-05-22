@@ -18,7 +18,7 @@ describe('tabService', () => {
   });
 
   describe('getUserTabs', () => {
-    it('should return user tabs', async () => {
+    it('должен возвращать список табулатур пользователя при успешном запросе', async () => {
       const mockTabs = [{ id: 1, title: 'Tab 1' }];
       mockApi.get.mockResolvedValue({
         data: { success: true, data: mockTabs },
@@ -29,7 +29,7 @@ describe('tabService', () => {
       expect(mockApi.get).toHaveBeenCalledWith('/tabs');
     });
 
-    it('should return empty array on error', async () => {
+    it('должен возвращать пустой массив при ошибке запроса', async () => {
       mockApi.get.mockRejectedValue(new Error('Network error'));
       const result = await tabService.getUserTabs();
       expect(result).toEqual([]);
@@ -37,7 +37,7 @@ describe('tabService', () => {
   });
 
   describe('getFavorites', () => {
-    it('should return favorites', async () => {
+    it('должен возвращать список избранных табулатур при успешном запросе', async () => {
       const mockFavorites = [{ id: 1, title: 'Favorite 1', addedAt: '2024-01-01' }];
       mockApi.get.mockResolvedValue({
         data: { success: true, data: mockFavorites },
@@ -48,7 +48,7 @@ describe('tabService', () => {
       expect(mockApi.get).toHaveBeenCalledWith('/tabs/favorites');
     });
 
-    it('should return empty array on error', async () => {
+    it('должен возвращать пустой массив при ошибке запроса', async () => {
       mockApi.get.mockRejectedValue(new Error('Error'));
       const result = await tabService.getFavorites();
       expect(result).toEqual([]);
@@ -65,7 +65,7 @@ describe('tabService', () => {
       isPublic: false,
     };
 
-    it('should create new tab', async () => {
+    it('должен создавать новую табулатуру при отсутствии id', async () => {
       const createdTab = { id: 1, title: 'New Tab' };
       mockApi.post.mockResolvedValue({
         data: { success: true, data: createdTab },
@@ -76,7 +76,7 @@ describe('tabService', () => {
       expect(mockApi.post).toHaveBeenCalled();
     });
 
-    it('should update existing tab', async () => {
+    it('должен обновлять существующую табулатуру при наличии id', async () => {
       const existingTab = { ...mockTabData, id: 1 };
       const updatedTab = { id: 1, title: 'Updated Tab' };
       mockApi.put.mockResolvedValue({
@@ -88,7 +88,7 @@ describe('tabService', () => {
       expect(mockApi.put).toHaveBeenCalled();
     });
 
-    it('should return null for invalid tab data', async () => {
+    it('должен возвращать null при невалидных данных табулатуры', async () => {
       const result = await tabService.saveTab({} as any);
       expect(result).toBeNull();
     });

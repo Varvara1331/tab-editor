@@ -1,7 +1,6 @@
 import { ApiError, ApiErrorType, normalizeError, getErrorMessage } from '../errors';
 import axios from 'axios';
 
-// Мок для axios.isAxiosError
 jest.mock('axios', () => ({
   isAxiosError: jest.fn(),
 }));
@@ -12,20 +11,20 @@ describe('errors', () => {
   });
 
   describe('ApiError', () => {
-    it('should create error with default type', () => {
+    it('должен создавать ошибку с типом UNKNOWN по умолчанию', () => {
       const error = new ApiError('Test error');
       expect(error.message).toBe('Test error');
       expect(error.type).toBe(ApiErrorType.UNKNOWN);
       expect(error.name).toBe('ApiError');
     });
 
-    it('should create error with specified type', () => {
+    it('должен создавать ошибку с указанным типом и статус кодом', () => {
       const error = new ApiError('Server error', ApiErrorType.SERVER, 500);
       expect(error.type).toBe(ApiErrorType.SERVER);
       expect(error.statusCode).toBe(500);
     });
 
-    it('should preserve original error', () => {
+    it('должен сохранять ссылку на оригинальную ошибку', () => {
       const original = new Error('Original');
       const error = new ApiError('Wrapped', ApiErrorType.NETWORK, undefined, original);
       expect(error.originalError).toBe(original);
@@ -33,47 +32,46 @@ describe('errors', () => {
   });
 
   describe('normalizeError', () => {
-    it('should return ApiError as is', () => {
+    it('должен возвращать ApiError без изменений', () => {
       const apiError = new ApiError('Test');
       const result = normalizeError(apiError, 'Default');
       expect(result).toBe(apiError);
     });
 
-    it('should convert Error to ApiError', () => {
+    it('должен преобразовывать стандартную Error в ApiError', () => {
       const error = new Error('Original error');
       const result = normalizeError(error, 'Default');
       expect(result).toBeInstanceOf(ApiError);
       expect(result.message).toBe('Original error');
     });
 
-    it('should convert string to ApiError', () => {
+    it('должен преобразовывать строку в ApiError', () => {
       const result = normalizeError('String error', 'Default');
       expect(result.message).toBe('String error');
     });
 
-    it('should convert unknown error to ApiError with default message', () => {
+    it('должен преобразовывать неизвестную ошибку в ApiError с сообщением по умолчанию', () => {
       const result = normalizeError({}, 'Default message');
       expect(result.message).toBe('Default message');
     });
   });
 
   describe('getErrorMessage', () => {
-    it('should return message from ApiError', () => {
+    it('должен возвращать сообщение из ApiError', () => {
       const error = new ApiError('Custom message');
       expect(getErrorMessage(error)).toBe('Custom message');
     });
 
-    it('should return message from Error', () => {
+    it('должен возвращать сообщение из стандартной Error', () => {
       const error = new Error('JS Error');
       expect(getErrorMessage(error)).toBe('JS Error');
     });
 
-    it('should return string as is', () => {
+    it('должен возвращать строку как есть', () => {
       expect(getErrorMessage('String error')).toBe('String error');
     });
 
-    it('should extract error from Axios-like response', () => {
-      // Создаём настоящий AxiosError с помощью конструктора
+    it('должен извлекать сообщение из ответа Axios-подобной ошибки', () => {
       const axiosError = new Error('Axios error') as any;
       axiosError.isAxiosError = true;
       axiosError.response = { data: { error: 'Axios error' } };
@@ -81,7 +79,7 @@ describe('errors', () => {
       expect(getErrorMessage(axiosError)).toBe('Axios error');
     });
 
-    it('should return fallback for empty object', () => {
+    it('должен возвращать сообщение по умолчанию для пустого объекта', () => {
       expect(getErrorMessage({}, 'Fallback')).toBe('Fallback');
     });
   });

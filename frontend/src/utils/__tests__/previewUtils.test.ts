@@ -2,70 +2,70 @@ import { getPreviewText, hasPreview, truncatePreview } from '../previewUtils';
 
 describe('previewUtils', () => {
   describe('getPreviewText', () => {
-    it('should return preview text when valid preview provided', () => {
+    it('должен возвращать текст превью для валидного превью', () => {
       const preview = '0 3 5 0 3 5';
       expect(getPreviewText(preview)).toBe('0 3 5 0 3 5');
     });
 
-    it('should return "Нет превью" for undefined preview', () => {
+    it('должен возвращать "Нет превью" для undefined', () => {
       expect(getPreviewText(undefined)).toBe('Нет превью');
     });
 
-    it('should return "Нет превью" for empty string preview', () => {
+    it('должен возвращать "Нет превью" для пустой строки', () => {
       expect(getPreviewText('')).toBe('Нет превью');
     });
 
-    it('should return "Нет превью" when preview is "..."', () => {
+    it('должен возвращать "Нет превью" когда превью равно "..."', () => {
       expect(getPreviewText('...')).toBe('Нет превью');
     });
   });
 
   describe('hasPreview', () => {
-    it('should return true for valid preview', () => {
+    it('должен возвращать true для валидного превью', () => {
       expect(hasPreview('0 3 5')).toBe(true);
     });
 
-    it('should return false for undefined preview', () => {
+    it('должен возвращать false для undefined', () => {
       expect(hasPreview(undefined)).toBe(false);
     });
 
-    it('should return false for empty string', () => {
+    it('должен возвращать false для пустой строки', () => {
       expect(hasPreview('')).toBe(false);
     });
 
-    it('should return false for "..." preview', () => {
+    it('должен возвращать false для превью "..."', () => {
       expect(hasPreview('...')).toBe(false);
     });
   });
 
   describe('truncatePreview', () => {
-    it('should return full preview when shorter than maxLength', () => {
+    it('должен возвращать полное превью если оно короче максимальной длины', () => {
       const preview = '0 3 5';
       expect(truncatePreview(preview, 10)).toBe('0 3 5');
     });
 
-    it('should truncate preview when longer than maxLength', () => {
+    it('должен обрезать превью если оно длиннее максимальной длины', () => {
       const preview = '0 3 5 0 3 5 0 3 5';
       const result = truncatePreview(preview, 10);
       expect(result.length).toBeLessThan(preview.length);
       expect(result).toContain('...');
     });
 
-    it('should return "Нет превью" for undefined preview', () => {
+    it('должен возвращать "Нет превью" для undefined', () => {
       expect(truncatePreview(undefined)).toBe('Нет превью');
     });
 
-    it('should return "Нет превью" for "..." preview', () => {
+    it('должен возвращать "Нет превью" для превью "..."', () => {
       expect(truncatePreview('...')).toBe('Нет превью');
     });
 
-    it('should use default maxLength of 20 when not specified', () => {
+    it('должен использовать максимальную длину 20 по умолчанию', () => {
       const longPreview = '0 3 5 0 3 5 0 3 5 0 3 5 0 3 5';
       const result = truncatePreview(longPreview);
-      expect(result.length).toBeLessThanOrEqual(23); // 20 + '...'
+      expect(result.length).toBeLessThanOrEqual(23);
     });
 
-    it('should trim whitespace before adding ellipsis', () => {
+    it('должен обрезать пробелы перед добавлением многоточия', () => {
       const preview = '0 3 5 0 3 5   ';
       const result = truncatePreview(preview, 8);
       expect(result).not.toContain('  ');

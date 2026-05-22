@@ -1,7 +1,6 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import TabCard from '../common/TabCard';
 
-// Моки для утилит
 jest.mock('../../utils/dateUtils', () => ({
   formatDate: jest.fn().mockReturnValue('15.01.2024'),
 }));

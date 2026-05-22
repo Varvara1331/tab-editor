@@ -1,4 +1,3 @@
-// Мок для базы данных
 const mockDb = {
   run: jest.fn(),
   get: jest.fn(),
@@ -11,7 +10,6 @@ jest.mock('../database', () => ({
   db: mockDb,
 }));
 
-// Подавление логов во время тестов
 beforeAll(() => {
   jest.spyOn(console, 'log').mockImplementation(() => {});
   jest.spyOn(console, 'warn').mockImplementation(() => {});
@@ -26,5 +24,4 @@ afterEach(() => {
   jest.clearAllMocks();
 });
 
-// Экспорт мока для использования в тестах
 export { mockDb };

@@ -1,15 +1,12 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import Auth from '../auth/Auth';
 import { login, register } from '../../services/authService';
 
-// Моки для сервисов
 jest.mock('../../services/authService', () => ({
   login: jest.fn(),
   register: jest.fn(),
 }));
 
-// Мок для изображения
 jest.mock('../../logo512.png', () => 'logo-mock.png', { virtual: true });
 
 describe('Auth', () => {
@@ -127,7 +124,6 @@ describe('Auth', () => {
 
   describe('обработка ошибок', () => {
     it('должен показывать ошибку при неудачном входе', async () => {
-      // Используем пароль правильной длины, чтобы пройти валидацию
       (login as jest.Mock).mockResolvedValue({ 
         success: false, 
         error: 'Неверный пароль' 

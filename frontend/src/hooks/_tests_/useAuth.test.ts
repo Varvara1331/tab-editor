@@ -19,7 +19,7 @@ describe('useAuth', () => {
     jest.clearAllMocks();
   });
 
-  it('should load user on mount', async () => {
+  it('должен загружать данные пользователя при монтировании компонента', async () => {
     (authService.getCurrentUser as jest.Mock).mockReturnValue(mockUser);
 
     const { result } = renderHook(() => useAuth());
@@ -31,7 +31,7 @@ describe('useAuth', () => {
     });
   });
 
-  it('should return null for unauthenticated user', async () => {
+  it('должен возвращать null для неавторизованного пользователя', async () => {
     (authService.getCurrentUser as jest.Mock).mockReturnValue(null);
 
     const { result } = renderHook(() => useAuth());
@@ -43,7 +43,7 @@ describe('useAuth', () => {
     });
   });
 
-  it('should handle logout', async () => {
+  it('должен корректно выполнять выход из системы и очищать данные пользователя', async () => {
     (authService.getCurrentUser as jest.Mock).mockReturnValue(mockUser);
 
     const { result } = renderHook(() => useAuth());
@@ -61,7 +61,7 @@ describe('useAuth', () => {
     expect(result.current.isAuthenticated).toBe(false);
   });
 
-  it('should refresh user', async () => {
+  it('должен обновлять данные пользователя при вызове refreshUser', async () => {
     const updatedUser = { ...mockUser, username: 'updateduser' };
     (authService.getCurrentUser as jest.Mock)
       .mockReturnValueOnce(mockUser)
@@ -84,7 +84,7 @@ describe('useAuth', () => {
 });
 
 describe('useLegacyAuth', () => {
-  it('should return current user and isAuthenticated function', () => {
+  it('должен возвращать объект с текущим пользователем и функцией проверки аутентификации', () => {
     const { result } = renderHook(() => useLegacyAuth());
     expect(result.current).toHaveProperty('currentUser');
     expect(result.current).toHaveProperty('isAuthenticated');

@@ -13,44 +13,44 @@ describe('filterUtils', () => {
   ];
 
   describe('filterBySearchQuery', () => {
-    it('should filter by title', () => {
+    it('должен фильтровать по названию', () => {
       const result = filterBySearchQuery(mockItems, 'Stairway');
       expect(result).toHaveLength(1);
       expect(result[0].title).toBe('Stairway to Heaven');
     });
 
-    it('should filter by artist', () => {
+    it('должен фильтровать по имени исполнителя', () => {
       const result = filterBySearchQuery(mockItems, 'Purple');
       expect(result).toHaveLength(1);
       expect(result[0].artist).toBe('Deep Purple');
     });
 
-    it('should be case insensitive by default', () => {
+    it('должен быть нечувствительным к регистру по умолчанию', () => {
       const result = filterBySearchQuery(mockItems, 'STAIRWAY');
       expect(result).toHaveLength(1);
     });
 
-    it('should respect caseSensitive option', () => {
+    it('должен учитывать регистр при включенной опции caseSensitive', () => {
       const result = filterBySearchQuery(mockItems, 'STAIRWAY', { caseSensitive: true });
       expect(result).toHaveLength(0);
     });
 
-    it('should return all items for empty query', () => {
+    it('должен возвращать все элементы для пустого запроса', () => {
       const result = filterBySearchQuery(mockItems, '');
       expect(result).toHaveLength(3);
     });
 
-    it('should return empty array for no matches', () => {
+    it('должен возвращать пустой массив при отсутствии совпадений', () => {
       const result = filterBySearchQuery(mockItems, 'nonexistent');
       expect(result).toHaveLength(0);
     });
 
-    it('should support exact match mode', () => {
+    it('должен поддерживать режим точного совпадения', () => {
       const result = filterBySearchQuery(mockItems, 'Stairway to Heaven', { matchExact: true });
       expect(result).toHaveLength(1);
     });
 
-    it('should not match partial in exact mode', () => {
+    it('не должен находить частичные совпадения в режиме точного совпадения', () => {
       const result = filterBySearchQuery(mockItems, 'Stairway', { matchExact: true });
       expect(result).toHaveLength(0);
     });
@@ -62,7 +62,7 @@ describe('filterUtils', () => {
       { id: 2, tabData: { title: 'Song 2', artist: 'Artist 2' } },
     ] as any[];
 
-    it('should filter library items by title', () => {
+    it('должен фильтровать элементы библиотеки по названию', () => {
       const result = filterLibraryItems(mockLibraryItems, 'Song 1');
       expect(result).toHaveLength(1);
       expect(result[0].id).toBe(1);
@@ -75,23 +75,23 @@ describe('filterUtils', () => {
       { name: 'Jane Smith', email: 'jane@example.com', age: 25 },
     ];
 
-    it('should filter by specified fields', () => {
+    it('должен фильтровать по указанным полям', () => {
       const result = filterByFields(users, 'john', ['name', 'email']);
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe('John Doe');
     });
 
-    it('should search in multiple fields', () => {
+    it('должен выполнять поиск по нескольким полям', () => {
       const result = filterByFields(users, 'example', ['name', 'email']);
       expect(result).toHaveLength(2);
     });
 
-    it('should return all items for empty query', () => {
+    it('должен возвращать все элементы для пустого запроса', () => {
       const result = filterByFields(users, '', ['name']);
       expect(result).toHaveLength(2);
     });
 
-    it('should handle case sensitivity', () => {
+    it('должен обрабатывать чувствительность к регистру', () => {
       const result = filterByFields(users, 'JOHN', ['name'], { caseSensitive: true });
       expect(result).toHaveLength(0);
     });

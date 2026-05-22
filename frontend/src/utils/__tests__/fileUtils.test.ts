@@ -9,37 +9,37 @@ import {
 
 describe('fileUtils', () => {
   describe('getFileExtension', () => {
-    it('should return extension for simple filename', () => {
+    it('должен возвращать расширение для простого имени файла', () => {
       expect(getFileExtension('document.txt')).toBe('txt');
     });
 
-    it('should return extension for filename with multiple dots', () => {
+    it('должен возвращать расширение для имени файла с несколькими точками', () => {
       expect(getFileExtension('archive.tar.gz')).toBe('gz');
     });
 
-    it('should return the last part for filename without extension', () => {
+    it('должен возвращать исходное имя для файла без расширения', () => {
       expect(getFileExtension('filename')).toBe('filename');
     });
 
-    it('should handle empty string', () => {
+    it('должен обрабатывать пустую строку', () => {
       expect(getFileExtension('')).toBe('');
     });
   });
 
   describe('isGpJsonFile', () => {
-    it('should return true for .gp.json extension', () => {
+    it('должен возвращать true для расширения .gp.json', () => {
       expect(isGpJsonFile('song.gp.json')).toBe(true);
     });
 
-    it('should return false for regular .json', () => {
+    it('должен возвращать false для обычного .json', () => {
       expect(isGpJsonFile('song.json')).toBe(false);
     });
 
-    it('should return false for other extensions', () => {
+    it('должен возвращать false для других расширений', () => {
       expect(isGpJsonFile('song.txt')).toBe(false);
     });
 
-    it('should be case insensitive', () => {
+    it('должен быть нечувствительным к регистру', () => {
       expect(isGpJsonFile('SONG.GP.JSON')).toBe(true);
     });
   });
@@ -49,52 +49,52 @@ describe('fileUtils', () => {
       return { name, size } as File;
     };
 
-    it('should return valid for allowed extension and size', () => {
+    it('должен возвращать валидный результат для разрешенного расширения и размера', () => {
       const file = createMockFile('tab.json', 1024);
       const result = validateFile(file, { extensions: ['json'], maxSizeMB: 1 });
       expect(result.valid).toBe(true);
     });
 
-    it('should return invalid for wrong extension', () => {
+    it('должен возвращать невалидный результат для неподдерживаемого расширения', () => {
       const file = createMockFile('tab.txt', 1024);
       const result = validateFile(file, { extensions: ['json'], maxSizeMB: 1 });
       expect(result.valid).toBe(false);
       expect(result.error).toContain('Поддерживаются только файлы');
     });
 
-    it('should return invalid for file too large', () => {
+    it('должен возвращать невалидный результат для слишком большого файла', () => {
       const file = createMockFile('tab.json', 2 * 1024 * 1024);
       const result = validateFile(file, { extensions: ['json'], maxSizeMB: 1 });
       expect(result.valid).toBe(false);
       expect(result.error).toContain('слишком большой');
     });
 
-    it('should handle .gp.json extension correctly', () => {
+    it('должен корректно обрабатывать расширение .gp.json', () => {
       const file = createMockFile('tab.gp.json', 1024);
       const result = validateFile(file, { extensions: ['gp.json'], maxSizeMB: 1 });
       expect(result.valid).toBe(true);
     });
 
-    it('should handle empty extensions array', () => {
+    it('должен обрабатывать пустой массив расширений', () => {
       const file = createMockFile('test.txt', 100);
       const result = validateFile(file, { extensions: [], maxSizeMB: 1 });
       expect(result.valid).toBe(false);
       expect(result.error).toContain('Поддерживаются только файлы');
     });
 
-    it('should handle case insensitive extension check', () => {
+    it('должен быть нечувствительным к регистру при проверке расширения', () => {
       const file = createMockFile('tab.JSON', 1024);
       const result = validateFile(file, { extensions: ['json'], maxSizeMB: 1 });
       expect(result.valid).toBe(true);
     });
 
-    it('should return valid for file exactly at size limit', () => {
+    it('должен возвращать валидный результат для файла точно по лимиту размера', () => {
       const file = createMockFile('tab.json', 1 * 1024 * 1024);
       const result = validateFile(file, { extensions: ['json'], maxSizeMB: 1 });
       expect(result.valid).toBe(true);
     });
 
-    it('should return invalid for file slightly over size limit', () => {
+    it('должен возвращать невалидный результат для файла немного превышающего лимит', () => {
       const file = createMockFile('tab.json', 1 * 1024 * 1024 + 1);
       const result = validateFile(file, { extensions: ['json'], maxSizeMB: 1 });
       expect(result.valid).toBe(false);
@@ -103,14 +103,14 @@ describe('fileUtils', () => {
   });
 
   describe('readFileAsText', () => {
-    it('should read file as text successfully', async () => {
+    it('должен успешно читать файл как текст', async () => {
       const content = 'test file content';
       const file = new File([content], 'test.txt', { type: 'text/plain' });
       const result = await readFileAsText(file);
       expect(result).toBe(content);
     });
 
-    it('should handle empty file', async () => {
+    it('должен обрабатывать пустой файл', async () => {
       const file = new File([], 'empty.txt', { type: 'text/plain' });
       const result = await readFileAsText(file);
       expect(result).toBe('');
@@ -118,14 +118,14 @@ describe('fileUtils', () => {
   });
 
   describe('fileToDataUrl', () => {
-    it('should convert file to data URL', async () => {
+    it('должен преобразовывать файл в data URL', async () => {
       const content = 'test';
       const file = new File([content], 'test.txt', { type: 'text/plain' });
       const result = await fileToDataUrl(file);
       expect(result).toMatch(/^data:text\/plain;base64,/);
     });
 
-    it('should handle empty file', async () => {
+    it('должен обрабатывать пустой файл', async () => {
       const file = new File([], 'empty.txt', { type: 'text/plain' });
       const result = await fileToDataUrl(file);
       expect(result).toMatch(/^data:text\/plain;base64,/);
@@ -133,38 +133,38 @@ describe('fileUtils', () => {
   });
 
   describe('formatFileSize', () => {
-    it('should format bytes', () => {
+    it('должен форматировать байты', () => {
       expect(formatFileSize(500)).toBe('500 B');
     });
 
-    it('should format kilobytes', () => {
+    it('должен форматировать килобайты', () => {
       expect(formatFileSize(1024)).toMatch(/1(\.0)? KB/);
     });
 
-    it('should format megabytes', () => {
+    it('должен форматировать мегабайты', () => {
       expect(formatFileSize(1.5 * 1024 * 1024)).toMatch(/1(\.5)? MB/);
     });
 
-    it('should format gigabytes', () => {
+    it('должен форматировать гигабайты', () => {
       const result = formatFileSize(2 * 1024 * 1024 * 1024);
       expect(result).toMatch(/2(\.0)? GB/);
     });
 
-    it('should handle zero bytes', () => {
+    it('должен обрабатывать ноль байт', () => {
       expect(formatFileSize(0)).toBe('0 B');
     });
 
-    it('should respect decimal places', () => {
+    it('должен учитывать количество десятичных знаков', () => {
       const result = formatFileSize(1536, 2);
       expect(result).toMatch(/1(\.5|\.50)? KB/);
     });
 
-    it('should handle negative decimals', () => {
+    it('должен обрабатывать отрицательное количество десятичных знаков', () => {
       const result = formatFileSize(1024, -1);
       expect(result).toBe('1 KB');
     });
 
-    it('should handle zero decimals', () => {
+    it('должен обрабатывать ноль десятичных знаков', () => {
       const result = formatFileSize(1536, 0);
       expect(result).toBe('2 KB');
     });

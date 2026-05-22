@@ -26,7 +26,7 @@ describe('Auth Middleware', () => {
   describe('protect', () => {
     const mockUser = { id: 1, username: 'testuser', email: 'test@test.com' };
 
-    it('should return 401 if no authorization header', async () => {
+    it('должен возвращать 401 при отсутствии заголовка авторизации', async () => {
       await protect(req, res, next);
 
       expect(res.status).toHaveBeenCalledWith(401);
@@ -37,7 +37,7 @@ describe('Auth Middleware', () => {
       expect(next).not.toHaveBeenCalled();
     });
 
-    it('should return 401 if header does not start with Bearer', async () => {
+    it('должен возвращать 401 если заголовок не начинается с Bearer', async () => {
       req.headers.authorization = 'Basic token';
 
       await protect(req, res, next);
@@ -49,7 +49,7 @@ describe('Auth Middleware', () => {
       });
     });
 
-    it('should return 401 if token is missing', async () => {
+    it('должен возвращать 401 если токен отсутствует после Bearer', async () => {
       req.headers.authorization = 'Bearer';
 
       await protect(req, res, next);
@@ -61,7 +61,7 @@ describe('Auth Middleware', () => {
       });
     });
 
-    it('should return 401 if token verification fails', async () => {
+    it('должен возвращать 401 если верификация токена не удалась', async () => {
       req.headers.authorization = 'Bearer invalid-token';
       (verifyToken as jest.Mock).mockImplementation(() => {
         throw new Error('Invalid token');
@@ -76,7 +76,7 @@ describe('Auth Middleware', () => {
       });
     });
 
-    it('should return 401 if user not found', async () => {
+    it('должен возвращать 401 если пользователь не найден', async () => {
       req.headers.authorization = 'Bearer valid-token';
       (verifyToken as jest.Mock).mockReturnValue({ id: 999 });
       (UserModel.findById as jest.Mock).mockResolvedValue(null);
@@ -90,7 +90,7 @@ describe('Auth Middleware', () => {
       });
     });
 
-    it('should call next and set req.user on success', async () => {
+    it('должен вызывать next и устанавливать req.user при успешной авторизации', async () => {
       req.headers.authorization = 'Bearer valid-token';
       (verifyToken as jest.Mock).mockReturnValue({ id: 1 });
       (UserModel.findById as jest.Mock).mockResolvedValue(mockUser);

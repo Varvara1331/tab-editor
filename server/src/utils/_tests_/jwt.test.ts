@@ -17,7 +17,7 @@ describe('JWT Utils', () => {
   });
 
   describe('generateToken', () => {
-    it('should generate token with user id', () => {
+    it('должен генерировать токен с ID пользователя', () => {
       const mockToken = 'mock-jwt-token';
       (jwt.sign as jest.Mock).mockReturnValue(mockToken);
 
@@ -33,7 +33,7 @@ describe('JWT Utils', () => {
   });
 
   describe('verifyToken', () => {
-    it('should verify and decode valid token', () => {
+    it('должен верифицировать и декодировать валидный токен', () => {
       const mockDecoded = { id: 123, iat: 1234567890, exp: 1234567890 };
       (jwt.verify as jest.Mock).mockReturnValue(mockDecoded);
 
@@ -43,7 +43,7 @@ describe('JWT Utils', () => {
       expect(result).toEqual(mockDecoded);
     });
 
-    it('should throw error for invalid token', () => {
+    it('должен выбрасывать ошибку для невалидного токена', () => {
       (jwt.verify as jest.Mock).mockImplementation(() => {
         throw new Error('Invalid token');
       });

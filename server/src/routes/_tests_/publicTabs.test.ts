@@ -31,7 +31,7 @@ describe('Public Tabs Routes', () => {
   });
 
   describe('GET /api/public-tabs', () => {
-    it('should return public tabs with pagination', async () => {
+    it('должен возвращать публичные табулатуры с пагинацией', async () => {
       (TabModel.findPublicTabs as jest.Mock).mockResolvedValue([mockPublicTab]);
       (LibraryModel.findByUserId as jest.Mock).mockResolvedValue([]);
 
@@ -47,7 +47,7 @@ describe('Public Tabs Routes', () => {
       });
     });
 
-    it('should use default pagination values', async () => {
+    it('должен использовать значения пагинации по умолчанию', async () => {
       (TabModel.findPublicTabs as jest.Mock).mockResolvedValue([mockPublicTab]);
       (LibraryModel.findByUserId as jest.Mock).mockResolvedValue([]);
 
@@ -58,7 +58,7 @@ describe('Public Tabs Routes', () => {
       expect(response.body.pagination.offset).toBe(0);
     });
 
-    it('should handle server error', async () => {
+    it('должен обрабатывать ошибку сервера', async () => {
       (TabModel.findPublicTabs as jest.Mock).mockRejectedValue(new Error('DB Error'));
 
       const response = await request(app).get('/api/public-tabs');
@@ -70,7 +70,7 @@ describe('Public Tabs Routes', () => {
   });
 
   describe('GET /api/public-tabs/:id', () => {
-    it('should return public tab by id', async () => {
+    it('должен возвращать публичную табулатуру по ID', async () => {
       (TabModel.findById as jest.Mock).mockResolvedValue(mockPublicTab);
       (TabModel.incrementViews as jest.Mock).mockResolvedValue(undefined);
 
@@ -81,7 +81,7 @@ describe('Public Tabs Routes', () => {
       expect(response.body.data).toEqual(mockPublicTab);
     });
 
-    it('should return 404 if tab not found', async () => {
+    it('должен возвращать 404 если табулатура не найдена', async () => {
       (TabModel.findById as jest.Mock).mockResolvedValue(null);
 
       const response = await request(app).get('/api/public-tabs/999');
@@ -90,7 +90,7 @@ describe('Public Tabs Routes', () => {
       expect(response.body.error).toBe('Табулатура не найдена');
     });
 
-    it('should return 403 if tab is not public', async () => {
+    it('должен возвращать 403 если табулатура не является публичной', async () => {
       (TabModel.findById as jest.Mock).mockResolvedValue({ ...mockPublicTab, isPublic: false });
 
       const response = await request(app).get('/api/public-tabs/1');
@@ -99,7 +99,7 @@ describe('Public Tabs Routes', () => {
       expect(response.body.error).toBe('Эта табулатура не является публичной');
     });
 
-    it('should handle server error', async () => {
+    it('должен обрабатывать ошибку сервера', async () => {
       (TabModel.findById as jest.Mock).mockRejectedValue(new Error('DB Error'));
 
       const response = await request(app).get('/api/public-tabs/1');
@@ -110,7 +110,7 @@ describe('Public Tabs Routes', () => {
   });
 
   describe('POST /api/public-tabs/:id/library', () => {
-    it('should add tab to library', async () => {
+    it('должен добавлять табулатуру в библиотеку', async () => {
       (TabModel.findById as jest.Mock).mockResolvedValue(mockPublicTab);
       (LibraryModel.checkExists as jest.Mock).mockResolvedValue(false);
       (LibraryModel.addFromPublication as jest.Mock).mockResolvedValue({ id: 1 });
@@ -122,7 +122,7 @@ describe('Public Tabs Routes', () => {
       expect(response.body.message).toBe('Табулатура добавлена в библиотеку');
     });
 
-    it('should return 404 if tab not found', async () => {
+    it('должен возвращать 404 если табулатура не найдена', async () => {
       (TabModel.findById as jest.Mock).mockResolvedValue(null);
 
       const response = await request(app).post('/api/public-tabs/999/library');
@@ -131,7 +131,7 @@ describe('Public Tabs Routes', () => {
       expect(response.body.error).toBe('Табулатура не найдена');
     });
 
-    it('should return 403 if tab is not public', async () => {
+    it('должен возвращать 403 если табулатура не является публичной', async () => {
       (TabModel.findById as jest.Mock).mockResolvedValue({ ...mockPublicTab, isPublic: false });
 
       const response = await request(app).post('/api/public-tabs/1/library');
@@ -140,7 +140,7 @@ describe('Public Tabs Routes', () => {
       expect(response.body.error).toBe('Эта табулатура не является публичной');
     });
 
-    it('should return 400 if tab already in library', async () => {
+    it('должен возвращать 400 если табулатура уже в библиотеке', async () => {
       (TabModel.findById as jest.Mock).mockResolvedValue(mockPublicTab);
       (LibraryModel.checkExists as jest.Mock).mockResolvedValue(true);
 
@@ -150,7 +150,7 @@ describe('Public Tabs Routes', () => {
       expect(response.body.error).toBe('Табулатура уже добавлена в библиотеку');
     });
 
-    it('should handle server error', async () => {
+    it('должен обрабатывать ошибку сервера', async () => {
       (TabModel.findById as jest.Mock).mockRejectedValue(new Error('DB Error'));
 
       const response = await request(app).post('/api/public-tabs/1/library');
@@ -161,7 +161,7 @@ describe('Public Tabs Routes', () => {
   });
 
   describe('DELETE /api/public-tabs/:id/library', () => {
-    it('should remove tab from library', async () => {
+    it('должен удалять табулатуру из библиотеки', async () => {
       (LibraryModel.removeFromLibrary as jest.Mock).mockResolvedValue(true);
 
       const response = await request(app).delete('/api/public-tabs/1/library');
@@ -171,7 +171,7 @@ describe('Public Tabs Routes', () => {
       expect(response.body.message).toBe('Табулатура удалена из библиотеки');
     });
 
-    it('should return 404 if tab not in library', async () => {
+    it('должен возвращать 404 если табулатура не в библиотеке', async () => {
       (LibraryModel.removeFromLibrary as jest.Mock).mockResolvedValue(false);
 
       const response = await request(app).delete('/api/public-tabs/999/library');
@@ -180,7 +180,7 @@ describe('Public Tabs Routes', () => {
       expect(response.body.error).toBe('Табулатура не найдена в библиотеке');
     });
 
-    it('should handle server error', async () => {
+    it('должен обрабатывать ошибку сервера', async () => {
       (LibraryModel.removeFromLibrary as jest.Mock).mockRejectedValue(new Error('DB Error'));
 
       const response = await request(app).delete('/api/public-tabs/1/library');
@@ -191,7 +191,7 @@ describe('Public Tabs Routes', () => {
   });
 
   describe('GET /api/public-tabs/:id/library/check', () => {
-    it('should return true if tab in library', async () => {
+    it('должен возвращать true если табулатура в библиотеке', async () => {
       (LibraryModel.checkExists as jest.Mock).mockResolvedValue(true);
 
       const response = await request(app).get('/api/public-tabs/1/library/check');
@@ -200,7 +200,7 @@ describe('Public Tabs Routes', () => {
       expect(response.body.data.exists).toBe(true);
     });
 
-    it('should return false if tab not in library', async () => {
+    it('должен возвращать false если табулатура не в библиотеке', async () => {
       (LibraryModel.checkExists as jest.Mock).mockResolvedValue(false);
 
       const response = await request(app).get('/api/public-tabs/1/library/check');
@@ -209,7 +209,7 @@ describe('Public Tabs Routes', () => {
       expect(response.body.data.exists).toBe(false);
     });
 
-    it('should handle server error', async () => {
+    it('должен обрабатывать ошибку сервера', async () => {
       (LibraryModel.checkExists as jest.Mock).mockRejectedValue(new Error('DB Error'));
 
       const response = await request(app).get('/api/public-tabs/1/library/check');
@@ -220,7 +220,7 @@ describe('Public Tabs Routes', () => {
   });
 
   describe('GET /api/public-tabs/:id/download', () => {
-    it('should download public tab', async () => {
+    it('должен скачивать публичную табулатуру', async () => {
       (TabModel.findById as jest.Mock).mockResolvedValue(mockPublicTab);
 
       const response = await request(app).get('/api/public-tabs/1/download');
@@ -230,7 +230,7 @@ describe('Public Tabs Routes', () => {
       expect(response.body.data).toEqual(mockPublicTab);
     });
 
-    it('should return 404 if tab not found', async () => {
+    it('должен возвращать 404 если табулатура не найдена', async () => {
       (TabModel.findById as jest.Mock).mockResolvedValue(null);
 
       const response = await request(app).get('/api/public-tabs/999/download');
@@ -239,7 +239,7 @@ describe('Public Tabs Routes', () => {
       expect(response.body.error).toBe('Табулатура не найдена');
     });
 
-    it('should return 404 if tab is not public', async () => {
+    it('должен возвращать 404 если табулатура не является публичной', async () => {
       (TabModel.findById as jest.Mock).mockResolvedValue({ ...mockPublicTab, isPublic: false });
 
       const response = await request(app).get('/api/public-tabs/1/download');
@@ -248,7 +248,7 @@ describe('Public Tabs Routes', () => {
       expect(response.body.error).toBe('Табулатура не найдена');
     });
 
-    it('should handle server error', async () => {
+    it('должен обрабатывать ошибку сервера', async () => {
       (TabModel.findById as jest.Mock).mockRejectedValue(new Error('DB Error'));
 
       const response = await request(app).get('/api/public-tabs/1/download');

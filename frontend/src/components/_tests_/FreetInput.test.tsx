@@ -1,5 +1,4 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import FretInput from '../editor/FreetInput';
 
 describe('FretInput', () => {

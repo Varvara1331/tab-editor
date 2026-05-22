@@ -26,7 +26,7 @@ describe('UserService', () => {
   });
 
   describe('create', () => {
-    it('should create a new user', async () => {
+    it('должен создавать нового пользователя', async () => {
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashedpassword');
       (db.run as jest.Mock).mockResolvedValue({ lastID: 1 });
       (db.get as jest.Mock).mockResolvedValue(mockUserRow);
@@ -38,7 +38,7 @@ describe('UserService', () => {
       expect(bcrypt.hash).toHaveBeenCalledWith('password123', 10);
     });
 
-    it('should throw error when user creation fails', async () => {
+    it('должен выбрасывать ошибку при неудачном создании пользователя', async () => {
       (bcrypt.hash as jest.Mock).mockResolvedValue('hashedpassword');
       (db.run as jest.Mock).mockResolvedValue({ lastID: 1 });
       (db.get as jest.Mock).mockResolvedValue(null);
@@ -49,7 +49,7 @@ describe('UserService', () => {
   });
 
   describe('findByEmail', () => {
-    it('should return user when found', async () => {
+    it('должен возвращать пользователя если найден', async () => {
       (db.get as jest.Mock).mockResolvedValue(mockUserRow);
 
       const result = await UserService.findByEmail('test@test.com');
@@ -59,7 +59,7 @@ describe('UserService', () => {
       expect(result?.id).toBe(1);
     });
 
-    it('should return null when user not found', async () => {
+    it('должен возвращать null если пользователь не найден', async () => {
       (db.get as jest.Mock).mockResolvedValue(null);
 
       const result = await UserService.findByEmail('nonexistent@test.com');
@@ -69,7 +69,7 @@ describe('UserService', () => {
   });
 
   describe('findByUsername', () => {
-    it('should return user when found', async () => {
+    it('должен возвращать пользователя если найден', async () => {
       (db.get as jest.Mock).mockResolvedValue(mockUserRow);
 
       const result = await UserService.findByUsername('testuser');
@@ -78,7 +78,7 @@ describe('UserService', () => {
       expect(result?.username).toBe('testuser');
     });
 
-    it('should return null when user not found', async () => {
+    it('должен возвращать null если пользователь не найден', async () => {
       (db.get as jest.Mock).mockResolvedValue(null);
 
       const result = await UserService.findByUsername('nonexistent');
@@ -88,7 +88,7 @@ describe('UserService', () => {
   });
 
   describe('findById', () => {
-    it('should return user when found', async () => {
+    it('должен возвращать пользователя если найден', async () => {
       (db.get as jest.Mock).mockResolvedValue(mockUserRow);
 
       const result = await UserService.findById(1);
@@ -98,7 +98,7 @@ describe('UserService', () => {
       expect(result?.username).toBe('testuser');
     });
 
-    it('should return null when user not found', async () => {
+    it('должен возвращать null если пользователь не найден', async () => {
       (db.get as jest.Mock).mockResolvedValue(null);
 
       const result = await UserService.findById(999);
@@ -108,7 +108,7 @@ describe('UserService', () => {
   });
 
   describe('updateLastLogin', () => {
-    it('should update last login timestamp', async () => {
+    it('должен обновлять временную метку последнего входа', async () => {
       (db.run as jest.Mock).mockResolvedValue({ changes: 1 });
 
       await UserService.updateLastLogin(1);
@@ -121,7 +121,7 @@ describe('UserService', () => {
   });
 
   describe('comparePassword', () => {
-    it('should return true for correct password', async () => {
+    it('должен возвращать true для правильного пароля', async () => {
       const user = { passwordHash: 'hashed' } as any;
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
@@ -130,7 +130,7 @@ describe('UserService', () => {
       expect(result).toBe(true);
     });
 
-    it('should return false for incorrect password', async () => {
+    it('должен возвращать false для неправильного пароля', async () => {
       const user = { passwordHash: 'hashed' } as any;
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
@@ -141,7 +141,7 @@ describe('UserService', () => {
   });
 
   describe('mapUser', () => {
-    it('should correctly map database row to IUser', async () => {
+    it('должен корректно отображать строку базы данных в IUser', async () => {
       (db.get as jest.Mock).mockResolvedValue(mockUserRow);
 
       const result = await UserService.findById(1);
@@ -156,7 +156,7 @@ describe('UserService', () => {
       expect(result?.lastLogin).toBeUndefined();
     });
 
-    it('should handle lastLogin date correctly', async () => {
+    it('должен корректно обрабатывать дату последнего входа', async () => {
       (db.get as jest.Mock).mockResolvedValue(mockUserRowWithLastLogin);
 
       const result = await UserService.findById(1);
@@ -164,7 +164,7 @@ describe('UserService', () => {
       expect(result?.lastLogin).toBeInstanceOf(Date);
     });
 
-    it('should parse settings JSON when present', async () => {
+    it('должен парсить JSON настроек когда они присутствуют', async () => {
       const rowWithSettings = {
         ...mockUserRow,
         Settings: '{"theme":"dark"}',

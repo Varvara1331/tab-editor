@@ -21,7 +21,7 @@ describe('useAuthState', () => {
     jest.clearAllMocks();
   });
 
-  it('should check auth on mount', async () => {
+  it('должен проверять статус аутентификации и загружать данные пользователя при монтировании', async () => {
     (authService.isAuthenticated as jest.Mock).mockReturnValue(true);
     (authService.getCurrentUser as jest.Mock).mockReturnValue(mockUser);
 
@@ -34,7 +34,7 @@ describe('useAuthState', () => {
     });
   });
 
-  it('should handle unauthenticated user', async () => {
+  it('должен корректно обрабатывать неавторизованного пользователя', async () => {
     (authService.isAuthenticated as jest.Mock).mockReturnValue(false);
 
     const { result } = renderHook(() => useAuthState());
@@ -46,7 +46,7 @@ describe('useAuthState', () => {
     });
   });
 
-  it('should handle auth success', async () => {
+  it('должен обновлять состояние при успешной аутентификации и очищать редактор', async () => {
     (authService.isAuthenticated as jest.Mock).mockReturnValue(false);
     (authService.getCurrentUser as jest.Mock).mockReturnValue(mockUser);
 
@@ -65,7 +65,7 @@ describe('useAuthState', () => {
     expect(result.current.currentUser).toEqual(mockUser);
   });
 
-  it('should handle logout with confirmation', async () => {
+  it('должен выполнять выход из системы после подтверждения пользователя', async () => {
     (authService.isAuthenticated as jest.Mock).mockReturnValue(true);
     (authService.getCurrentUser as jest.Mock).mockReturnValue(mockUser);
 
@@ -86,7 +86,7 @@ describe('useAuthState', () => {
     expect(result.current.currentUser).toBeNull();
   });
 
-  it('should not logout if confirmation cancelled', async () => {
+  it('должен отменять выход из системы при отказе пользователя от подтверждения', async () => {
     (authService.isAuthenticated as jest.Mock).mockReturnValue(true);
     (authService.getCurrentUser as jest.Mock).mockReturnValue(mockUser);
 

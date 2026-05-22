@@ -50,101 +50,101 @@ const mockPublicTab: PublicTab = {
 
 describe('tabHelpers', () => {
   describe('isLibraryItem', () => {
-    it('should return true for LibraryItem', () => {
+    it('должен возвращать true для LibraryItem', () => {
       expect(isLibraryItem(mockLibraryItem)).toBe(true);
     });
 
-    it('should return false for PublicTab', () => {
+    it('должен возвращать false для PublicTab', () => {
       expect(isLibraryItem(mockPublicTab)).toBe(false);
     });
 
-    it('should return false for null', () => {
+    it('должен возвращать false для null', () => {
       expect(isLibraryItem(null)).toBe(false);
     });
 
-    it('should return false for undefined', () => {
+    it('должен возвращать false для undefined', () => {
       expect(isLibraryItem(undefined)).toBe(false);
     });
   });
 
   describe('isPublicTab', () => {
-    it('should return true for PublicTab', () => {
+    it('должен возвращать true для PublicTab', () => {
       expect(isPublicTab(mockPublicTab)).toBe(true);
     });
 
-    it('should return false for LibraryItem', () => {
+    it('должен возвращать false для LibraryItem', () => {
       expect(isPublicTab(mockLibraryItem)).toBe(false);
     });
   });
 
   describe('getTabTitle', () => {
-    it('should get title from LibraryItem', () => {
+    it('должен получать заголовок из LibraryItem', () => {
       expect(getTabTitle(mockLibraryItem)).toBe('Song');
     });
 
-    it('should get title from PublicTab', () => {
+    it('должен получать заголовок из PublicTab', () => {
       expect(getTabTitle(mockPublicTab)).toBe('Public Song');
     });
   });
 
   describe('getTabArtist', () => {
-    it('should get artist from LibraryItem', () => {
+    it('должен получать исполнителя из LibraryItem', () => {
       expect(getTabArtist(mockLibraryItem)).toBe('Artist');
     });
 
-    it('should get artist from PublicTab', () => {
+    it('должен получать исполнителя из PublicTab', () => {
       expect(getTabArtist(mockPublicTab)).toBe('Public Artist');
     });
   });
 
   describe('getTabTuning', () => {
-    it('should get tuning from LibraryItem', () => {
+    it('должен получать строй из LibraryItem', () => {
       expect(getTabTuning(mockLibraryItem)).toEqual(['E4', 'B3', 'G3', 'D3', 'A2', 'E2']);
     });
 
-    it('should get tuning from PublicTab', () => {
+    it('должен получать строй из PublicTab', () => {
       expect(getTabTuning(mockPublicTab)).toEqual(['E4', 'B3', 'G3', 'D3', 'A2', 'E2']);
     });
   });
 
   describe('getTabId', () => {
-    it('should get id from LibraryItem', () => {
+    it('должен получать ID из LibraryItem', () => {
       expect(getTabId(mockLibraryItem)).toBe(1);
     });
 
-    it('should get id from PublicTab', () => {
+    it('должен получать ID из PublicTab', () => {
       expect(getTabId(mockPublicTab)).toBe(2);
     });
   });
 
   describe('getTabDate', () => {
-    it('should get date from LibraryItem', () => {
+    it('должен получать дату из LibraryItem', () => {
       const date = getTabDate(mockLibraryItem, 'my');
       expect(date).toBe(mockLibraryItem.lastModified);
     });
 
-    it('should get date from PublicTab', () => {
+    it('должен получать дату из PublicTab', () => {
       const date = getTabDate(mockPublicTab, 'public');
       expect(date).toBe(mockPublicTab.createdAt);
     });
   });
 
   describe('getTabPreview', () => {
-    it('should get preview from LibraryItem', () => {
+    it('должен получать превью из LibraryItem', () => {
       expect(getTabPreview(mockLibraryItem)).toBe('Song preview');
     });
 
-    it('should get preview from PublicTab', () => {
+    it('должен получать превью из PublicTab', () => {
       expect(getTabPreview(mockPublicTab)).toBe('Public preview');
     });
   });
 
   describe('getIsPublicFromTab', () => {
-    it('should return false for private LibraryItem', () => {
+    it('должен возвращать false для приватной LibraryItem', () => {
       expect(getIsPublicFromTab(mockLibraryItem)).toBe(false);
     });
 
-    it('should return true for PublicTab', () => {
+    it('должен возвращать true для PublicTab', () => {
       expect(getIsPublicFromTab(mockPublicTab)).toBe(true);
     });
   });

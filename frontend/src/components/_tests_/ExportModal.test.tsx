@@ -2,7 +2,6 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import ExportModal from '../modals/ExportModal';
 import { downloadTab } from '../../utils/export/exportUtils';
 
-// Мок для exportUtils
 jest.mock('../../utils/export/exportUtils', () => ({
   downloadTab: jest.fn().mockResolvedValue(undefined),
 }));
@@ -73,7 +72,6 @@ describe('ExportModal', () => {
   describe('выбор формата', () => {
     it('PDF должен быть выбран по умолчанию', () => {
       render(<ExportModal tabData={mockTabData} isOpen={true} onClose={mockOnClose} />);
-      // Ищем radio button по значению
       const pdfRadio = screen.getByDisplayValue('pdf');
       expect(pdfRadio).toBeChecked();
     });

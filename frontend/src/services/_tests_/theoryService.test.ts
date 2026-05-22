@@ -25,7 +25,7 @@ describe('theoryService', () => {
   });
 
   describe('getTheoryProgress', () => {
-    it('should return progress from API', async () => {
+    it('должен возвращать прогресс из API при успешном запросе', async () => {
       const mockProgress = { completedArticles: ['1'], totalPoints: 100 };
       mockApi.get.mockResolvedValue({
         data: { success: true, data: mockProgress },
@@ -35,7 +35,7 @@ describe('theoryService', () => {
       expect(result).toEqual(mockProgress);
     });
 
-    it('should return default progress on error', async () => {
+    it('должен возвращать прогресс по умолчанию при ошибке запроса', async () => {
       mockApi.get.mockRejectedValue(new Error('Network error'));
       const result = await getTheoryProgress();
       expect(result.completedArticles).toEqual([]);
@@ -43,7 +43,7 @@ describe('theoryService', () => {
   });
 
   describe('completeArticle', () => {
-    it('should complete article', async () => {
+    it('должен отмечать статью как пройденную', async () => {
       mockApi.post.mockResolvedValue({
         data: { success: true, data: { completedArticles: ['1'] } },
       });
@@ -52,14 +52,14 @@ describe('theoryService', () => {
       expect(result.completedArticles).toContain('1');
     });
 
-    it('should throw error on failure', async () => {
+    it('должен выбрасывать ошибку при неудачном завершении статьи', async () => {
       mockApi.post.mockRejectedValue(new Error('API Error'));
       await expect(completeArticle('1')).rejects.toThrow();
     });
   });
 
   describe('getTheoryStatistics', () => {
-    it('should return statistics', async () => {
+    it('должен возвращать статистику по теории', async () => {
       mockApi.get.mockResolvedValue({
         data: { success: true, data: { totalPoints: 100 } },
       });
@@ -70,7 +70,7 @@ describe('theoryService', () => {
   });
 
   describe('clearTheoryProgress', () => {
-    it('should clear progress', async () => {
+    it('должен очищать прогресс теории', async () => {
       mockApi.put.mockResolvedValue({
         data: { success: true, data: { completedArticles: [] } },
       });
@@ -80,14 +80,8 @@ describe('theoryService', () => {
     });
   });
 
-describe('theoryService - улучшенное покрытие', () => {
-  beforeEach(() => {
-    jest.clearAllMocks();
-    localStorage.clear();
-  });
-
   describe('updateTheoryProgress', () => {
-    it('should update progress successfully', async () => {
+    it('должен успешно обновлять прогресс теории', async () => {
       const mockProgress = { completedArticles: ['1'], totalPoints: 100 };
       mockApi.put.mockResolvedValue({
         data: { success: true, data: mockProgress },
@@ -97,7 +91,7 @@ describe('theoryService - улучшенное покрытие', () => {
       expect(result).toEqual(mockProgress);
     });
 
-    it('should throw error when API fails', async () => {
+    it('должен выбрасывать ошибку при неудачном обновлении прогресса', async () => {
       mockApi.put.mockResolvedValue({
         data: { success: false, error: 'Server error' },
       });
@@ -105,7 +99,7 @@ describe('theoryService - улучшенное покрытие', () => {
       await expect(updateTheoryProgress({})).rejects.toThrow('Server error');
     });
 
-    it('should save to localStorage on API error', async () => {
+    it('должен сохранять прогресс в localStorage при ошибке API', async () => {
       const savedProgress = { completedArticles: ['old'], totalPoints: 50 };
       localStorage.setItem('guitar_tab_theory_progress', JSON.stringify(savedProgress));
       
@@ -116,8 +110,8 @@ describe('theoryService - улучшенное покрытие', () => {
     });
   });
 
-  describe('completeArticle - улучшенное покрытие', () => {
-    it('should complete article with quiz score', async () => {
+  describe('completeArticle - расширенное покрытие', () => {
+    it('должен отмечать статью с результатом викторины', async () => {
       mockApi.post.mockResolvedValue({
         data: { success: true, data: { completedArticles: ['1'], quizScores: { '1': 95 } } },
       });
@@ -126,7 +120,7 @@ describe('theoryService - улучшенное покрытие', () => {
       expect(result.quizScores?.['1']).toBe(95);
     });
 
-    it('should handle API error and save locally', async () => {
+    it('должен обрабатывать ошибку API и сохранять локально', async () => {
       const savedProgress = { 
         completedArticles: [], 
         quizScores: {}, 
@@ -141,7 +135,7 @@ describe('theoryService - улучшенное покрытие', () => {
       expect(result.totalPoints).toBe(80);
     });
 
-    it('should not duplicate article completion', async () => {
+    it('не должен дублировать пройденную статью', async () => {
       const savedProgress = { 
         completedArticles: ['1'], 
         quizScores: { '1': 90 }, 
@@ -157,8 +151,8 @@ describe('theoryService - улучшенное покрытие', () => {
     });
   });
 
-  describe('getTheoryStatistics - улучшенное покрытие', () => {
-    it('should calculate statistics from localStorage when API fails', async () => {
+  describe('getTheoryStatistics - расширенное покрытие', () => {
+    it('должен вычислять статистику из localStorage при ошибке API', async () => {
       const savedProgress = { 
         completedArticles: ['1', '2'], 
         quizScores: { '1': 90, '2': 80 }, 
@@ -176,7 +170,7 @@ describe('theoryService - улучшенное покрытие', () => {
       expect(result.lastActive).toBe('2024-01-01');
     });
 
-    it('should return default statistics when no data', async () => {
+    it('должен возвращать статистику по умолчанию при отсутствии данных', async () => {
       mockApi.get.mockRejectedValue(new Error('Network error'));
       localStorage.removeItem('guitar_tab_theory_progress');
 
@@ -189,7 +183,7 @@ describe('theoryService - улучшенное покрытие', () => {
   });
 
   describe('syncTheoryProgress', () => {
-    it('should sync local progress with server', async () => {
+    it('должен синхронизировать локальный прогресс с сервером', async () => {
       const localProgress = { completedArticles: ['1'], totalPoints: 100 };
       localStorage.setItem('guitar_tab_theory_progress', JSON.stringify(localProgress));
       
@@ -201,7 +195,7 @@ describe('theoryService - улучшенное покрытие', () => {
       expect(mockApi.put).toHaveBeenCalled();
     });
 
-    it('should handle sync error gracefully', async () => {
+    it('должен корректно обрабатывать ошибку синхронизации', async () => {
       const localProgress = { completedArticles: ['1'] };
       localStorage.setItem('guitar_tab_theory_progress', JSON.stringify(localProgress));
       
@@ -210,15 +204,15 @@ describe('theoryService - улучшенное покрытие', () => {
       await expect(syncTheoryProgress()).resolves.not.toThrow();
     });
 
-    it('should not sync if no local progress', async () => {
+    it('не должен синхронизировать при отсутствии локального прогресса', async () => {
       localStorage.removeItem('guitar_tab_theory_progress');
       await syncTheoryProgress();
       expect(mockApi.put).not.toHaveBeenCalled();
     });
   });
 
-  describe('clearTheoryProgress', () => {
-    it('should clear progress even if API fails', async () => {
+  describe('clearTheoryProgress - расширенное покрытие', () => {
+    it('должен очищать прогресс даже при ошибке API', async () => {
       localStorage.setItem('guitar_tab_theory_progress', JSON.stringify({ completedArticles: ['1'] }));
       
       mockApi.put.mockRejectedValue(new Error('Network error'));
@@ -227,5 +221,4 @@ describe('theoryService - улучшенное покрытие', () => {
       expect(localStorage.getItem('guitar_tab_theory_progress')).toBeNull();
     });
   });
-});
 });

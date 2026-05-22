@@ -7,10 +7,8 @@ import { generateToken } from '../../utils/jwt';
 jest.mock('../../models/User');
 jest.mock('../../utils/jwt');
 
-// Правильный мок для protect middleware
 jest.mock('../../middleware/auth', () => ({
   protect: (req: any, _res: any, next: any) => {
-    // Добавляем пользователя в запрос для тестов
     req.user = { id: 1, username: 'testuser', email: 'test@test.com' };
     next();
   },
@@ -35,7 +33,7 @@ describe('Auth Routes', () => {
   });
 
   describe('POST /api/auth/register', () => {
-    it('should register user successfully', async () => {
+    it('должен успешно регистрировать нового пользователя', async () => {
       (UserModel.findByEmail as jest.Mock).mockResolvedValue(null);
       (UserModel.findByUsername as jest.Mock).mockResolvedValue(null);
       (UserModel.create as jest.Mock).mockResolvedValue(mockUser);
@@ -50,7 +48,7 @@ describe('Auth Routes', () => {
       expect(response.body.token).toBe('jwt-token');
     });
 
-    it('should return 400 if email already exists', async () => {
+    it('должен возвращать 400 если email уже существует', async () => {
       (UserModel.findByEmail as jest.Mock).mockResolvedValue(mockUser);
 
       const response = await request(app)
@@ -63,7 +61,7 @@ describe('Auth Routes', () => {
   });
 
   describe('POST /api/auth/login', () => {
-    it('should login user successfully', async () => {
+    it('должен успешно выполнять вход пользователя', async () => {
       (UserModel.findByEmail as jest.Mock).mockResolvedValue(mockUser);
       (UserModel.comparePassword as jest.Mock).mockResolvedValue(true);
       (UserModel.updateLastLogin as jest.Mock).mockResolvedValue(undefined);
@@ -78,7 +76,7 @@ describe('Auth Routes', () => {
       expect(response.body.token).toBe('jwt-token');
     });
 
-    it('should return 401 for invalid credentials', async () => {
+    it('должен возвращать 401 для неверных учетных данных', async () => {
       (UserModel.findByEmail as jest.Mock).mockResolvedValue(null);
 
       const response = await request(app)
@@ -91,7 +89,7 @@ describe('Auth Routes', () => {
   });
 
   describe('GET /api/auth/me', () => {
-    it('should return user info when authenticated', async () => {
+    it('должен возвращать информацию о пользователе при аутентификации', async () => {
       const response = await request(app)
         .get('/api/auth/me')
         .set('Authorization', 'Bearer test-token');

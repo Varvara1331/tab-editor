@@ -24,7 +24,7 @@ describe('TabModel', () => {
   });
 
   describe('create', () => {
-    it('should call TabService.create', async () => {
+    it('должен вызывать TabService.create при создании новой табулатуры', async () => {
       (TabService.create as jest.Mock).mockResolvedValue(mockTab);
 
       const result = await TabModel.create(1, { title: 'Test Song' });
@@ -35,7 +35,7 @@ describe('TabModel', () => {
   });
 
   describe('findById', () => {
-    it('should call TabService.findById', async () => {
+    it('должен вызывать TabService.findById при поиске табулатуры по ID', async () => {
       (TabService.findById as jest.Mock).mockResolvedValue(mockTab);
 
       const result = await TabModel.findById(1);
@@ -46,7 +46,7 @@ describe('TabModel', () => {
   });
 
   describe('findByUserId', () => {
-    it('should call TabService.findByUserId', async () => {
+    it('должен вызывать TabService.findByUserId при получении табулатур пользователя', async () => {
       (TabService.findByUserId as jest.Mock).mockResolvedValue([mockTab]);
 
       const result = await TabModel.findByUserId(1);
@@ -57,7 +57,7 @@ describe('TabModel', () => {
   });
 
   describe('findPublicTabs', () => {
-    it('should call TabService.findPublicTabs', async () => {
+    it('должен вызывать TabService.findPublicTabs при получении публичных табулатур', async () => {
       (TabService.findPublicTabs as jest.Mock).mockResolvedValue([mockTab]);
 
       const result = await TabModel.findPublicTabs(10, 0, 'test');
@@ -68,7 +68,7 @@ describe('TabModel', () => {
   });
 
   describe('update', () => {
-    it('should call TabService.update', async () => {
+    it('должен вызывать TabService.update при обновлении табулатуры', async () => {
       (TabService.update as jest.Mock).mockResolvedValue(mockTab);
 
       const result = await TabModel.update(1, 1, { title: 'Updated Title' });
@@ -79,7 +79,7 @@ describe('TabModel', () => {
   });
 
   describe('delete', () => {
-    it('should call TabService.delete', async () => {
+    it('должен вызывать TabService.delete при удалении табулатуры', async () => {
       (TabService.delete as jest.Mock).mockResolvedValue(true);
 
       const result = await TabModel.delete(1, 1);
@@ -90,7 +90,7 @@ describe('TabModel', () => {
   });
 
   describe('incrementViews', () => {
-    it('should call TabService.incrementViews', async () => {
+    it('должен вызывать TabService.incrementViews при увеличении счетчика просмотров', async () => {
       (TabService.incrementViews as jest.Mock).mockResolvedValue(undefined);
 
       await TabModel.incrementViews(1);

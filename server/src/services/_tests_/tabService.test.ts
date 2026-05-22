@@ -31,7 +31,7 @@ describe('TabService', () => {
   });
 
   describe('create', () => {
-    it('should create a new tab', async () => {
+    it('должен создавать новую табулатуру', async () => {
       (db.run as jest.Mock).mockResolvedValue({ lastID: 1 });
       (db.get as jest.Mock).mockResolvedValue(mockTabRow);
 
@@ -42,7 +42,7 @@ describe('TabService', () => {
       expect(db.run).toHaveBeenCalled();
     });
 
-    it('should create tab with default values when minimal data provided', async () => {
+    it('должен создавать табулатуру со значениями по умолчанию при минимальных данных', async () => {
       (db.run as jest.Mock).mockResolvedValue({ lastID: 1 });
       (db.get as jest.Mock).mockResolvedValue(mockTabRow);
 
@@ -54,7 +54,7 @@ describe('TabService', () => {
   });
 
   describe('findById', () => {
-    it('should return tab when found', async () => {
+    it('должен возвращать табулатуру если найдена', async () => {
       (db.get as jest.Mock).mockResolvedValue(mockTabRow);
 
       const result = await TabService.findById(1);
@@ -64,7 +64,7 @@ describe('TabService', () => {
       expect(result?.tuning).toEqual(['E', 'A', 'D', 'G', 'B', 'E']);
     });
 
-    it('should return null when tab not found', async () => {
+    it('должен возвращать null если табулатура не найдена', async () => {
       (db.get as jest.Mock).mockResolvedValue(null);
 
       const result = await TabService.findById(999);
@@ -74,7 +74,7 @@ describe('TabService', () => {
   });
 
   describe('findByUserId', () => {
-    it('should return user tabs', async () => {
+    it('должен возвращать табулатуры пользователя', async () => {
       (db.all as jest.Mock).mockResolvedValue([mockTabRow]);
 
       const result = await TabService.findByUserId(1);
@@ -83,7 +83,7 @@ describe('TabService', () => {
       expect(result[0].title).toBe('Test Song');
     });
 
-    it('should return empty array when user has no tabs', async () => {
+    it('должен возвращать пустой массив если у пользователя нет табулатур', async () => {
       (db.all as jest.Mock).mockResolvedValue([]);
 
       const result = await TabService.findByUserId(999);
@@ -93,7 +93,7 @@ describe('TabService', () => {
   });
 
   describe('findPublicTabs', () => {
-    it('should return public tabs', async () => {
+    it('должен возвращать публичные табулатуры', async () => {
       (db.all as jest.Mock).mockResolvedValue([mockPublicTabRow]);
 
       const result = await TabService.findPublicTabs(10, 0);
@@ -102,7 +102,7 @@ describe('TabService', () => {
       expect(result[0].isPublic).toBe(true);
     });
 
-    it('should return public tabs with search', async () => {
+    it('должен возвращать публичные табулатуры с поиском', async () => {
       (db.all as jest.Mock).mockResolvedValue([mockPublicTabRow]);
 
       const result = await TabService.findPublicTabs(10, 0, 'test');
@@ -114,7 +114,7 @@ describe('TabService', () => {
       expect(result).toHaveLength(1);
     });
 
-    it('should return empty array when no public tabs', async () => {
+    it('должен возвращать пустой массив если нет публичных табулатур', async () => {
       (db.all as jest.Mock).mockResolvedValue([]);
 
       const result = await TabService.findPublicTabs(10, 0);
@@ -124,7 +124,7 @@ describe('TabService', () => {
   });
 
   describe('update', () => {
-    it('should update tab title', async () => {
+    it('должен обновлять заголовок табулатуры', async () => {
       (db.get as jest.Mock).mockResolvedValue(mockTabRow);
       (db.run as jest.Mock).mockResolvedValue({ changes: 1 });
       (db.get as jest.Mock).mockResolvedValueOnce(mockTabRow).mockResolvedValueOnce({
@@ -138,7 +138,7 @@ describe('TabService', () => {
       expect(result?.title).toBe('Updated Title');
     });
 
-    it('should update isPublic status', async () => {
+    it('должен обновлять статус публичности', async () => {
       (db.get as jest.Mock).mockResolvedValue(mockTabRow);
       (db.run as jest.Mock).mockResolvedValue({ changes: 1 });
       (db.get as jest.Mock).mockResolvedValueOnce(mockTabRow).mockResolvedValueOnce({
@@ -152,7 +152,7 @@ describe('TabService', () => {
       expect(result?.isPublic).toBe(true);
     });
 
-    it('should return null when tab not found', async () => {
+    it('должен возвращать null если табулатура не найдена', async () => {
       (db.get as jest.Mock).mockResolvedValue(null);
 
       const result = await TabService.update(999, 1, { title: 'Updated' });
@@ -160,7 +160,7 @@ describe('TabService', () => {
       expect(result).toBeNull();
     });
 
-    it('should return null when user is not owner', async () => {
+    it('должен возвращать null если пользователь не владелец', async () => {
       (db.get as jest.Mock).mockResolvedValue({ ...mockTabRow, UserId: 2 });
 
       const result = await TabService.update(1, 1, { title: 'Updated' });
@@ -168,7 +168,7 @@ describe('TabService', () => {
       expect(result).toBeNull();
     });
 
-    it('should return same tab when no fields to update', async () => {
+    it('должен возвращать ту же табулатуру если нет полей для обновления', async () => {
       (db.get as jest.Mock).mockResolvedValue(mockTabRow);
 
       const result = await TabService.update(1, 1, {});
@@ -179,7 +179,7 @@ describe('TabService', () => {
   });
 
   describe('delete', () => {
-    it('should delete tab successfully', async () => {
+    it('должен успешно удалять табулатуру', async () => {
       (db.run as jest.Mock).mockResolvedValue({ changes: 1 });
 
       const result = await TabService.delete(1, 1);
@@ -191,7 +191,7 @@ describe('TabService', () => {
       );
     });
 
-    it('should return false when tab not found', async () => {
+    it('должен возвращать false если табулатура не найдена', async () => {
       (db.run as jest.Mock).mockResolvedValue({ changes: 0 });
 
       const result = await TabService.delete(999, 1);
@@ -201,7 +201,7 @@ describe('TabService', () => {
   });
 
   describe('incrementViews', () => {
-    it('should increment views counter', async () => {
+    it('должен увеличивать счетчик просмотров', async () => {
       (db.run as jest.Mock).mockResolvedValue({ changes: 1 });
 
       await TabService.incrementViews(1);
@@ -214,7 +214,7 @@ describe('TabService', () => {
   });
 
   describe('mapTab', () => {
-    it('should correctly map database row to ITab', async () => {
+    it('должен корректно отображать строку базы данных в ITab', async () => {
       (db.get as jest.Mock).mockResolvedValue(mockTabRow);
 
       const result = await TabService.findById(1);

@@ -40,7 +40,7 @@ describe('tabTransformers', () => {
   };
 
   describe('transformToTabData', () => {
-    it('should transform TabResponse to TabData', () => {
+    it('должен преобразовывать TabResponse в TabData', () => {
       const result = transformToTabData(mockTabResponse);
       
       expect(result.id).toBe(1);
@@ -50,13 +50,13 @@ describe('tabTransformers', () => {
       expect(result.createdAt).toBeInstanceOf(Date);
     });
 
-    it('should handle empty tab data', () => {
+    it('должен обрабатывать пустые данные табулатуры', () => {
       const result = transformToTabData(null as any);
       expect(result.title).toBe('Untitled');
       expect(result.tuning).toEqual(['E4', 'B3', 'G3', 'D3', 'A2', 'E2']);
     });
 
-    it('should apply transform options', () => {
+    it('должен применять опции преобразования', () => {
       const result = transformToTabData(mockTabResponse, { 
         isOwn: true, 
         isPublic: true,
@@ -68,43 +68,43 @@ describe('tabTransformers', () => {
       expect(result.userId).toBe(100);
     });
 
-    it('should handle tab without artist', () => {
+    it('должен обрабатывать табулатуру без исполнителя', () => {
       const tab = { ...mockTabResponse, artist: undefined } as any;
       const result = transformToTabData(tab);
       expect(result.artist).toBe('');
     });
 
-    it('should handle tab without tuning (fallback to default)', () => {
+    it('должен обрабатывать табулатуру без строя (использовать строй по умолчанию)', () => {
       const tab = { ...mockTabResponse, tuning: null } as any;
       const result = transformToTabData(tab);
       expect(result.tuning).toEqual(['E4', 'B3', 'G3', 'D3', 'A2', 'E2']);
     });
 
-    it('should handle tab with non-array tuning', () => {
+    it('должен обрабатывать табулатуру с не-массивом в качестве строя', () => {
       const tab = { ...mockTabResponse, tuning: 'invalid' as any };
       const result = transformToTabData(tab);
       expect(result.tuning).toEqual(['E4', 'B3', 'G3', 'D3', 'A2', 'E2']);
     });
 
-    it('should handle tab without measures', () => {
+    it('должен обрабатывать табулатуру без тактов', () => {
       const tab = { ...mockTabResponse, measures: null } as any;
       const result = transformToTabData(tab);
       expect(result.measures).toEqual([]);
     });
 
-    it('should handle tab without createdAt', () => {
+    it('должен обрабатывать табулатуру без даты создания', () => {
       const tab = { ...mockTabResponse, createdAt: undefined } as any;
       const result = transformToTabData(tab);
       expect(result.createdAt).toBeInstanceOf(Date);
     });
 
-    it('should handle tab without updatedAt', () => {
+    it('должен обрабатывать табулатуру без даты обновления', () => {
       const tab = { ...mockTabResponse, updatedAt: undefined } as any;
       const result = transformToTabData(tab);
       expect(result.updatedAt).toBeInstanceOf(Date);
     });
 
-    it('should handle error during transformation', () => {
+    it('должен обрабатывать ошибку в процессе преобразования', () => {
       const badTab = {
         get id() { throw new Error('Test error'); }
       } as any;
@@ -114,7 +114,7 @@ describe('tabTransformers', () => {
   });
 
   describe('transformToLibraryItem', () => {
-    it('should transform TabResponse to LibraryItem', () => {
+    it('должен преобразовывать TabResponse в LibraryItem', () => {
       const result = transformToLibraryItem(mockTabResponse);
       
       expect(result.id).toBe(1);
@@ -123,7 +123,7 @@ describe('tabTransformers', () => {
       expect(result.isPublication).toBe(false);
     });
 
-    it('should handle publication options', () => {
+    it('должен обрабатывать опции публикации', () => {
       const result = transformToLibraryItem(mockTabResponse, {
         isPublication: true,
         originalAuthor: 'Original Author'
@@ -133,13 +133,13 @@ describe('tabTransformers', () => {
       expect(result.originalAuthor).toBe('Original Author');
     });
 
-    it('should handle missing updatedAt', () => {
+    it('должен обрабатывать отсутствие updatedAt', () => {
       const tab = { ...mockTabResponse, updatedAt: undefined } as any;
       const result = transformToLibraryItem(tab);
       expect(result.lastModified).toBeDefined();
     });
 
-    it('should handle missing preview', () => {
+    it('должен обрабатывать отсутствие preview', () => {
       const tab = { ...mockTabResponse, preview: undefined } as any;
       const result = transformToLibraryItem(tab);
       expect(result.preview).toBeUndefined();
@@ -147,7 +147,7 @@ describe('tabTransformers', () => {
   });
 
   describe('transformPublicTabToTabData', () => {
-    it('should transform PublicTab to TabData', () => {
+    it('должен преобразовывать PublicTab в TabData', () => {
       const result = transformPublicTabToTabData(mockPublicTab, 200);
       
       expect(result.id).toBe(2);
@@ -156,23 +156,23 @@ describe('tabTransformers', () => {
       expect(result.isOwn).toBe(true);
     });
 
-    it('should set isOwn false for different user', () => {
+    it('должен устанавливать isOwn false для другого пользователя', () => {
       const result = transformPublicTabToTabData(mockPublicTab, 999);
       expect(result.isOwn).toBe(false);
     });
 
-    it('should handle invalid public tab', () => {
+    it('должен обрабатывать невалидную публичную табулатуру', () => {
       const result = transformPublicTabToTabData(null as any);
       expect(result.title).toBe('Untitled');
     });
 
-    it('should handle public tab without id', () => {
+    it('должен обрабатывать публичную табулатуру без id', () => {
       const tab = { ...mockPublicTab, id: undefined } as any;
       const result = transformPublicTabToTabData(tab);
       expect(result.title).toBe('Untitled');
     });
 
-    it('should handle undefined currentUserId', () => {
+    it('должен обрабатывать undefined в качестве currentUserId', () => {
       const result = transformPublicTabToTabData(mockPublicTab, undefined);
       expect(result.isOwn).toBe(false);
     });

@@ -29,7 +29,7 @@ describe('authService', () => {
   });
 
   describe('register', () => {
-    it('should register user successfully', async () => {
+    it('должен успешно регистрировать пользователя и сохранять токен', async () => {
       const mockResponse = {
         data: {
           success: true,
@@ -45,7 +45,7 @@ describe('authService', () => {
       expect(localStorage.getItem(STORAGE_KEYS.TOKEN)).toBe('test-token');
     });
 
-    it('should handle registration error', async () => {
+    it('должен обрабатывать ошибку при регистрации', async () => {
       mockApi.post.mockRejectedValue(new Error('Network error'));
       const result = await register('test', 'test@test.com', 'password');
       expect(result.success).toBe(false);
@@ -54,7 +54,7 @@ describe('authService', () => {
   });
 
   describe('login', () => {
-    it('should login user successfully', async () => {
+    it('должен успешно выполнять вход пользователя и сохранять токен', async () => {
       const mockResponse = {
         data: {
           success: true,
@@ -71,7 +71,7 @@ describe('authService', () => {
   });
 
   describe('logout', () => {
-    it('should clear session and drafts', () => {
+    it('должен очищать сессию пользователя и удалять черновики', () => {
       localStorage.setItem(STORAGE_KEYS.TOKEN, 'token');
       localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify({ id: 1, username: 'test' }));
       
@@ -83,42 +83,42 @@ describe('authService', () => {
   });
 
   describe('getCurrentUser', () => {
-    it('should return user from localStorage', () => {
+    it('должен возвращать пользователя из localStorage', () => {
       const user = { id: 1, username: 'test', email: 'test@test.com', createdAt: '2024-01-01' };
       localStorage.setItem(STORAGE_KEYS.USER, JSON.stringify(user));
       
       expect(getCurrentUser()).toEqual(user);
     });
 
-    it('should return null if no user', () => {
+    it('должен возвращать null при отсутствии пользователя', () => {
       expect(getCurrentUser()).toBeNull();
     });
   });
 
   describe('isAuthenticated', () => {
-    it('should return true if token exists', () => {
+    it('должен возвращать true при наличии токена', () => {
       localStorage.setItem(STORAGE_KEYS.TOKEN, 'token');
       expect(isAuthenticated()).toBe(true);
     });
 
-    it('should return false if no token', () => {
+    it('должен возвращать false при отсутствии токена', () => {
       expect(isAuthenticated()).toBe(false);
     });
   });
 
   describe('getToken', () => {
-    it('should return token from localStorage', () => {
+    it('должен возвращать токен из localStorage', () => {
       localStorage.setItem(STORAGE_KEYS.TOKEN, 'my-token');
       expect(getToken()).toBe('my-token');
     });
 
-    it('should return null if no token', () => {
+    it('должен возвращать null при отсутствии токена', () => {
       expect(getToken()).toBeNull();
     });
   });
 
   describe('clearEditorDrafts', () => {
-    it('should clear drafts for specific user', () => {
+    it('должен удалять черновики для конкретного пользователя', () => {
       localStorage.setItem('currentTab_123', 'data');
       localStorage.setItem('currentTabData', 'data');
       
@@ -128,7 +128,7 @@ describe('authService', () => {
       expect(localStorage.getItem('currentTabData')).toBeNull();
     });
 
-    it('should clear only general draft without userId', () => {
+    it('должен удалять только общий черновик без ID пользователя', () => {
       localStorage.setItem('currentTabData', 'data');
       
       clearEditorDrafts();
@@ -138,7 +138,7 @@ describe('authService', () => {
   });
 
   describe('clearEditorState', () => {
-    it('should be alias for clearEditorDrafts', () => {
+    it('должен быть псевдонимом для clearEditorDrafts', () => {
       expect(clearEditorState).toBe(clearEditorDrafts);
     });
   });

@@ -9,7 +9,6 @@ jest.mock('../../services/libraryService');
 describe('useTabsLibrary', () => {
   const mockUser = { id: 1, username: 'test', email: 'test@test.com', createdAt: '2024-01-01' };
   
-  // Правильная структура LibraryItem
   const mockMyTabs = [
     { 
       id: 1, 
@@ -34,7 +33,7 @@ describe('useTabsLibrary', () => {
     (getFavorites as jest.Mock).mockResolvedValue(mockFavorites);
   });
 
-  it('should load tabs on mount', async () => {
+  it('должен загружать табулатуры и избранное при монтировании компонента', async () => {
     const { result } = renderHook(() => useTabsLibrary());
 
     await waitFor(() => {
@@ -44,7 +43,7 @@ describe('useTabsLibrary', () => {
     });
   });
 
-  it('should delete my tab', async () => {
+  it('должен удалять табулатуру из моей библиотеки', async () => {
     (removeFromLibrary as jest.Mock).mockResolvedValue(true);
     const { result } = renderHook(() => useTabsLibrary());
 
@@ -61,7 +60,7 @@ describe('useTabsLibrary', () => {
     expect(removeFromLibrary).toHaveBeenCalledWith(1);
   });
 
-  it('should remove from favorites', async () => {
+  it('должен удалять табулатуру из избранного', async () => {
     (removeFromFavorites as jest.Mock).mockResolvedValue(true);
     const { result } = renderHook(() => useTabsLibrary());
 
@@ -78,7 +77,7 @@ describe('useTabsLibrary', () => {
     expect(removeFromFavorites).toHaveBeenCalledWith(2);
   });
 
-  it('should search tabs', async () => {
+  it('должен выполнять поиск по табулатурам', async () => {
     const { result } = renderHook(() => useTabsLibrary());
 
     await waitFor(() => {
@@ -90,7 +89,7 @@ describe('useTabsLibrary', () => {
     expect(searchResult.myTabsFiltered[0].id).toBe(1);
   });
 
-  it('should refresh tabs', async () => {
+  it('должен обновлять список табулатур при вызове refresh', async () => {
     const { result } = renderHook(() => useTabsLibrary());
 
     await waitFor(() => {
@@ -104,7 +103,7 @@ describe('useTabsLibrary', () => {
     expect(getLibrary).toHaveBeenCalledTimes(2);
   });
 
-  it('should handle no current user', async () => {
+  it('должен возвращать пустые списки при отсутствии авторизованного пользователя', async () => {
     (useAuth as jest.Mock).mockReturnValue({ currentUser: null, isLoading: false });
     
     const { result } = renderHook(() => useTabsLibrary());
@@ -116,7 +115,7 @@ describe('useTabsLibrary', () => {
     });
   });
 
-  it('should filter tabs by search query', () => {
+  it('должен фильтровать табулатуры по поисковому запросу', () => {
     const { result } = renderHook(() => useTabsLibrary());
     const tabs = [{ tabData: { title: 'Rock Song', artist: 'Rock Band' } }] as any;
     

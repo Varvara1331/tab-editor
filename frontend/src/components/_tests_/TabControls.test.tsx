@@ -4,7 +4,6 @@ import TabControls from '../editor/TabControls';
 describe('TabControls', () => {
   const mockOnToolSelect = jest.fn();
   const mockOnNotesPerMeasureChange = jest.fn();
-  const mockOnTuningChange = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();

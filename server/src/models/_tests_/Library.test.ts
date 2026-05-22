@@ -18,7 +18,7 @@ describe('LibraryModel', () => {
   });
 
   describe('add', () => {
-    it('should call LibraryService.add', async () => {
+    it('должен вызывать LibraryService.add при добавлении табулатуры в библиотеку', async () => {
       (LibraryService.add as jest.Mock).mockResolvedValue(mockLibraryItem);
 
       const result = await LibraryModel.add(1, { title: 'Test Song' } as any, false);
@@ -29,7 +29,7 @@ describe('LibraryModel', () => {
   });
 
   describe('findByUserId', () => {
-    it('should call LibraryService.findByUserId', async () => {
+    it('должен вызывать LibraryService.findByUserId при получении библиотеки пользователя', async () => {
       (LibraryService.findByUserId as jest.Mock).mockResolvedValue([mockLibraryItem]);
 
       const result = await LibraryModel.findByUserId(1);
@@ -40,7 +40,7 @@ describe('LibraryModel', () => {
   });
 
   describe('checkExists', () => {
-    it('should call LibraryService.checkExists', async () => {
+    it('должен вызывать LibraryService.checkExists при проверке существования табулатуры', async () => {
       (LibraryService.checkExists as jest.Mock).mockResolvedValue(true);
 
       const result = await LibraryModel.checkExists(1, 1);
@@ -51,7 +51,7 @@ describe('LibraryModel', () => {
   });
 
   describe('removeFromLibrary', () => {
-    it('should call LibraryService.removeFromLibrary', async () => {
+    it('должен вызывать LibraryService.removeFromLibrary при удалении табулатуры из библиотеки', async () => {
       (LibraryService.removeFromLibrary as jest.Mock).mockResolvedValue(true);
 
       const result = await LibraryModel.removeFromLibrary(1, 1);
@@ -62,7 +62,7 @@ describe('LibraryModel', () => {
   });
 
   describe('getFavoritesByUserId', () => {
-    it('should call LibraryService.getFavoritesByUserId', async () => {
+    it('должен вызывать LibraryService.getFavoritesByUserId при получении избранных табулатур', async () => {
       (LibraryService.getFavoritesByUserId as jest.Mock).mockResolvedValue([mockLibraryItem]);
 
       const result = await LibraryModel.getFavoritesByUserId(1);

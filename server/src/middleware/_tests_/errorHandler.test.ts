@@ -24,7 +24,7 @@ describe('Error Handler Middleware', () => {
   });
 
   describe('errorHandler', () => {
-    it('should return 500 with error message in development', () => {
+    it('должен возвращать 500 с сообщением об ошибке в режиме разработки', () => {
       config.nodeEnv = 'development';
       const error = new Error('Test error');
 
@@ -38,7 +38,7 @@ describe('Error Handler Middleware', () => {
       });
     });
 
-    it('should return 500 with generic message in production', () => {
+    it('должен возвращать 500 с общим сообщением в режиме производства', () => {
       config.nodeEnv = 'production';
       const error = new Error('Test error');
 
@@ -53,7 +53,7 @@ describe('Error Handler Middleware', () => {
   });
 
   describe('notFound', () => {
-    it('should return 404 with correct error message', () => {
+    it('должен возвращать 404 с корректным сообщением об ошибке', () => {
       notFound(req as Request, res as Response);
 
       expect(res.status).toHaveBeenCalledWith(404);

@@ -44,7 +44,7 @@ describe('LibraryService', () => {
   });
 
   describe('add', () => {
-    it('should add tab to library', async () => {
+    it('должен добавлять табулатуру в библиотеку', async () => {
       (db.run as jest.Mock).mockResolvedValue({ lastID: 1 });
       (db.get as jest.Mock).mockResolvedValue(mockLibraryRow);
 
@@ -54,7 +54,7 @@ describe('LibraryService', () => {
       expect(db.run).toHaveBeenCalled();
     });
 
-    it('should add tab as publication', async () => {
+    it('должен добавлять табулатуру как публикацию', async () => {
       (db.run as jest.Mock).mockResolvedValue({ lastID: 1 });
       (db.get as jest.Mock).mockResolvedValue(mockPublicationRow);
 
@@ -65,7 +65,7 @@ describe('LibraryService', () => {
   });
 
   describe('addFromPublication', () => {
-    it('should add publication to library', async () => {
+    it('должен добавлять публикацию в библиотеку', async () => {
       (db.run as jest.Mock).mockResolvedValue({ lastID: 1 });
       (db.get as jest.Mock).mockResolvedValue(mockPublicationRow);
 
@@ -77,7 +77,7 @@ describe('LibraryService', () => {
   });
 
   describe('findById', () => {
-    it('should return library item when found', async () => {
+    it('должен возвращать элемент библиотеки если найден', async () => {
       (db.get as jest.Mock).mockResolvedValue(mockLibraryRow);
 
       const result = await LibraryService.findById(1);
@@ -86,7 +86,7 @@ describe('LibraryService', () => {
       expect(result?.id).toBe(1);
     });
 
-    it('should return null when not found', async () => {
+    it('должен возвращать null если элемент не найден', async () => {
       (db.get as jest.Mock).mockResolvedValue(null);
 
       const result = await LibraryService.findById(999);
@@ -96,7 +96,7 @@ describe('LibraryService', () => {
   });
 
   describe('findByUserId', () => {
-    it('should return user library items', async () => {
+    it('должен возвращать элементы библиотеки пользователя', async () => {
       (db.all as jest.Mock).mockResolvedValue([mockLibraryRow]);
 
       const result = await LibraryService.findByUserId(1);
@@ -105,7 +105,7 @@ describe('LibraryService', () => {
       expect(result[0].id).toBe(1);
     });
 
-    it('should return empty array when user has no library items', async () => {
+    it('должен возвращать пустой массив если у пользователя нет элементов в библиотеке', async () => {
       (db.all as jest.Mock).mockResolvedValue([]);
 
       const result = await LibraryService.findByUserId(999);
@@ -115,7 +115,7 @@ describe('LibraryService', () => {
   });
 
   describe('checkExists', () => {
-    it('should return true if tab exists in library', async () => {
+    it('должен возвращать true если табулатура существует в библиотеке', async () => {
       (db.get as jest.Mock).mockResolvedValue({ Id: 1 });
 
       const result = await LibraryService.checkExists(1, 1);
@@ -123,7 +123,7 @@ describe('LibraryService', () => {
       expect(result).toBe(true);
     });
 
-    it('should return false if tab not in library', async () => {
+    it('должен возвращать false если табулатура не в библиотеке', async () => {
       (db.get as jest.Mock).mockResolvedValue(null);
 
       const result = await LibraryService.checkExists(1, 999);
@@ -133,7 +133,7 @@ describe('LibraryService', () => {
   });
 
   describe('removeFromLibrary', () => {
-    it('should remove tab from library successfully', async () => {
+    it('должен успешно удалять табулатуру из библиотеки', async () => {
       (db.run as jest.Mock).mockResolvedValue({ changes: 1 });
 
       const result = await LibraryService.removeFromLibrary(1, 1);
@@ -141,7 +141,7 @@ describe('LibraryService', () => {
       expect(result).toBe(true);
     });
 
-    it('should return false when tab not in library', async () => {
+    it('должен возвращать false если табулатура не в библиотеке', async () => {
       (db.run as jest.Mock).mockResolvedValue({ changes: 0 });
 
       const result = await LibraryService.removeFromLibrary(1, 999);
@@ -151,7 +151,7 @@ describe('LibraryService', () => {
   });
 
   describe('updateLastOpened', () => {
-    it('should update last opened timestamp', async () => {
+    it('должен обновлять временную метку последнего открытия', async () => {
       (db.run as jest.Mock).mockResolvedValue({ changes: 1 });
 
       await LibraryService.updateLastOpened(1);
@@ -164,7 +164,7 @@ describe('LibraryService', () => {
   });
 
   describe('getFavoritesByUserId', () => {
-    it('should return favorites for user', async () => {
+    it('должен возвращать избранные табулатуры для пользователя', async () => {
       (db.all as jest.Mock).mockResolvedValue([mockFavoriteTabRow]);
 
       const result = await LibraryService.getFavoritesByUserId(1);
@@ -174,7 +174,7 @@ describe('LibraryService', () => {
       expect(result[0].authorName).toBe('Author Name');
     });
 
-    it('should return empty array when user has no favorites', async () => {
+    it('должен возвращать пустой массив если у пользователя нет избранного', async () => {
       (db.all as jest.Mock).mockResolvedValue([]);
 
       const result = await LibraryService.getFavoritesByUserId(1);
@@ -182,7 +182,7 @@ describe('LibraryService', () => {
       expect(result).toHaveLength(0);
     });
 
-    it('should parse JSON fields correctly', async () => {
+    it('должен корректно парсить JSON поля', async () => {
       (db.all as jest.Mock).mockResolvedValue([mockFavoriteTabRow]);
 
       const result = await LibraryService.getFavoritesByUserId(1);
@@ -194,7 +194,7 @@ describe('LibraryService', () => {
   });
 
   describe('mapToLibraryItem', () => {
-    it('should correctly map database row to ILibraryItem', async () => {
+    it('должен корректно отображать строку базы данных в ILibraryItem', async () => {
       (db.get as jest.Mock).mockResolvedValue(mockLibraryRow);
 
       const result = await LibraryService.findById(1);
@@ -211,7 +211,7 @@ describe('LibraryService', () => {
       expect(result?.addedAt).toBeInstanceOf(Date);
     });
 
-    it('should handle lastOpened date', async () => {
+    it('должен обрабатывать дату последнего открытия', async () => {
       const rowWithLastOpened = {
         ...mockLibraryRow,
         LastOpened: '2024-01-15T00:00:00.000Z',

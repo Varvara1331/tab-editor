@@ -9,58 +9,58 @@ import {
 
 describe('stringUtils', () => {
   describe('transliterate', () => {
-    it('should transliterate Cyrillic to Latin', () => {
+    it('должен транслитерировать кириллицу в латиницу', () => {
       expect(transliterate('Привет')).toBe('Privet');
       expect(transliterate('Мир')).toBe('Mir');
     });
 
-    it('should handle mixed case', () => {
+    it('должен обрабатывать смешанный регистр', () => {
       expect(transliterate('ПриВет')).toBe('PriVet');
     });
 
-    it('should preserve Latin characters', () => {
+    it('должен сохранять латинские символы', () => {
       expect(transliterate('Hello World')).toBe('Hello World');
     });
 
-    it('should handle empty string', () => {
+    it('должен обрабатывать пустую строку', () => {
       expect(transliterate('')).toBe('');
     });
   });
 
   describe('escapeHtml', () => {
-    it('should escape ampersand', () => {
+    it('должен экранировать амперсанд', () => {
       expect(escapeHtml('&')).toBe('&amp;');
     });
 
-    it('should escape less than', () => {
+    it('должен экранировать знак меньше', () => {
       expect(escapeHtml('<')).toBe('&lt;');
     });
 
-    it('should escape greater than', () => {
+    it('должен экранировать знак больше', () => {
       expect(escapeHtml('>')).toBe('&gt;');
     });
 
-    it('should escape double quotes', () => {
+    it('должен экранировать двойные кавычки', () => {
       expect(escapeHtml('"')).toBe('&quot;');
     });
 
-    it('should escape single quotes', () => {
+    it('должен экранировать одинарные кавычки', () => {
       expect(escapeHtml("'")).toBe('&#39;');
     });
 
-    it('should handle complex HTML', () => {
+    it('должен обрабатывать сложный HTML', () => {
       const html = '<div class="test">Hello & welcome</div>';
       const expected = '&lt;div class=&quot;test&quot;&gt;Hello &amp; welcome&lt;/div&gt;';
       expect(escapeHtml(html)).toBe(expected);
     });
 
-    it('should handle empty string', () => {
+    it('должен обрабатывать пустую строку', () => {
       expect(escapeHtml('')).toBe('');
     });
   });
 
   describe('escapeXml', () => {
-    it('should escape XML special characters', () => {
+    it('должен экранировать специальные символы XML', () => {
       const xml = '<note>"It\'s & test"</note>';
       const expected = '&lt;note&gt;&quot;It&apos;s &amp; test&quot;&lt;/note&gt;';
       expect(escapeXml(xml)).toBe(expected);
@@ -68,65 +68,65 @@ describe('stringUtils', () => {
   });
 
   describe('sanitizeFilename', () => {
-    it('should remove forbidden characters', () => {
+    it('должен удалять запрещенные символы', () => {
       expect(sanitizeFilename('test:file?name*')).toBe('testfilename');
       expect(sanitizeFilename('<>:"/\\|?*')).toBe('untitled');
     });
 
-    it('should handle spaces', () => {
+    it('должен сохранять пробелы', () => {
       expect(sanitizeFilename('my song file')).toBe('my song file');
     });
 
-    it('should keep valid characters', () => {
+    it('должен сохранять валидные символы', () => {
       expect(sanitizeFilename('My Song v1.0.gp')).toBe('My Song v1.0.gp');
     });
 
-    it('should return untitled for empty string', () => {
+    it('должен возвращать untitled для пустой строки', () => {
       expect(sanitizeFilename('')).toBe('untitled');
     });
   });
 
   describe('truncate', () => {
-    it('should truncate long string', () => {
+    it('должен обрезать длинную строку', () => {
       const long = 'This is a very long string that needs truncation';
       const result = truncate(long, 20);
       expect(result.length).toBeLessThanOrEqual(20);
       expect(result).toContain('...');
     });
 
-    it('should not truncate short string', () => {
+    it('не должен обрезать короткую строку', () => {
       const short = 'Short';
       expect(truncate(short, 10)).toBe(short);
     });
 
-    it('should handle custom suffix', () => {
+    it('должен обрабатывать пользовательский суффикс', () => {
       const result = truncate('Long string', 8, '[cut]');
       expect(result).toContain('[cut]');
     });
 
-    it('should handle empty string', () => {
+    it('должен обрабатывать пустую строку', () => {
       expect(truncate('')).toBe('');
     });
   });
 
   describe('slugify', () => {
-    it('should convert to lowercase', () => {
+    it('должен преобразовывать в нижний регистр', () => {
       expect(slugify('My Song')).toBe('my-song');
     });
 
-    it('should transliterate Cyrillic', () => {
+    it('должен транслитерировать кириллицу', () => {
       expect(slugify('Моя песня')).toBe('moya-pesnya');
     });
 
-    it('should replace spaces with hyphens', () => {
+    it('должен заменять пробелы на дефисы', () => {
       expect(slugify('rock and roll')).toBe('rock-and-roll');
     });
 
-    it('should remove special characters', () => {
+    it('должен удалять специальные символы', () => {
       expect(slugify('Rock & Roll!')).toBe('rock-roll');
     });
 
-    it('should handle empty string', () => {
+    it('должен обрабатывать пустую строку', () => {
       expect(slugify('')).toBe('');
     });
   });

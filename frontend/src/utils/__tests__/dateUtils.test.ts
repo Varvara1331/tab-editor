@@ -14,88 +14,85 @@ describe('dateUtils', () => {
   describe('formatDate', () => {
     const testDate = '2024-01-15T10:30:00Z';
 
-    it('should format date in SHORT format (DD.MM.YYYY)', () => {
+    it('должен форматировать дату в коротком формате (DD.MM.YYYY)', () => {
       const result = formatDate(testDate, { format: DateFormat.SHORT });
       expect(result).toMatch(/\d{2}\.\d{2}\.\d{4}/);
     });
 
-    it('should format date in LONG format', () => {
+    it('должен форматировать дату в длинном формате с названием месяца', () => {
       const result = formatDate(testDate, { format: DateFormat.LONG });
       expect(result).toMatch(/\d{2}\s+[а-я]+\s+\d{4}/i);
     });
 
-    it('should format date in ISO format', () => {
+    it('должен форматировать дату в ISO формате', () => {
       const result = formatDate(testDate, { format: DateFormat.ISO });
-      // Проверяем, что результат содержит правильную дату
       expect(result).toContain('2024-01-15');
       expect(result).toContain('10:30');
     });
 
-    it('should return fallback for empty string', () => {
+    it('должен возвращать fallback для пустой строки', () => {
       const result = formatDate('', { fallback: '—' });
       expect(result).toBe('—');
     });
 
-    it('should return fallback for invalid date', () => {
+    it('должен возвращать fallback для некорректной даты', () => {
       const result = formatDate('invalid-date', { fallback: 'Invalid' });
       expect(result).toBe('Invalid');
     });
 
-    it('should use default SHORT format when not specified', () => {
+    it('должен использовать короткий формат по умолчанию', () => {
       const result = formatDate(testDate);
       expect(result).toMatch(/\d{2}\.\d{2}\.\d{4}/);
     });
 
-    it('should use ru-RU locale by default', () => {
+    it('должен использовать локаль ru-RU по умолчанию', () => {
       const result = formatDate(testDate, { format: DateFormat.LONG });
-      // Должны быть русские названия месяцев
       expect(result).toMatch(/января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря/i);
     });
 
-    it('should use custom locale when provided', () => {
+    it('должен использовать пользовательскую локаль при передаче', () => {
       const result = formatDate(testDate, { format: DateFormat.LONG, locale: 'en-US' });
-      // Должны быть английские названия месяцев
       expect(result).toMatch(/January|February|March|April|May|June|July|August|September|October|November|December/i);
     });
   });
 
   describe('getRelativeTime', () => {
-    it('should return "только что" for current time', () => {
+    it('должен возвращать "только что" для текущего времени', () => {
       const result = getRelativeTime(new Date());
       expect(result).toBe('только что');
     });
 
-    it('should return minutes ago for less than hour', () => {
+    it('должен возвращать количество минут для интервала менее часа', () => {
       const date = new Date(Date.now() - 5 * 60 * 1000);
       const result = getRelativeTime(date);
       expect(result).toMatch(/\d+ мин назад/);
     });
 
-    it('should return hours ago for less than day', () => {
+    it('должен возвращать количество часов для интервала менее дня', () => {
       const date = new Date(Date.now() - 2 * 60 * 60 * 1000);
       const result = getRelativeTime(date);
       expect(result).toMatch(/\d+ ч назад/);
     });
 
-    it('should return days ago for less than week', () => {
+    it('должен возвращать количество дней для интервала менее недели', () => {
       const date = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
       const result = getRelativeTime(date);
       expect(result).toMatch(/\d+ дн назад/);
     });
 
-    it('should return weeks ago for less than month', () => {
+    it('должен возвращать количество недель для интервала менее месяца', () => {
       const date = new Date(Date.now() - 14 * 24 * 60 * 60 * 1000);
       const result = getRelativeTime(date);
       expect(result).toMatch(/\d+ нед назад/);
     });
 
-    it('should return months ago for less than year', () => {
+    it('должен возвращать количество месяцев для интервала менее года', () => {
       const date = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000);
       const result = getRelativeTime(date);
       expect(result).toMatch(/\d+ мес назад/);
     });
 
-    it('should return years ago for more than year', () => {
+    it('должен возвращать количество лет для интервала более года', () => {
       const date = new Date(Date.now() - 400 * 24 * 60 * 60 * 1000);
       const result = getRelativeTime(date);
       expect(result).toMatch(/\d+ г назад/);
@@ -103,19 +100,19 @@ describe('dateUtils', () => {
   });
 
   describe('compareDates', () => {
-    it('should return negative when date1 < date2', () => {
+    it('должен возвращать отрицательное значение когда date1 < date2', () => {
       const date1 = new Date('2024-01-01');
       const date2 = new Date('2024-02-01');
       expect(compareDates(date1, date2)).toBeLessThan(0);
     });
 
-    it('should return positive when date1 > date2', () => {
+    it('должен возвращать положительное значение когда date1 > date2', () => {
       const date1 = new Date('2024-02-01');
       const date2 = new Date('2024-01-01');
       expect(compareDates(date1, date2)).toBeGreaterThan(0);
     });
 
-    it('should return 0 when dates are equal', () => {
+    it('должен возвращать 0 когда даты равны', () => {
       const date1 = new Date('2024-01-01');
       const date2 = new Date('2024-01-01');
       expect(compareDates(date1, date2)).toBe(0);
@@ -123,16 +120,16 @@ describe('dateUtils', () => {
   });
 
   describe('isValidDate', () => {
-    it('should return true for valid Date object', () => {
+    it('должен возвращать true для корректного объекта Date', () => {
       expect(isValidDate(new Date())).toBe(true);
       expect(isValidDate(new Date('2024-01-15'))).toBe(true);
     });
 
-    it('should return false for invalid Date', () => {
+    it('должен возвращать false для некорректного объекта Date', () => {
       expect(isValidDate(new Date('invalid'))).toBe(false);
     });
 
-    it('should return false for non-Date values', () => {
+    it('должен возвращать false для значений не являющихся Date', () => {
       expect(isValidDate('2024-01-01')).toBe(false);
       expect(isValidDate(123)).toBe(false);
       expect(isValidDate(null)).toBe(false);
@@ -142,29 +139,29 @@ describe('dateUtils', () => {
   });
 
   describe('parseDateSafe', () => {
-    it('should parse valid date string', () => {
+    it('должен корректно парсить валидную строку даты', () => {
       const result = parseDateSafe('2024-01-15T10:30:00Z');
       expect(result).toBeInstanceOf(Date);
       expect(result?.toISOString()).toBe('2024-01-15T10:30:00.000Z');
     });
 
-    it('should parse date without time', () => {
+    it('должен парсить дату без времени', () => {
       const result = parseDateSafe('2024-01-15');
       expect(result).toBeInstanceOf(Date);
       expect(result?.getFullYear()).toBe(2024);
-      expect(result?.getMonth()).toBe(0); // January
+      expect(result?.getMonth()).toBe(0);
       expect(result?.getDate()).toBe(15);
     });
 
-    it('should return null for empty string', () => {
+    it('должен возвращать null для пустой строки', () => {
       expect(parseDateSafe('')).toBeNull();
     });
 
-    it('should return null for invalid date', () => {
+    it('должен возвращать null для некорректной даты', () => {
       expect(parseDateSafe('invalid')).toBeNull();
     });
 
-    it('should return fallback for invalid date when provided', () => {
+    it('должен возвращать fallback для некорректной даты если он предоставлен', () => {
       const fallback = new Date('2024-01-01');
       const result = parseDateSafe('invalid', fallback);
       expect(result).toBe(fallback);
@@ -172,7 +169,7 @@ describe('dateUtils', () => {
   });
 
   describe('startOfDay', () => {
-    it('should set time to 00:00:00.000', () => {
+    it('должен устанавливать время на 00:00:00.000', () => {
       const date = new Date('2024-01-15T15:30:45.123Z');
       const result = startOfDay(date);
       expect(result.getHours()).toBe(0);
@@ -181,14 +178,14 @@ describe('dateUtils', () => {
       expect(result.getMilliseconds()).toBe(0);
     });
 
-    it('should not modify original date', () => {
+    it('не должен изменять исходную дату', () => {
       const original = new Date('2024-01-15T15:30:45.123Z');
       const originalTime = original.getTime();
       startOfDay(original);
       expect(original.getTime()).toBe(originalTime);
     });
 
-    it('should use current date when no argument provided', () => {
+    it('должен использовать текущую дату если аргумент не передан', () => {
       const result = startOfDay();
       expect(result).toBeInstanceOf(Date);
       expect(result.getHours()).toBe(0);
@@ -198,7 +195,7 @@ describe('dateUtils', () => {
   });
 
   describe('endOfDay', () => {
-    it('should set time to 23:59:59.999', () => {
+    it('должен устанавливать время на 23:59:59.999', () => {
       const date = new Date('2024-01-15T15:30:45.123Z');
       const result = endOfDay(date);
       expect(result.getHours()).toBe(23);
@@ -207,14 +204,14 @@ describe('dateUtils', () => {
       expect(result.getMilliseconds()).toBe(999);
     });
 
-    it('should not modify original date', () => {
+    it('не должен изменять исходную дату', () => {
       const original = new Date('2024-01-15T15:30:45.123Z');
       const originalTime = original.getTime();
       endOfDay(original);
       expect(original.getTime()).toBe(originalTime);
     });
 
-    it('should use current date when no argument provided', () => {
+    it('должен использовать текущую дату если аргумент не передан', () => {
       const result = endOfDay();
       expect(result).toBeInstanceOf(Date);
       expect(result.getHours()).toBe(23);
@@ -227,29 +224,29 @@ describe('dateUtils', () => {
     const start = new Date('2024-01-01');
     const end = new Date('2024-01-31');
 
-    it('should return true when date is between start and end', () => {
+    it('должен возвращать true когда дата находится между началом и концом', () => {
       expect(isBetween(date, start, end)).toBe(true);
     });
 
-    it('should return true when date equals start', () => {
+    it('должен возвращать true когда дата равна началу интервала', () => {
       expect(isBetween(start, start, end)).toBe(true);
     });
 
-    it('should return true when date equals end', () => {
+    it('должен возвращать true когда дата равна концу интервала', () => {
       expect(isBetween(end, start, end)).toBe(true);
     });
 
-    it('should return false when date is before start', () => {
+    it('должен возвращать false когда дата раньше начала интервала', () => {
       const before = new Date('2023-12-31');
       expect(isBetween(before, start, end)).toBe(false);
     });
 
-    it('should return false when date is after end', () => {
+    it('должен возвращать false когда дата позже конца интервала', () => {
       const after = new Date('2024-02-01');
       expect(isBetween(after, start, end)).toBe(false);
     });
 
-    it('should handle same day range', () => {
+    it('должен корректно обрабатывать интервал в один день', () => {
       const sameDay = new Date('2024-01-15');
       const rangeStart = new Date('2024-01-15');
       const rangeEnd = new Date('2024-01-15');

@@ -3,7 +3,7 @@ import { ApiResponse, HttpStatus } from '../index';
 describe('Types', () => {
   describe('ApiResponse', () => {
     describe('success', () => {
-      it('should return success response with data', () => {
+      it('должен возвращать успешный ответ с данными', () => {
         const data = { id: 1, name: 'test' };
         const result = ApiResponse.success(data);
 
@@ -14,7 +14,7 @@ describe('Types', () => {
         });
       });
 
-      it('should return success response with message', () => {
+      it('должен возвращать успешный ответ с сообщением', () => {
         const data = { id: 1, name: 'test' };
         const message = 'Operation successful';
         const result = ApiResponse.success(data, message);
@@ -26,7 +26,7 @@ describe('Types', () => {
         });
       });
 
-      it('should return success response with empty data', () => {
+      it('должен возвращать успешный ответ с пустыми данными', () => {
         const result = ApiResponse.success(null);
 
         expect(result).toEqual({
@@ -36,7 +36,7 @@ describe('Types', () => {
         });
       });
 
-      it('should return success response with array data', () => {
+      it('должен возвращать успешный ответ с массивом данных', () => {
         const data = [{ id: 1 }, { id: 2 }];
         const result = ApiResponse.success(data);
 
@@ -49,7 +49,7 @@ describe('Types', () => {
     });
 
     describe('error', () => {
-      it('should return error response with message', () => {
+      it('должен возвращать ответ с ошибкой и сообщением', () => {
         const errorMessage = 'Something went wrong';
         const result = ApiResponse.error(errorMessage);
 
@@ -59,7 +59,7 @@ describe('Types', () => {
         });
       });
 
-      it('should return error response with empty message', () => {
+      it('должен возвращать ответ с ошибкой и пустым сообщением', () => {
         const result = ApiResponse.error('');
 
         expect(result).toEqual({
@@ -71,7 +71,7 @@ describe('Types', () => {
   });
 
   describe('HttpStatus', () => {
-    it('should have correct status codes', () => {
+    it('должен содержать правильные коды статусов', () => {
       expect(HttpStatus.OK).toBe(200);
       expect(HttpStatus.CREATED).toBe(201);
       expect(HttpStatus.BAD_REQUEST).toBe(400);
@@ -81,8 +81,7 @@ describe('Types', () => {
       expect(HttpStatus.INTERNAL_SERVER_ERROR).toBe(500);
     });
 
-    // HttpStatus не заморожен в исходном коде, поэтому проверяем что это объект
-    it('should be an object', () => {
+    it('должен быть объектом', () => {
       expect(typeof HttpStatus).toBe('object');
       expect(HttpStatus).toBeDefined();
     });
@@ -90,8 +89,7 @@ describe('Types', () => {
 });
 
 describe('Type interfaces', () => {
-  // Тесты для проверки структуры интерфейсов (TypeScript compile-time checks)
-  it('should have IUser structure', () => {
+  it('должен иметь структуру IUser', () => {
     const user: any = {
       id: 1,
       username: 'testuser',
@@ -102,7 +100,7 @@ describe('Type interfaces', () => {
     expect(user).toBeDefined();
   });
 
-  it('should have ITab structure', () => {
+  it('должен иметь структуру ITab', () => {
     const tab: any = {
       id: 1,
       userId: 1,
@@ -118,7 +116,7 @@ describe('Type interfaces', () => {
     expect(tab).toBeDefined();
   });
 
-  it('should have ILibraryItem structure', () => {
+  it('должен иметь структуру ILibraryItem', () => {
     const libraryItem: any = {
       id: 1,
       userId: 1,

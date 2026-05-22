@@ -16,7 +16,7 @@ describe('TheoryProgressService', () => {
   });
 
   describe('getProgress', () => {
-    it('should return progress when found', async () => {
+    it('должен возвращать прогресс если найден', async () => {
       (db.get as jest.Mock).mockResolvedValue(mockProgressRow);
 
       const result = await TheoryProgressService.getProgress(1);
@@ -26,7 +26,7 @@ describe('TheoryProgressService', () => {
       expect(result?.totalPoints).toBe(85);
     });
 
-    it('should return null when progress not found', async () => {
+    it('должен возвращать null если прогресс не найден', async () => {
       (db.get as jest.Mock).mockResolvedValue(null);
 
       const result = await TheoryProgressService.getProgress(999);
@@ -36,7 +36,7 @@ describe('TheoryProgressService', () => {
   });
 
   describe('upsertProgress', () => {
-    it('should update existing progress', async () => {
+    it('должен обновлять существующий прогресс', async () => {
       (db.get as jest.Mock).mockResolvedValue(mockProgressRow);
       (db.run as jest.Mock).mockResolvedValue({ changes: 1 });
 
@@ -47,7 +47,7 @@ describe('TheoryProgressService', () => {
       expect(result.completedArticles).toContain('article-2');
     });
 
-    it('should create new progress when none exists', async () => {
+    it('должен создавать новый прогресс если его нет', async () => {
       (db.get as jest.Mock).mockResolvedValue(null);
       (db.run as jest.Mock).mockResolvedValue({ lastID: 1 });
 
@@ -60,7 +60,7 @@ describe('TheoryProgressService', () => {
       expect(result.totalPoints).toBe(85);
     });
 
-    it('should update quiz scores and recalculate total points', async () => {
+    it('должен обновлять баллы викторин и пересчитывать общее количество очков', async () => {
       (db.get as jest.Mock).mockResolvedValue(mockProgressRow);
       (db.run as jest.Mock).mockResolvedValue({ changes: 1 });
 
@@ -73,7 +73,7 @@ describe('TheoryProgressService', () => {
       expect(result.totalPoints).toBe(170);
     });
 
-    it('should update lastRead timestamp', async () => {
+    it('должен обновлять временную метку последнего чтения', async () => {
       (db.get as jest.Mock).mockResolvedValue(mockProgressRow);
       (db.run as jest.Mock).mockResolvedValue({ changes: 1 });
       const newLastRead = '2024-02-01T00:00:00.000Z';
@@ -87,7 +87,7 @@ describe('TheoryProgressService', () => {
   });
 
   describe('completeArticle', () => {
-    it('should mark article as completed with quiz score', async () => {
+    it('должен отмечать статью как пройденную с баллом за викторину', async () => {
       (db.get as jest.Mock).mockResolvedValue(null);
       (db.run as jest.Mock).mockResolvedValue({ lastID: 1 });
 
@@ -98,7 +98,7 @@ describe('TheoryProgressService', () => {
       expect(result.totalPoints).toBe(85);
     });
 
-    it('should mark article as completed without quiz score', async () => {
+    it('должен отмечать статью как пройденную без балла за викторину', async () => {
       (db.get as jest.Mock).mockResolvedValue({ ...mockProgressRow, QuizScores: '{}', TotalPoints: 0 });
       (db.run as jest.Mock).mockResolvedValue({ changes: 1 });
 
@@ -108,7 +108,7 @@ describe('TheoryProgressService', () => {
       expect(result.quizScores['article-1']).toBeUndefined();
     });
 
-    it('should not duplicate article in completed list', async () => {
+    it('не должен дублировать статью в списке пройденных', async () => {
       (db.get as jest.Mock).mockResolvedValue(mockProgressRow);
       (db.run as jest.Mock).mockResolvedValue({ changes: 1 });
 
@@ -117,7 +117,7 @@ describe('TheoryProgressService', () => {
       expect(result.completedArticles).toHaveLength(1);
     });
 
-    it('should add new quiz score to existing ones', async () => {
+    it('должен добавлять новый балл викторины к существующим', async () => {
       (db.get as jest.Mock).mockResolvedValue(mockProgressRow);
       (db.run as jest.Mock).mockResolvedValue({ changes: 1 });
 
@@ -130,7 +130,7 @@ describe('TheoryProgressService', () => {
   });
 
   describe('getStatistics', () => {
-    it('should return statistics for user with progress', async () => {
+    it('должен возвращать статистику для пользователя с прогрессом', async () => {
       (db.get as jest.Mock).mockResolvedValue(mockProgressRow);
 
       const result = await TheoryProgressService.getStatistics(1);
@@ -141,7 +141,7 @@ describe('TheoryProgressService', () => {
       expect(result.lastActive).toBe('2024-01-01T00:00:00.000Z');
     });
 
-    it('should return zero statistics for user without progress', async () => {
+    it('должен возвращать нулевую статистику для пользователя без прогресса', async () => {
       (db.get as jest.Mock).mockResolvedValue(null);
 
       const result = await TheoryProgressService.getStatistics(999);
@@ -152,7 +152,7 @@ describe('TheoryProgressService', () => {
       expect(result.lastActive).toBeNull();
     });
 
-    it('should calculate average score correctly for multiple quizzes', async () => {
+    it('должен корректно вычислять средний балл для нескольких викторин', async () => {
       const multiScoreRow = {
         ...mockProgressRow,
         QuizScores: '{"article-1":85,"article-2":95,"article-3":75}',
@@ -167,7 +167,7 @@ describe('TheoryProgressService', () => {
   });
 
   describe('getCompletedArticles', () => {
-    it('should return completed articles list', async () => {
+    it('должен возвращать список пройденных статей', async () => {
       (db.get as jest.Mock).mockResolvedValue(mockProgressRow);
 
       const result = await TheoryProgressService.getCompletedArticles(1);
@@ -175,7 +175,7 @@ describe('TheoryProgressService', () => {
       expect(result).toEqual(['article-1']);
     });
 
-    it('should return empty array for user without progress', async () => {
+    it('должен возвращать пустой массив для пользователя без прогресса', async () => {
       (db.get as jest.Mock).mockResolvedValue(null);
 
       const result = await TheoryProgressService.getCompletedArticles(999);
@@ -185,7 +185,7 @@ describe('TheoryProgressService', () => {
   });
 
   describe('isArticleCompleted', () => {
-    it('should return true if article is completed', async () => {
+    it('должен возвращать true если статья пройдена', async () => {
       (db.get as jest.Mock).mockResolvedValue(mockProgressRow);
 
       const result = await TheoryProgressService.isArticleCompleted(1, 'article-1');
@@ -193,7 +193,7 @@ describe('TheoryProgressService', () => {
       expect(result).toBe(true);
     });
 
-    it('should return false if article is not completed', async () => {
+    it('должен возвращать false если статья не пройдена', async () => {
       (db.get as jest.Mock).mockResolvedValue(mockProgressRow);
 
       const result = await TheoryProgressService.isArticleCompleted(1, 'article-999');
@@ -201,7 +201,7 @@ describe('TheoryProgressService', () => {
       expect(result).toBe(false);
     });
 
-    it('should return false for user without progress', async () => {
+    it('должен возвращать false для пользователя без прогресса', async () => {
       (db.get as jest.Mock).mockResolvedValue(null);
 
       const result = await TheoryProgressService.isArticleCompleted(999, 'article-1');
@@ -211,7 +211,7 @@ describe('TheoryProgressService', () => {
   });
 
   describe('getTotalPoints', () => {
-    it('should return total points', async () => {
+    it('должен возвращать общее количество очков', async () => {
       (db.get as jest.Mock).mockResolvedValue(mockProgressRow);
 
       const result = await TheoryProgressService.getTotalPoints(1);
@@ -219,7 +219,7 @@ describe('TheoryProgressService', () => {
       expect(result).toBe(85);
     });
 
-    it('should return 0 for user without progress', async () => {
+    it('должен возвращать 0 для пользователя без прогресса', async () => {
       (db.get as jest.Mock).mockResolvedValue(null);
 
       const result = await TheoryProgressService.getTotalPoints(999);
@@ -229,7 +229,7 @@ describe('TheoryProgressService', () => {
   });
 
   describe('getArticleScore', () => {
-    it('should return score for completed article', async () => {
+    it('должен возвращать балл за пройденную статью', async () => {
       (db.get as jest.Mock).mockResolvedValue(mockProgressRow);
 
       const result = await TheoryProgressService.getArticleScore(1, 'article-1');
@@ -237,7 +237,7 @@ describe('TheoryProgressService', () => {
       expect(result).toBe(85);
     });
 
-    it('should return null for not completed article', async () => {
+    it('должен возвращать null для непройденной статьи', async () => {
       (db.get as jest.Mock).mockResolvedValue(mockProgressRow);
 
       const result = await TheoryProgressService.getArticleScore(1, 'article-999');
@@ -245,7 +245,7 @@ describe('TheoryProgressService', () => {
       expect(result).toBeNull();
     });
 
-    it('should return null for user without progress', async () => {
+    it('должен возвращать null для пользователя без прогресса', async () => {
       (db.get as jest.Mock).mockResolvedValue(null);
 
       const result = await TheoryProgressService.getArticleScore(999, 'article-1');
@@ -255,7 +255,7 @@ describe('TheoryProgressService', () => {
   });
 
   describe('getLeaderboard', () => {
-    it('should return leaderboard', async () => {
+    it('должен возвращать таблицу лидеров', async () => {
       const mockLeaderboard = [
         { UserId: 1, Username: 'user1', TotalPoints: 100, ArticlesCount: 5 },
         { UserId: 2, Username: 'user2', TotalPoints: 80, ArticlesCount: 4 },
@@ -269,7 +269,7 @@ describe('TheoryProgressService', () => {
       expect(result[1].username).toBe('user2');
     });
 
-    it('should use default limit of 10', async () => {
+    it('должен использовать лимит по умолчанию 10', async () => {
       (db.all as jest.Mock).mockResolvedValue([]);
 
       await TheoryProgressService.getLeaderboard();
@@ -280,7 +280,7 @@ describe('TheoryProgressService', () => {
       );
     });
 
-    it('should return empty array when no leaderboard data', async () => {
+    it('должен возвращать пустой массив при отсутствии данных для таблицы лидеров', async () => {
       (db.all as jest.Mock).mockResolvedValue([]);
 
       const result = await TheoryProgressService.getLeaderboard(5);
@@ -290,7 +290,7 @@ describe('TheoryProgressService', () => {
   });
 
   describe('deleteProgress', () => {
-    it('should delete progress for user', async () => {
+    it('должен удалять прогресс пользователя', async () => {
       (db.run as jest.Mock).mockResolvedValue({ changes: 1 });
 
       await TheoryProgressService.deleteProgress(1);

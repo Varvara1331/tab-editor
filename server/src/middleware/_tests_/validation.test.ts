@@ -16,7 +16,7 @@ describe('Validation Middleware', () => {
   });
 
   describe('validate', () => {
-    it('should pass validation for valid data', () => {
+    it('должен проходить валидацию для корректных данных', () => {
       req.body = { email: 'test@test.com', password: 'password123' };
       const schema = {
         email: { required: true, validator: 'email' as const },
@@ -30,7 +30,7 @@ describe('Validation Middleware', () => {
       expect(res.status).not.toHaveBeenCalled();
     });
 
-    it('should return error for missing required field', () => {
+    it('должен возвращать ошибку для отсутствующего обязательного поля', () => {
       req.body = { email: 'test@test.com' };
       const schema = {
         email: { required: true },
@@ -49,7 +49,7 @@ describe('Validation Middleware', () => {
       );
     });
 
-    it('should return error for invalid email format', () => {
+    it('должен возвращать ошибку для неверного формата email', () => {
       req.body = { email: 'invalid-email' };
       const schema = {
         email: { required: true, validator: 'email' as const },
@@ -61,7 +61,7 @@ describe('Validation Middleware', () => {
       expect(res.status).toHaveBeenCalledWith(400);
     });
 
-    it('should return error for short password', () => {
+    it('должен возвращать ошибку для слишком короткого пароля', () => {
       req.body = { password: '123' };
       const schema = {
         password: { required: true, minLength: 6 },
@@ -78,7 +78,7 @@ describe('Validation Middleware', () => {
       );
     });
 
-    it('should skip validation for optional missing fields', () => {
+    it('должен пропускать валидацию для отсутствующих необязательных полей', () => {
       req.body = { email: 'test@test.com' };
       const schema = {
         email: { required: true },
@@ -93,24 +93,23 @@ describe('Validation Middleware', () => {
   });
 
   describe('sanitize', () => {
-    it('should trim and remove HTML tags from strings', () => {
-  req.body = {
-    name: '  <script>alert("xss")</script>John  ',
-    age: 25,
-  };
+    it('должен обрезать пробелы и удалять HTML теги из строк', () => {
+      req.body = {
+        name: '  <script>alert("xss")</script>John  ',
+        age: 25,
+      };
 
-  const middleware = sanitize(['name']);
-  middleware(req as Request, res as Response, next);
+      const middleware = sanitize(['name']);
+      middleware(req as Request, res as Response, next);
 
-  // Функция удаляет только < и >, но не сами теги
-  expect(req.body.name).not.toContain('<');
-  expect(req.body.name).not.toContain('>');
-  expect(req.body.name.trim()).toBeTruthy();
-  expect(req.body.age).toBe(25);
-  expect(next).toHaveBeenCalled();
-});
+      expect(req.body.name).not.toContain('<');
+      expect(req.body.name).not.toContain('>');
+      expect(req.body.name.trim()).toBeTruthy();
+      expect(req.body.age).toBe(25);
+      expect(next).toHaveBeenCalled();
+    });
 
-    it('should sanitize all string fields if no fields specified', () => {
+    it('должен очищать все строковые поля если не указаны конкретные', () => {
       req.body = {
         name: '  John  ',
         city: '  New York  ',
@@ -125,7 +124,7 @@ describe('Validation Middleware', () => {
       expect(req.body.age).toBe(25);
     });
 
-    it('should truncate long strings', () => {
+    it('должен обрезать длинные строки', () => {
       const longString = 'a'.repeat(2000);
       req.body = { text: longString };
 

@@ -1,7 +1,6 @@
 import { importTabFromFile, canImportFile } from '../import/importUtils';
 import { validateFile, readFileAsText } from '../fileUtils';
 
-// Моки для функций из fileUtils
 jest.mock('../fileUtils', () => ({
   validateFile: jest.fn(),
   readFileAsText: jest.fn(),
@@ -9,7 +8,6 @@ jest.mock('../fileUtils', () => ({
   isGpJsonFile: jest.fn(),
 }));
 
-// Моки для функций из importParsers
 jest.mock('../import/importParsers', () => ({
   importFromJson: jest.fn().mockReturnValue({ id: 1, title: 'Imported Tab' }),
   importFromGpJson: jest.fn().mockReturnValue({ id: 2, title: 'GP Imported' }),
@@ -25,13 +23,13 @@ describe('importUtils', () => {
   });
 
   describe('canImportFile', () => {
-    it('should return true for valid file', () => {
+    it('должен возвращать true для валидного файла', () => {
       mockValidateFile.mockReturnValue({ valid: true });
       const file = new File([''], 'test.json', { type: 'application/json' });
       expect(canImportFile(file)).toBe(true);
     });
 
-    it('should return false for invalid file', () => {
+    it('должен возвращать false для невалидного файла', () => {
       mockValidateFile.mockReturnValue({ valid: false, error: 'Invalid format' });
       const file = new File([''], 'test.txt', { type: 'text/plain' });
       expect(canImportFile(file)).toBe(false);
@@ -39,7 +37,7 @@ describe('importUtils', () => {
   });
 
   describe('importTabFromFile', () => {
-    it('should return error for invalid file', async () => {
+    it('должен возвращать ошибку для невалидного файла', async () => {
       mockValidateFile.mockReturnValue({ valid: false, error: 'File too large' });
       const file = new File([''], 'test.json', { type: 'application/json' });
       const result = await importTabFromFile(file);
@@ -48,7 +46,7 @@ describe('importUtils', () => {
       expect(result.error).toBe('File too large');
     });
 
-    it('should handle JSON file', async () => {
+    it('должен обрабатывать JSON файл', async () => {
       mockValidateFile.mockReturnValue({ valid: true });
       mockReadFileAsText.mockResolvedValue('{"title":"Song"}');
       
@@ -62,7 +60,7 @@ describe('importUtils', () => {
       expect(result.format).toBe('JSON');
     });
 
-    it('should handle GP JSON file', async () => {
+    it('должен обрабатывать GP JSON файл', async () => {
       mockValidateFile.mockReturnValue({ valid: true });
       mockReadFileAsText.mockResolvedValue('{"format":"guitar-pro-compatible"}');
       

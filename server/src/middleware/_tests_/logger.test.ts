@@ -35,14 +35,14 @@ describe('Logger Middleware', () => {
   });
 
   describe('logger', () => {
-    it('should call next and register finish event', () => {
+    it('должен вызывать next и регистрировать событие finish', () => {
       logger(req as Request, res as Response, next);
 
       expect(next).toHaveBeenCalled();
       expect(res.on).toHaveBeenCalledWith('finish', expect.any(Function));
     });
 
-    it('should log request details on finish event', () => {
+    it('должен логировать детали запроса при событии finish', () => {
       logger(req as Request, res as Response, next);
 
       if (finishCallback) {
@@ -54,7 +54,7 @@ describe('Logger Middleware', () => {
       );
     });
 
-    it('should handle different HTTP methods and status codes', () => {
+    it('должен обрабатывать разные HTTP методы и статус коды', () => {
       req.method = 'POST';
       res.statusCode = 201;
 
@@ -71,7 +71,7 @@ describe('Logger Middleware', () => {
   });
 
   describe('detailedLogger', () => {
-    it('should call next and register finish event', () => {
+    it('должен вызывать next и регистрировать событие finish', () => {
       const mockJson = jest.fn().mockReturnThis();
       res.json = mockJson;
 
@@ -81,7 +81,7 @@ describe('Logger Middleware', () => {
       expect(res.on).toHaveBeenCalledWith('finish', expect.any(Function));
     });
 
-    it('should override json method to track response size', () => {
+    it('должен переопределять метод json для отслеживания размера ответа', () => {
       const mockResponseBody = { success: true, data: { id: 1, name: 'test' } };
       const originalJson = res.json;
 
@@ -96,7 +96,7 @@ describe('Logger Middleware', () => {
       expect(originalJson).toHaveBeenCalledWith(mockResponseBody);
     });
 
-    it('should log detailed info including IP and User-Agent on finish', () => {
+    it('должен логировать детальную информацию включая IP и User-Agent при finish', () => {
       detailedLogger(req as Request, res as Response, next);
 
       if (finishCallback) {
@@ -114,8 +114,7 @@ describe('Logger Middleware', () => {
       );
     });
 
-    it('should handle missing IP address', () => {
-      // Создаём новый объект req без ip, с socket.remoteAddress
+    it('должен обрабатывать отсутствие IP адреса', () => {
       const reqWithoutIp: Partial<Request> = {
         method: 'GET',
         url: '/api/test',
@@ -134,7 +133,7 @@ describe('Logger Middleware', () => {
       );
     });
 
-    it('should handle missing User-Agent', () => {
+    it('должен обрабатывать отсутствие User-Agent', () => {
       (req.get as jest.Mock).mockReturnValue(undefined);
 
       detailedLogger(req as Request, res as Response, next);
@@ -148,7 +147,7 @@ describe('Logger Middleware', () => {
       );
     });
 
-    it('should calculate response size in KB', () => {
+    it('должен вычислять размер ответа в KB', () => {
       const mockResponseBody = { success: true, data: { id: 1, name: 'test' } };
       
       detailedLogger(req as Request, res as Response, next);
@@ -166,7 +165,7 @@ describe('Logger Middleware', () => {
       );
     });
 
-    it('should handle different HTTP methods and status codes in detailed mode', () => {
+    it('должен обрабатывать разные HTTP методы и статус коды в детальном режиме', () => {
       req.method = 'DELETE';
       res.statusCode = 204;
 
@@ -181,7 +180,7 @@ describe('Logger Middleware', () => {
       );
     });
 
-    it('should truncate long User-Agent strings', () => {
+    it('должен обрезать длинные строки User-Agent', () => {
       const longUserAgent = 'VeryLongUserAgentStringThatExceedsFiftyCharactersAndShouldBeTruncated';
       (req.get as jest.Mock).mockReturnValue(longUserAgent);
 

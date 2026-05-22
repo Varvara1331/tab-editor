@@ -19,7 +19,7 @@ describe('TheoryProgressModel', () => {
   });
 
   describe('getProgress', () => {
-    it('should call TheoryProgressService.getProgress', async () => {
+    it('должен вызывать TheoryProgressService.getProgress при получении прогресса пользователя', async () => {
       (TheoryProgressService.getProgress as jest.Mock).mockResolvedValue(mockProgress);
 
       const result = await TheoryProgressModel.getProgress(1);
@@ -30,7 +30,7 @@ describe('TheoryProgressModel', () => {
   });
 
   describe('upsertProgress', () => {
-    it('should call TheoryProgressService.upsertProgress', async () => {
+    it('должен вызывать TheoryProgressService.upsertProgress при обновлении или создании прогресса', async () => {
       (TheoryProgressService.upsertProgress as jest.Mock).mockResolvedValue(mockProgress);
 
       const result = await TheoryProgressModel.upsertProgress(1, { totalPoints: 100 });
@@ -41,7 +41,7 @@ describe('TheoryProgressModel', () => {
   });
 
   describe('completeArticle', () => {
-    it('should call TheoryProgressService.completeArticle', async () => {
+    it('должен вызывать TheoryProgressService.completeArticle при завершении статьи', async () => {
       (TheoryProgressService.completeArticle as jest.Mock).mockResolvedValue(mockProgress);
 
       const result = await TheoryProgressModel.completeArticle(1, 'article-3', 90);
@@ -52,7 +52,7 @@ describe('TheoryProgressModel', () => {
   });
 
   describe('getStatistics', () => {
-    it('should call TheoryProgressService.getStatistics', async () => {
+    it('должен вызывать TheoryProgressService.getStatistics при получении статистики прогресса', async () => {
       const mockStats = {
         totalArticlesCompleted: 2,
         totalPoints: 85,
@@ -69,7 +69,7 @@ describe('TheoryProgressModel', () => {
   });
 
   describe('getCompletedArticles', () => {
-    it('should call TheoryProgressService.getCompletedArticles', async () => {
+    it('должен вызывать TheoryProgressService.getCompletedArticles при получении списка завершенных статей', async () => {
       (TheoryProgressService.getCompletedArticles as jest.Mock).mockResolvedValue(['article-1', 'article-2']);
 
       const result = await TheoryProgressModel.getCompletedArticles(1);
@@ -80,7 +80,7 @@ describe('TheoryProgressModel', () => {
   });
 
   describe('isArticleCompleted', () => {
-    it('should call TheoryProgressService.isArticleCompleted', async () => {
+    it('должен вызывать TheoryProgressService.isArticleCompleted при проверке завершения статьи', async () => {
       (TheoryProgressService.isArticleCompleted as jest.Mock).mockResolvedValue(true);
 
       const result = await TheoryProgressModel.isArticleCompleted(1, 'article-1');
@@ -91,7 +91,7 @@ describe('TheoryProgressModel', () => {
   });
 
   describe('getTotalPoints', () => {
-    it('should call TheoryProgressService.getTotalPoints', async () => {
+    it('должен вызывать TheoryProgressService.getTotalPoints при получении общего количества очков', async () => {
       (TheoryProgressService.getTotalPoints as jest.Mock).mockResolvedValue(85);
 
       const result = await TheoryProgressModel.getTotalPoints(1);
@@ -102,7 +102,7 @@ describe('TheoryProgressModel', () => {
   });
 
   describe('getLeaderboard', () => {
-    it('should call TheoryProgressService.getLeaderboard', async () => {
+    it('должен вызывать TheoryProgressService.getLeaderboard при получении таблицы лидеров', async () => {
       const mockLeaderboard = [{ userId: 1, username: 'user1', totalPoints: 100, articlesCompleted: 5 }];
       (TheoryProgressService.getLeaderboard as jest.Mock).mockResolvedValue(mockLeaderboard);
 
@@ -114,7 +114,7 @@ describe('TheoryProgressModel', () => {
   });
 
   describe('deleteProgress', () => {
-    it('should call TheoryProgressService.deleteProgress', async () => {
+    it('должен вызывать TheoryProgressService.deleteProgress при удалении прогресса пользователя', async () => {
       (TheoryProgressService.deleteProgress as jest.Mock).mockResolvedValue(undefined);
 
       await TheoryProgressModel.deleteProgress(1);

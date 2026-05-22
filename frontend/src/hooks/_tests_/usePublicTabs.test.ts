@@ -11,7 +11,6 @@ jest.mock('../../services/libraryService');
 describe('usePublicTabs', () => {
   const mockUser = { id: 1, username: 'test', email: 'test@test.com', createdAt: '2024-01-01' };
   
-  // Полный объект PublicTab со всеми необходимыми полями
   const mockTabs = [
     { 
       id: 1, 
@@ -48,7 +47,7 @@ describe('usePublicTabs', () => {
     (checkInFavorites as jest.Mock).mockResolvedValue(false);
   });
 
-  it('should load tabs on mount', async () => {
+  it('должен загружать публичные табулатуры при монтировании компонента', async () => {
     const { result } = renderHook(() => usePublicTabs());
 
     await waitFor(() => {
@@ -57,7 +56,7 @@ describe('usePublicTabs', () => {
     });
   });
 
-  it('should filter tabs by search query', async () => {
+  it('должен фильтровать табулатуры по поисковому запросу', async () => {
     const { result } = renderHook(() => usePublicTabs());
 
     act(() => {
@@ -67,7 +66,7 @@ describe('usePublicTabs', () => {
     expect(result.current.searchQuery).toBe('rock');
   });
 
-  it('should refresh tabs', async () => {
+  it('должен обновлять список табулатур при вызове refresh', async () => {
     const { result } = renderHook(() => usePublicTabs());
 
     await waitFor(() => {
@@ -81,7 +80,7 @@ describe('usePublicTabs', () => {
     expect(publicTabsService.getPublicTabs).toHaveBeenCalledTimes(2);
   });
 
-  it('should toggle favorite', async () => {
+  it('должен добавлять табулатуру в избранное при toggleFavorite', async () => {
     (addToFavorites as jest.Mock).mockResolvedValue(true);
     const { result } = renderHook(() => usePublicTabs());
 
@@ -98,9 +97,8 @@ describe('usePublicTabs', () => {
     expect(addToFavorites).toHaveBeenCalledWith(1);
   });
 
-  it('should remove from favorites', async () => {
+  it('должен удалять табулатуру из избранного при повторном вызове toggleFavorite', async () => {
     (removeFromFavorites as jest.Mock).mockResolvedValue(true);
-    // Изменяем статус избранного на true
     (checkInFavorites as jest.Mock).mockResolvedValue(true);
     
     const { result } = renderHook(() => usePublicTabs());
