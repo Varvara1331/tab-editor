@@ -1,7 +1,9 @@
-// frontend/src/components/_tests_/TabPlayer.test.tsx
+import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import TabPlayer from '../editor/TabPlayer';
 
-// Создаем моки функций
+// Мок для useGuitarPlayerSF2
 const mockPlay = jest.fn().mockResolvedValue(undefined);
 const mockStop = jest.fn();
 const mockPause = jest.fn();
@@ -10,96 +12,109 @@ const mockInitializePlayer = jest.fn().mockResolvedValue(undefined);
 const mockLoadTab = jest.fn();
 const mockSeekToPosition = jest.fn();
 
-// Мокаем хук useGuitarPlayerSF2 ДО импорта компонента
 jest.mock('../../hooks/useGuitarPlayerSF2', () => ({
-  useGuitarPlayerSF2: jest.fn(),
+  useGuitarPlayerSF2: jest.fn(() => ({
+    isPlaying: false,
+    play: mockPlay,
+    stop: mockStop,
+    pause: mockPause,
+    currentPosition: null,
+    setTempo: mockSetTempo,
+    isReady: true,
+    isLoading: false,
+    error: null,
+    initializePlayer: mockInitializePlayer,
+    loadTab: mockLoadTab,
+    seekToPosition: mockSeekToPosition
+  }))
 }));
 
-// Мокаем lucide-react иконки
-jest.mock('lucide-react', () => ({
-  Play: () => <span data-testid="play-icon">PlayIcon</span>,
-  Pause: () => <span data-testid="pause-icon">PauseIcon</span>,
-  Square: () => <span data-testid="square-icon">SquareIcon</span>,
-  Loader2: () => <span data-testid="loader-icon">LoaderIcon</span>,
-  AlertCircle: () => <span data-testid="alert-icon">AlertIcon</span>,
-  Music: () => <span data-testid="music-icon">MusicIcon</span>,
-}));
-
-// Импортируем компонент
-import TabPlayer from '../editor/TabPlayer';
-import { useGuitarPlayerSF2 } from '../../hooks/useGuitarPlayerSF2';
+const mockTabData = {
+  id: 1,
+  title: 'Test Song',
+  artist: 'Test Artist',
+  tuning: ['E4', 'B3', 'G3', 'D3', 'A2', 'E2'],
+  notesPerMeasure: 16,
+  measures: [{ 
+    id: 'measure-1', 
+    strings: [{ stringNumber: 0, notes: [{ fret: 0 }, { fret: 3 }, { fret: 5 }] }], 
+    tempo: 120 
+  }],
+  isPublic: false,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+};
 
 describe('TabPlayer', () => {
-  const mockOnPositionChange = jest.fn();
-  const mockOnPlayheadPosition = jest.fn();
-
-  const mockTabData = {
-    id: 1,
-    title: 'Test Song',
-    artist: 'Test Artist',
-    tuning: ['E4', 'B3', 'G3', 'D3', 'A2', 'E2'],
-    measures: [
-      {
-        id: 'measure-1',
-        strings: [
-          { stringNumber: 0, notes: [{ fret: 0 }, { fret: 3 }, { fret: 5 }] },
-          { stringNumber: 1, notes: [{ fret: null }, { fret: null }, { fret: null }] },
-        ],
-        tempo: 120,
-      },
-    ],
-    notesPerMeasure: 16,
-    isPublic: false,
-    isOwn: true,
-    userId: 1,
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  };
-
   beforeEach(() => {
     jest.clearAllMocks();
-    mockPlay.mockResolvedValue(undefined);
-    mockInitializePlayer.mockResolvedValue(undefined);
-    
-    // Устанавливаем мок по умолчанию - isReady=true, isInitialized=true
-    (useGuitarPlayerSF2 as jest.Mock).mockReturnValue({
-      isPlaying: false,
-      play: mockPlay,
-      stop: mockStop,
-      pause: mockPause,
-      currentPosition: { measureIndex: 0, stringIndex: 0, noteIndex: 0 },
-      setTempo: mockSetTempo,
-      isReady: true,
-      isLoading: false,
-      error: null,
-      initializePlayer: mockInitializePlayer,
-      loadTab: mockLoadTab,
-      seekToPosition: mockSeekToPosition,
-    });
   });
 
   describe('рендеринг', () => {
-    it('должен рендерить панель управления плеером', () => {
+    it('должен отображать компонент с кнопками управления', () => {
       render(<TabPlayer tabData={mockTabData} />);
       
-      expect(screen.getByTitle('Играть')).toBeInTheDocument();
-      expect(screen.getByTitle('Остановить')).toBeInTheDocument();
-      expect(screen.getByText('Темп')).toBeInTheDocument();
+      expect(screen.getByTestId('tab-player')).toBeInTheDocument();
+      expect(screen.getByTestId('play-button')).toBeInTheDocument();
+      expect(screen.getByTestId('stop-button')).toBeInTheDocument();
+      expect(screen.getByTestId('tempo-slider')).toBeInTheDocument();
     });
 
-    it('должен отображать кнопку Play в начальном состоянии', () => {
+    it('должен отображать иконку Play когда не играет', () => {
       render(<TabPlayer tabData={mockTabData} />);
       
-      const playButton = screen.getByTitle('Играть');
-      expect(playButton).not.toBeDisabled();
+      expect(screen.getByTestId('play-icon')).toBeInTheDocument();
     });
 
-    it('должен отображать ползунок темпа', () => {
+    it('должен отображать BPM значение', () => {
       render(<TabPlayer tabData={mockTabData} />);
       
-      const tempoSlider = screen.getByRole('slider');
-      expect(tempoSlider).toBeInTheDocument();
-      expect(tempoSlider).toHaveValue('120');
+      expect(screen.getByTestId('bpm-value')).toHaveTextContent('120 BPM');
+    });
+
+    it('должен отображать индикатор загрузки при isLoading=true', () => {
+      const { useGuitarPlayerSF2 } = require('../../hooks/useGuitarPlayerSF2');
+      useGuitarPlayerSF2.mockImplementation(() => ({
+        isPlaying: false,
+        play: mockPlay,
+        stop: mockStop,
+        pause: mockPause,
+        currentPosition: null,
+        setTempo: mockSetTempo,
+        isReady: true,
+        isLoading: true,
+        error: null,
+        initializePlayer: mockInitializePlayer,
+        loadTab: mockLoadTab,
+        seekToPosition: mockSeekToPosition
+      }));
+      
+      render(<TabPlayer tabData={mockTabData} />);
+      
+      expect(screen.getByTestId('loading-indicator')).toBeInTheDocument();
+    });
+
+    it('должен отображать ошибку при error', () => {
+      const { useGuitarPlayerSF2 } = require('../../hooks/useGuitarPlayerSF2');
+      useGuitarPlayerSF2.mockImplementation(() => ({
+        isPlaying: false,
+        play: mockPlay,
+        stop: mockStop,
+        pause: mockPause,
+        currentPosition: null,
+        setTempo: mockSetTempo,
+        isReady: true,
+        isLoading: false,
+        error: 'Ошибка инициализации',
+        initializePlayer: mockInitializePlayer,
+        loadTab: mockLoadTab,
+        seekToPosition: mockSeekToPosition
+      }));
+      
+      render(<TabPlayer tabData={mockTabData} />);
+      
+      expect(screen.getByTestId('error-indicator')).toBeInTheDocument();
+      expect(screen.getByTestId('error-indicator')).toHaveTextContent('Ошибка инициализации');
     });
   });
 
@@ -107,17 +122,15 @@ describe('TabPlayer', () => {
     it('должен вызывать play при клике на кнопку Play', async () => {
       render(<TabPlayer tabData={mockTabData} />);
       
-      const playButton = screen.getByTitle('Играть');
-      expect(playButton).not.toBeDisabled();
-      fireEvent.click(playButton);
+      const playButton = screen.getByTestId('play-button');
+      await userEvent.click(playButton);
       
-      await waitFor(() => {
-        expect(mockPlay).toHaveBeenCalled();
-      });
+      expect(mockPlay).toHaveBeenCalled();
     });
 
-    it('должен вызывать pause при клике на кнопку Play во время воспроизведения', () => {
-      (useGuitarPlayerSF2 as jest.Mock).mockReturnValue({
+    it('должен отображать иконку Pause когда играет', () => {
+      const { useGuitarPlayerSF2 } = require('../../hooks/useGuitarPlayerSF2');
+      useGuitarPlayerSF2.mockImplementation(() => ({
         isPlaying: true,
         play: mockPlay,
         stop: mockStop,
@@ -129,89 +142,110 @@ describe('TabPlayer', () => {
         error: null,
         initializePlayer: mockInitializePlayer,
         loadTab: mockLoadTab,
-        seekToPosition: mockSeekToPosition,
-      });
+        seekToPosition: mockSeekToPosition
+      }));
       
       render(<TabPlayer tabData={mockTabData} />);
       
-      const playButton = screen.getByTitle('Пауза');
-      expect(playButton).not.toBeDisabled();
-      fireEvent.click(playButton);
-      
-      expect(mockPause).toHaveBeenCalled();
+      expect(screen.getByTestId('pause-icon')).toBeInTheDocument();
     });
 
-    it('должен вызывать stop при клике на кнопку Stop', () => {
-      render(<TabPlayer tabData={mockTabData} />);
-      
-      const stopButton = screen.getByTitle('Остановить');
-      expect(stopButton).not.toBeDisabled();
-      fireEvent.click(stopButton);
-      
-      expect(mockStop).toHaveBeenCalled();
-    });
-  });
-
-  describe('управление темпом', () => {
-    it('должен изменять темп при перемещении ползунка', () => {
-      render(<TabPlayer tabData={mockTabData} />);
-      
-      const tempoSlider = screen.getByRole('slider');
-      fireEvent.change(tempoSlider, { target: { value: '140' } });
-      
-      expect(mockSetTempo).toHaveBeenCalledWith(140);
-    });
-  });
-
-  describe('отображение позиции', () => {
-    it('должен отображать текущую позицию воспроизведения', () => {
-      (useGuitarPlayerSF2 as jest.Mock).mockReturnValue({
+    it('должен вызывать pause при клике на кнопку Play когда играет', async () => {
+      const { useGuitarPlayerSF2 } = require('../../hooks/useGuitarPlayerSF2');
+      useGuitarPlayerSF2.mockImplementation(() => ({
         isPlaying: true,
         play: mockPlay,
         stop: mockStop,
         pause: mockPause,
-        currentPosition: { measureIndex: 2, stringIndex: 0, noteIndex: 5 },
+        currentPosition: { measureIndex: 0, stringIndex: 0, noteIndex: 0 },
         setTempo: mockSetTempo,
         isReady: true,
         isLoading: false,
         error: null,
         initializePlayer: mockInitializePlayer,
         loadTab: mockLoadTab,
-        seekToPosition: mockSeekToPosition,
-      });
+        seekToPosition: mockSeekToPosition
+      }));
       
       render(<TabPlayer tabData={mockTabData} />);
       
-      // Проверяем что индикатор позиции отображается
-      const positionElement = screen.getByText(/Такт/);
-      expect(positionElement).toBeInTheDocument();
+      const playButton = screen.getByTestId('play-button');
+      await userEvent.click(playButton);
+      
+      expect(mockPause).toHaveBeenCalled();
+    });
+
+    it('должен вызывать stop при клике на кнопку Stop', async () => {
+      render(<TabPlayer tabData={mockTabData} />);
+      
+      const stopButton = screen.getByTestId('stop-button');
+      await userEvent.click(stopButton);
+      
+      expect(mockStop).toHaveBeenCalled();
     });
   });
 
-  describe('состояния загрузки и ошибок', () => {
-    it('должен отображать индикатор загрузки при isLoading=true', () => {
-      (useGuitarPlayerSF2 as jest.Mock).mockReturnValue({
-        isPlaying: false,
+  describe('управление темпом', () => {
+    it('должен изменять BPM при перемещении ползунка', async () => {
+      render(<TabPlayer tabData={mockTabData} />);
+      
+      const slider = screen.getByTestId('tempo-slider');
+      fireEvent.change(slider, { target: { value: '140' } });
+      
+      expect(screen.getByTestId('bpm-value')).toHaveTextContent('140 BPM');
+    });
+
+    it('должен вызывать setTempo при изменении BPM', () => {
+      render(<TabPlayer tabData={mockTabData} />);
+      
+      const slider = screen.getByTestId('tempo-slider');
+      fireEvent.change(slider, { target: { value: '140' } });
+      
+      expect(mockSetTempo).toHaveBeenCalledWith(140);
+    });
+  });
+
+  describe('отображение позиции', () => {
+    it('должен отображать текущую позицию', () => {
+      const { useGuitarPlayerSF2 } = require('../../hooks/useGuitarPlayerSF2');
+      useGuitarPlayerSF2.mockImplementation(() => ({
+        isPlaying: true,
         play: mockPlay,
         stop: mockStop,
         pause: mockPause,
-        currentPosition: null,
+        currentPosition: { measureIndex: 2, stringIndex: 0, noteIndex: 4 },
         setTempo: mockSetTempo,
-        isReady: false,
-        isLoading: true,
+        isReady: true,
+        isLoading: false,
         error: null,
         initializePlayer: mockInitializePlayer,
         loadTab: mockLoadTab,
-        seekToPosition: mockSeekToPosition,
-      });
+        seekToPosition: mockSeekToPosition
+      }));
       
       render(<TabPlayer tabData={mockTabData} />);
       
-      expect(screen.getByText('Загрузка гитарных звуков...')).toBeInTheDocument();
+      expect(screen.getByTestId('position-indicator')).toBeInTheDocument();
+      expect(screen.getByTestId('position-indicator')).toHaveTextContent('Такт 3, Позиция 5/16/16');
+    });
+  });
+
+  describe('инициализация', () => {
+    it('должен инициализировать плеер при монтировании', () => {
+      render(<TabPlayer tabData={mockTabData} />);
+      
+      expect(mockInitializePlayer).toHaveBeenCalled();
     });
 
-    it('должен отображать сообщение об ошибке', () => {
-      (useGuitarPlayerSF2 as jest.Mock).mockReturnValue({
+    it('должен загружать табулатуру при isReady', () => {
+      render(<TabPlayer tabData={mockTabData} />);
+      
+      expect(mockLoadTab).toHaveBeenCalledWith(mockTabData);
+    });
+
+    it('должен отображать индикатор инициализации', () => {
+      const { useGuitarPlayerSF2 } = require('../../hooks/useGuitarPlayerSF2');
+      useGuitarPlayerSF2.mockImplementation(() => ({
         isPlaying: false,
         play: mockPlay,
         stop: mockStop,
@@ -220,49 +254,77 @@ describe('TabPlayer', () => {
         setTempo: mockSetTempo,
         isReady: false,
         isLoading: false,
-        error: 'Failed to load audio',
+        error: null,
         initializePlayer: mockInitializePlayer,
         loadTab: mockLoadTab,
-        seekToPosition: mockSeekToPosition,
-      });
+        seekToPosition: mockSeekToPosition
+      }));
       
       render(<TabPlayer tabData={mockTabData} />);
       
-      expect(screen.getByText('Failed to load audio')).toBeInTheDocument();
+      expect(screen.getByTestId('init-indicator')).toBeInTheDocument();
     });
   });
 
-  describe('колбэки', () => {
+  describe('ref методы', () => {
+    it('должен экспонировать методы через ref', () => {
+      const ref = React.createRef<any>();
+      render(<TabPlayer ref={ref} tabData={mockTabData} />);
+      
+      expect(ref.current).toBeDefined();
+      expect(typeof ref.current?.play).toBe('function');
+      expect(typeof ref.current?.pause).toBe('function');
+      expect(typeof ref.current?.stop).toBe('function');
+      expect(typeof ref.current?.toggle).toBe('function');
+      expect(typeof ref.current?.getIsPlaying).toBe('function');
+      expect(typeof ref.current?.seekTo).toBe('function');
+    });
+
+    it('метод getIsPlaying должен возвращать состояние', () => {
+      const ref = React.createRef<any>();
+      render(<TabPlayer ref={ref} tabData={mockTabData} />);
+      
+      expect(ref.current.getIsPlaying()).toBe(false);
+    });
+
+    it('метод seekTo должен вызывать seekToPosition', () => {
+      const ref = React.createRef<any>();
+      render(<TabPlayer ref={ref} tabData={mockTabData} />);
+      
+      ref.current.seekTo(1, 2);
+      
+      expect(mockSeekToPosition).toHaveBeenCalledWith({
+        measureIndex: 1,
+        stringIndex: 0,
+        noteIndex: 2
+      });
+    });
+  });
+
+  describe('обработка событий позиции', () => {
     it('должен вызывать onPositionChange при изменении позиции', () => {
-      render(
-        <TabPlayer 
-          tabData={mockTabData} 
-          onPositionChange={mockOnPositionChange}
-        />
-      );
+      const onPositionChange = jest.fn();
+      const { useGuitarPlayerSF2 } = require('../../hooks/useGuitarPlayerSF2');
       
-      // onPositionChange вызывается при монтировании из-за useEffect
-      expect(mockOnPositionChange).toHaveBeenCalled();
-    });
-  });
-
-  describe('инициализация плеера', () => {
-    it('должен инициализировать плеер при монтировании', async () => {
-      render(<TabPlayer tabData={mockTabData} />);
+      const mockCurrentPosition = { measureIndex: 1, stringIndex: 0, noteIndex: 2 };
+      useGuitarPlayerSF2.mockImplementation(() => ({
+        isPlaying: true,
+        play: mockPlay,
+        stop: mockStop,
+        pause: mockPause,
+        currentPosition: mockCurrentPosition,
+        setTempo: mockSetTempo,
+        isReady: true,
+        isLoading: false,
+        error: null,
+        initializePlayer: mockInitializePlayer,
+        loadTab: mockLoadTab,
+        seekToPosition: mockSeekToPosition
+      }));
       
-      await waitFor(() => {
-        expect(mockInitializePlayer).toHaveBeenCalled();
-      });
-    });
-  });
-
-  describe('загрузка табулатуры', () => {
-    it('должен загружать табулатуру при готовности плеера', async () => {
-      render(<TabPlayer tabData={mockTabData} />);
+      render(<TabPlayer tabData={mockTabData} onPositionChange={onPositionChange} />);
       
-      await waitFor(() => {
-        expect(mockLoadTab).toHaveBeenCalledWith(mockTabData);
-      });
+      expect(onPositionChange).toHaveBeenCalledWith(mockCurrentPosition);
     });
   });
 });

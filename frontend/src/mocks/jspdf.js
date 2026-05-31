@@ -1,5 +1,7 @@
-export default class jsPDF {
+class jsPDF {
   addImage = jest.fn().mockReturnThis();
   addPage = jest.fn().mockReturnThis();
   output = jest.fn().mockReturnValue(new Blob(['mock pdf'], { type: 'application/pdf' }));
 }
+
+module.exports = jsPDF;

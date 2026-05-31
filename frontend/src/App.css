@@ -563,24 +563,23 @@ body {
    ГЛОБАЛЬНЫЕ КОМПОНЕНТЫ - СКРОЛЛБАРЫ
    ============================================ */
 
-::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  ::-webkit-scrollbar {
+  width: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(31, 28, 19, 0.6);
+  background: #f1f1f1;
   border-radius: var(--radius-sm);
+    margin: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(245, 70, 57, var(--opacity-medium));
+  background: var(--color-primary);
   border-radius: var(--radius-sm);
-  transition: background var(--transition-base);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(245, 70, 57, var(--opacity-muted));
+  background: var(--color-primary-dark);
 }
 
 ::selection {
@@ -688,33 +687,36 @@ body {
    ============================================ */
 
 @media (max-width: 768px) {
-  .app-header {
-    flex-direction: column;
-    padding: var(--spacing-lg);
-  }
-  
-  .app-nav {
-    justify-content: center;
-    width: 100%;
-    gap: var(--spacing-md);
-  }
-  
   .nav-btn,
   .view-tab,
   .public-view-tab {
-    width: 36px;
-    height: 36px;
+    width: 18px;
+    height: 18px;
   }
-  
-  .user-info {
-    width: 100%;
-    justify-content: center;
+
+  .app-header
+  {
+    flex-wrap: nowrap;
   }
+
+  .user-info .username
+  {
+    font-size: small;
+  }
+
   
   .logout-btn {
     padding: 6px;
     min-width: 32px;
     min-height: 32px;
+  }
+
+  .search-wrapper {
+    height: 25px;
+  }
+
+  .search-wrapper .search-input {
+    font-size: x-small;
   }
 }
 

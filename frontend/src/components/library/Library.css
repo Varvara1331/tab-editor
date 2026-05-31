@@ -395,16 +395,35 @@
 @media (max-width: 768px) {
   .library-container,
   .public-tabs-container {
-    padding: 15px;
+    padding: 0px;
   }
-  
-  .library-title,
-  .public-tabs-title {
-    font-size: 22px;
+
+  .library-subtitle, .public-tabs-subtitle
+  {
+     display: none;
   }
-  
-  .library-header-content {
-    flex-direction: column;
+
+  .library-title, .public-tabs-title
+  {
+    display: none;
+  }
+
+  .library-header
+  {
+    padding: 0;
+    margin: 0px;
+    background: none;
+    border: none;
+  }
+
+  .public-tabs-header
+  {
+    display:none
+  }
+
+  .library-header-left
+  {
+    text-align: left;
   }
   
   .library-import-btn {
@@ -414,7 +433,8 @@
   
   .library-view-tabs,
   .public-view-tabs {
-    gap: 10px;
+    gap: 0px;
+    margin: 0;
   }
   
   .view-tab,
@@ -424,62 +444,41 @@
   }
   
   .tab-card-wrapper {
-    margin-bottom: 16px;
+    margin-bottom: 20px;
   }
   
   .card-actions-side {
     position: static;
     transform: none;
     flex-direction: row;
-    justify-content: flex-start;
-    gap: var(--spacing-sm);
-    margin-bottom: var(--spacing-sm);
+    margin-top: 10px;
+  }
+
+  .card-info .card-date, .card-info .card-artist
+  {
+    display: none;
   }
   
   .card-actions-side .nav-btn {
-    width: 32px;
-    height: 32px;
+    width: 20px;
+    height: 20px;
   }
   
-  .card-info {
-    flex-direction: column;
-  }
-  
-  .card-left {
-    width: 100%;
-  }
-  
-  .card-right {
-    flex-direction: row;
-    justify-content: flex-start;
-    width: 100%;
-    flex-wrap: wrap;
-  }
-  
-  .card-preview-mobile {
+  .card-title, .card-artist, .card-date, .card-metadata{
+    font-size:small;
     display: block;
+  }
+  .card-icon
+  {
+    display: none;
+  }
+  .visibility-badge, .card-author{
+    font-size: xx-small;
   }
 }
 
 @media (max-width: 480px) {
   .card-left {
     flex-direction: column;
-    text-align: center;
-  }
-  
-  .card-details {
-    text-align: center;
-  }
-  
-  .card-metadata {
-    justify-content: center;
-  }
-  
-  .card-right {
-    justify-content: center;
-  }
-  
-  .card-actions-side {
-    justify-content: center;
   }
 }

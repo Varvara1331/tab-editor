@@ -227,6 +227,7 @@ const TabEditor: React.FC<TabEditorProps> = ({
   /** Раскладка табулатуры: горизонтальная (в строку) или вертикальная (в столбец) */
   const [tabLayout, setTabLayout] = useState<'horizontal' | 'vertical'>(() => 
     restoredState?.tabLayout || 'horizontal'
+
   );
 
   /** Флаг отображения тюнера */
@@ -1168,7 +1169,6 @@ const TabEditor: React.FC<TabEditorProps> = ({
               disabled={isReadOnly} 
             />
             <p>
-              {tabData.artist}
               <input 
                 type="text" 
                 value={tabData.artist || ''} 

@@ -5,8 +5,6 @@
  * @module services/theoryService
  */
 
-import { api, ApiResponse } from './api';
-
 /** Ключ для хранения прогресса в localStorage */
 const STORAGE_KEY = 'guitar_tab_theory_progress';
 
@@ -54,20 +52,12 @@ export interface UpdateProgressData {
  * Получение прогресса пользователя
  * 
  * @returns Прогресс пользователя
- * 
- * @example
- * ```typescript
- * const progress = await getTheoryProgress();
- * console.log(`Пройдено статей: ${progress.completedArticles.length}`);
- * ```
  */
 export const getTheoryProgress = async (): Promise<TheoryProgress> => {
   try {
-    const response = await api.get<ApiResponse<TheoryProgress>>('/theory/progress');
-    
-    if (response.data.success && response.data.data) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(response.data.data));
-      return response.data.data;
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      return JSON.parse(saved);
     }
     
     return {
@@ -77,13 +67,7 @@ export const getTheoryProgress = async (): Promise<TheoryProgress> => {
       totalPoints: 0
     };
   } catch (error) {
-    console.error('Error loading theory progress from server:', error);
-    
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      return JSON.parse(saved);
-    }
-    
+    console.error('Error loading theory progress:', error);
     return {
       completedArticles: [],
       lastRead: null,
@@ -98,33 +82,19 @@ export const getTheoryProgress = async (): Promise<TheoryProgress> => {
  * 
  * @param data - Данные для обновления
  * @returns Обновлённый прогресс
- * @throws {Error} При ошибке обновления
  */
 export const updateTheoryProgress = async (data: UpdateProgressData): Promise<TheoryProgress> => {
   try {
-    const response = await api.put<ApiResponse<TheoryProgress>>('/theory/progress', data);
-    
-    if (response.data.success && response.data.data) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(response.data.data));
-      return response.data.data;
-    }
-    
-    throw new Error(response.data.error || 'Failed to update progress');
+    const current = await getTheoryProgress();
+    const updatedProgress = {
+      ...current,
+      ...data,
+      lastRead: data.lastRead || new Date().toISOString()
+    };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedProgress));
+    return updatedProgress;
   } catch (error) {
     console.error('Error updating theory progress:', error);
-    
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const currentProgress = JSON.parse(saved);
-      const updatedProgress = {
-        ...currentProgress,
-        ...data,
-        lastRead: data.lastRead || new Date().toISOString()
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedProgress));
-      return updatedProgress;
-    }
-    
     throw error;
   }
 };
@@ -135,50 +105,29 @@ export const updateTheoryProgress = async (data: UpdateProgressData): Promise<Th
  * @param articleId - ID статьи
  * @param quizScore - Оценка за тест (опционально)
  * @returns Обновлённый прогресс
- * @throws {Error} При ошибке обновления
- * 
- * @example
- * ```typescript
- * await completeArticle('basic-chords');
- * await completeArticle('advanced-scales', 95);
- * ```
  */
 export const completeArticle = async (articleId: string, quizScore?: number): Promise<TheoryProgress> => {
   try {
-    const response = await api.post<ApiResponse<TheoryProgress>>('/theory/progress/complete', {
-      articleId,
-      quizScore
-    });
+    const current = await getTheoryProgress();
     
-    if (response.data.success && response.data.data) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(response.data.data));
-      return response.data.data;
+    if (!current.completedArticles.includes(articleId)) {
+      const updatedProgress = {
+        ...current,
+        completedArticles: [...current.completedArticles, articleId],
+        lastRead: new Date().toISOString(),
+        quizScores: {
+          ...current.quizScores,
+          ...(quizScore !== undefined && { [articleId]: quizScore })
+        },
+        totalPoints: (current.totalPoints || 0) + (quizScore || 0)
+      };
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedProgress));
+      return updatedProgress;
     }
     
-    throw new Error(response.data.error || 'Failed to complete article');
+    return current;
   } catch (error) {
     console.error('Error completing article:', error);
-    
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const currentProgress = JSON.parse(saved);
-      if (!currentProgress.completedArticles.includes(articleId)) {
-        const updatedProgress = {
-          ...currentProgress,
-          completedArticles: [...currentProgress.completedArticles, articleId],
-          lastRead: new Date().toISOString(),
-          quizScores: {
-            ...currentProgress.quizScores,
-            ...(quizScore !== undefined && { [articleId]: quizScore })
-          },
-          totalPoints: (currentProgress.totalPoints || 0) + (quizScore || 0)
-        };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedProgress));
-        return updatedProgress;
-      }
-      return currentProgress;
-    }
-    
     throw error;
   }
 };
@@ -187,46 +136,23 @@ export const completeArticle = async (articleId: string, quizScore?: number): Pr
  * Получение статистики прогресса
  * 
  * @returns Статистика прогресса
- * 
- * @example
- * ```typescript
- * const stats = await getTheoryStatistics();
- * console.log(`Средний балл: ${stats.averageScore}`);
- * ```
  */
 export const getTheoryStatistics = async (): Promise<TheoryStatistics> => {
   try {
-    const response = await api.get<ApiResponse<TheoryStatistics>>('/theory/statistics');
-    
-    if (response.data.success && response.data.data) {
-      return response.data.data;
-    }
+    const progress = await getTheoryProgress();
+    const scores = Object.values(progress.quizScores || {}) as number[];
+    const averageScore = scores.length > 0 
+      ? scores.reduce((a, b) => a + b, 0) / scores.length 
+      : 0;
     
     return {
-      totalArticlesCompleted: 0,
-      totalPoints: 0,
-      averageScore: 0,
-      lastActive: null
+      totalArticlesCompleted: progress.completedArticles?.length || 0,
+      totalPoints: progress.totalPoints || 0,
+      averageScore,
+      lastActive: progress.lastRead || null
     };
   } catch (error) {
     console.error('Error getting theory statistics:', error);
-    
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
-      const progress = JSON.parse(saved);
-      const scores = Object.values(progress.quizScores || {}) as number[];
-      const averageScore = scores.length > 0 
-        ? scores.reduce((a, b) => a + b, 0) / scores.length 
-        : 0;
-      
-      return {
-        totalArticlesCompleted: progress.completedArticles?.length || 0,
-        totalPoints: progress.totalPoints || 0,
-        averageScore,
-        lastActive: progress.lastRead || null
-      };
-    }
-    
     return {
       totalArticlesCompleted: 0,
       totalPoints: 0,
@@ -238,20 +164,12 @@ export const getTheoryStatistics = async (): Promise<TheoryStatistics> => {
 
 /**
  * Синхронизация локального прогресса с сервером
- * 
- * @example
- * ```typescript
- * await syncTheoryProgress();
- * console.log('Прогресс синхронизирован');
- * ```
  */
 export const syncTheoryProgress = async (): Promise<void> => {
   const localProgress = localStorage.getItem(STORAGE_KEY);
   if (localProgress) {
     try {
-      const progress = JSON.parse(localProgress);
-      await updateTheoryProgress(progress);
-      console.log('Theory progress synced with server');
+      console.log('Theory progress ready for sync');
     } catch (error) {
       console.error('Error syncing theory progress:', error);
     }
@@ -260,21 +178,9 @@ export const syncTheoryProgress = async (): Promise<void> => {
 
 /**
  * Очистка прогресса (для тестирования)
- * 
- * @example
- * ```typescript
- * await clearTheoryProgress();
- * console.log('Прогресс сброшен');
- * ```
  */
 export const clearTheoryProgress = async (): Promise<void> => {
   try {
-    await updateTheoryProgress({
-      completedArticles: [],
-      quizScores: {},
-      lastRead: new Date().toISOString()
-    });
-    
     localStorage.removeItem(STORAGE_KEY);
   } catch (error) {
     console.error('Error clearing theory progress:', error);

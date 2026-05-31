@@ -19,7 +19,7 @@
     "frontend/src/**/*.ts",
     "frontend/src/**/*.tsx",
     "server/src/**/*.ts"
-  ],
+, "frontend/src/mocks/hyml2canvas.js", "frontend/src/mocks/jspdf.js"  ],
   "exclude": [
     "node_modules",
     "**/node_modules",
